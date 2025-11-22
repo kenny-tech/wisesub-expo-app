@@ -39,31 +39,32 @@ const Signin: React.FC<SigninProps> = ({ navigation }) => {
   //   }, []);
 
   const handleLogin = async () => {
-    if (!email.trim()) return setEmailError("Email is required");
-    setEmailError(null);
+    navigation.replace('Tabs')
+    // if (!email.trim()) return setEmailError("Email is required");
+    // setEmailError(null);
 
-    if (!password.trim()) return setPasswordError("Password is required");
-    setPasswordError(null);
+    // if (!password.trim()) return setPasswordError("Password is required");
+    // setPasswordError(null);
 
-    setLoading(true);
+    // setLoading(true);
 
-    try {
-      const response = await axios.post(`${BASE_API}${LOGIN}`, {
-        email: email.toLowerCase(),
-        password,
-        device_id: deviceId,
-      });
+    // try {
+    //   const response = await axios.post(`${BASE_API}${LOGIN}`, {
+    //     email: email.toLowerCase(),
+    //     password,
+    //     device_id: deviceId,
+    //   });
 
-      setLoading(false);
+    //   setLoading(false);
 
-      if (response.data.success) {
-        navigation.replace("Dashboard");
-      }
-    } catch (err: any) {
-      setLoading(false);
+    //   if (response.data.success) {
+    //     navigation.replace("Dashboard");
+    //   }
+    // } catch (err: any) {
+    //   setLoading(false);
 
-      setError(err.response?.data?.message || "Login failed");
-    }
+    //   setError(err.response?.data?.message || "Login failed");
+    // }
   };
 
   return (

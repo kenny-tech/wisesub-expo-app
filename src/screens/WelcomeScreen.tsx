@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 12,
     color: "#666",
     fontFamily: "Poppins-Regular",
