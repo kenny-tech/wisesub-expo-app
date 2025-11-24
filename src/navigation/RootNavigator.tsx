@@ -2,9 +2,9 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { RootStackParamList } from './types';
 
-import Welcomecreen from '../screens/WelcomeScreen';
-import SignupScreen from '../screens/auth/SignupScreen';
-import SigninScreen from '../screens/auth/SigninScreen';
+import Welcomecreen from '../screens/Welcome';
+import SignupScreen from '../screens/auth/Signup';
+import SigninScreen from '../screens/auth/Signin';
 import TabNavigator from './TabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();

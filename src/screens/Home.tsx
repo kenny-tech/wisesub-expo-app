@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { formatAmount, formatDate } from "../helper/util";
 
 const { width } = Dimensions.get("window");
 const SERVICE_COLS = 4;
@@ -67,9 +68,6 @@ export default function Home({ navigation }: { navigation: any }) {
     }, [])
   );
 
-  const formatAmount = (amt: string) =>
-    parseFloat(amt || "0").toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   const renderService = ({ item }: { item: Service }) => {
     const tint = `${item.color}20`; // append alpha approx (works for many hex -> not exact alpha; okay for soft tint)
     return (
@@ -104,7 +102,7 @@ export default function Home({ navigation }: { navigation: any }) {
           </View>
           <View style={styles.transactionDetails}>
             <Text style={styles.transactionTitle}>{isCredit ? "Wallet Funded" : item.type}</Text>
-            <Text style={styles.transactionDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
+            <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
           </View>
         </View>
         <Text style={[styles.transactionAmount, isCredit ? styles.amountCredit : styles.amountDebit]}>
@@ -315,7 +313,7 @@ const styles = StyleSheet.create({
   },
   iconInner: { color: "#000" },
   serviceName: { marginTop: 8, fontSize: 12, fontFamily: "Poppins-Medium", color: "#0F172A", textAlign: "center" },
-  
+
   // Coming soon styles
   comingSoonBadge: {
     position: "absolute",
