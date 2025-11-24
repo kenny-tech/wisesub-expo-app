@@ -22,6 +22,7 @@ type Service = {
   icon: React.ReactNode;
   screen: string;
   color: string; // base color hex
+  comingSoon?: boolean;
 };
 
 type Transaction = {
@@ -37,9 +38,9 @@ const servicesData: Service[] = [
   { id: 3, name: "Cable", icon: <MaterialIcons name="live-tv" size={20} />, screen: "CableTv", color: "#F59E0B" },
   { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity", color: "#EF4444" },
   { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards", color: "#8B5CF6" },
-  { id: 6, name: "Refer", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#06B6D4" },
-  { id: 7, name: "Internet", icon: <Ionicons name="planet" size={20} />, screen: "Internet", color: "#84CC16" },
-  { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#F97316" },
+  { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#06B6D4" },
+  { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#84CC16", comingSoon: true },
+  { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#F97316", comingSoon: true },
 ];
 
 export default function Home({ navigation }: { navigation: any }) {
@@ -74,13 +75,19 @@ export default function Home({ navigation }: { navigation: any }) {
     return (
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate(item.screen)}
+        onPress={() => !item.comingSoon && navigation.navigate(item.screen)}
         style={styles.serviceCard}
+        disabled={item.comingSoon}
       >
         <View style={[styles.serviceIconContainer, { backgroundColor: tint, borderColor: `${item.color}40` }]}>
           <View style={[styles.iconInner, { color: item.color }]}>{item.icon}</View>
+          {item.comingSoon && (
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>Soon</Text>
+            </View>
+          )}
         </View>
-        <Text style={styles.serviceName} numberOfLines={1}>
+        <Text style={[styles.serviceName, item.comingSoon && styles.comingSoonServiceName]} numberOfLines={1}>
           {item.name}
         </Text>
       </TouchableOpacity>
@@ -116,7 +123,7 @@ export default function Home({ navigation }: { navigation: any }) {
             {/* Header */}
             <View style={styles.header}>
               <View>
-                <Text style={styles.greeting}>Hi, John! 👋</Text>
+                <Text style={styles.greeting}>Hi, John!</Text>
                 <Text style={styles.subtitle}>Welcome back to WiseSub</Text>
               </View>
 
@@ -219,7 +226,7 @@ export default function Home({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FFFFFF" }, 
+  screen: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 20 }, // Added margin top
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
   header: {
     marginTop: 18,
@@ -284,11 +291,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  fundBtnText: { color: "#1F54DD", fontSize: 14, fontFamily: "Poppins-SemiBold" },
+  fundBtnText: { color: "#1F54DD", fontSize: 14, fontFamily: "Poppins-Medium" },
 
   // services
   section: { marginTop: 6, marginBottom: 18 },
-  sectionTitle: { fontSize: 16, fontFamily: "Poppins-SemiBold", color: "#0F172A", marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontFamily: "Poppins-Medium", color: "#0F172A", marginBottom: 12 },
   servicesGrid: { paddingBottom: 6 },
   serviceCard: {
     width: SERVICE_SIZE,
@@ -304,9 +311,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 0.5,
     borderColor: "rgba(15,23,42,0.06)",
+    position: "relative",
   },
   iconInner: { color: "#000" },
   serviceName: { marginTop: 8, fontSize: 12, fontFamily: "Poppins-Medium", color: "#0F172A", textAlign: "center" },
+  
+  // Coming soon styles
+  comingSoonBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#8B5CF6",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+  comingSoonText: {
+    color: "#FFFFFF",
+    fontSize: 8,
+    fontFamily: "Poppins-Bold",
+  },
+  comingSoonLabel: {
+    color: "#94A3B8",
+    fontSize: 9,
+    fontFamily: "Poppins-Regular",
+    marginTop: 2,
+    textAlign: "center",
+  },
+  comingSoonServiceName: {
+    opacity: 0.7,
+  },
 
   // transactions
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 },
