@@ -223,7 +223,7 @@ export default function Home({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 20 }, // Added margin top
+  screen: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 10 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
   header: {
     marginTop: 18,
