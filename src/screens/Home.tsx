@@ -1,16 +1,16 @@
-import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-  StatusBar,
-} from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { formatAmount, formatDate } from "../helper/util";
 
 const { width } = Dimensions.get("window");
@@ -78,7 +78,7 @@ export default function Home({ navigation }: { navigation: any }) {
         disabled={item.comingSoon}
       >
         <View style={[styles.serviceIconContainer, { backgroundColor: tint, borderColor: `${item.color}40` }]}>
-          <View style={[styles.iconInner, { color: item.color }]}>{item.icon}</View>
+          <Text style={[styles.iconInner, { color: item.color }]}>{item.icon}</Text>
           {item.comingSoon && (
             <View style={styles.comingSoonBadge}>
               <Text style={styles.comingSoonText}>Soon</Text>
@@ -185,7 +185,6 @@ export default function Home({ navigation }: { navigation: any }) {
               </View>
             </View>
 
-
             {/* Quick Services */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Quick Services</Text>
@@ -203,7 +202,7 @@ export default function Home({ navigation }: { navigation: any }) {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recent Transactions</Text>
               <TouchableOpacity onPress={() => navigation.navigate("History")}>
-                <Text style={styles.seeMore}>View all</Text>
+                <Text style={styles.seeMore}>See more</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -246,8 +245,8 @@ const styles = StyleSheet.create({
   },
   notificationBadge: {
     position: "absolute",
-    top: -6,
-    right: -6,
+    top: -2,
+    right: -3,
     width: 18,
     height: 18,
     borderRadius: 18,
@@ -319,7 +318,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -6,
     right: -6,
-    backgroundColor: "#8B5CF6",
+    backgroundColor: "#1F54DD",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
