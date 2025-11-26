@@ -7,5 +7,9 @@ export type RootStackParamList = {
     Welcome: undefined;
     Signin: undefined;
     Signup: undefined;
+    Airtime: undefined;
+    Data: undefined;
+    CableTv: undefined;
+    Electricity: undefined;
     Tabs: undefined;
 };
