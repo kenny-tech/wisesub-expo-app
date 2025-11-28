@@ -11,5 +11,9 @@ export type RootStackParamList = {
     Data: undefined;
     CableTv: undefined;
     Electricity: undefined;
+    Referral: undefined;
+    ProfileInfo: undefined;
+    ChangePassword: undefined;
+    Support: undefined;
     Tabs: undefined;
 };
