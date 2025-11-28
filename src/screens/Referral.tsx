@@ -151,8 +151,6 @@ export default function Referral({ navigation }: { navigation: any }) {
                         </View>
                     </View>
                 </View>
-                {/* Toast Component must be rendered at the root level of your app, typically in App.js/App.tsx */}
-                <Toast />
             </View>
         </ScrollView>
     );

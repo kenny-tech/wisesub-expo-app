@@ -1,8 +1,8 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 import RootNavigator from './src/navigation/RootNavigator';
 
 // Keep the splash screen visible while fonts load
@@ -39,6 +39,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <RootNavigator />
+      <Toast />
     </NavigationContainer>
   );
 }
