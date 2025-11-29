@@ -2,11 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { profileStyles as styles } from '../styles/sharedStyles';
@@ -107,62 +107,6 @@ export default function ProfileInfo({ navigation }: { navigation: any }) {
             ) : (
               <Text style={styles.primaryButtonText}>Update Profile</Text>
             )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => navigation.navigate('ChangePassword')}
-          >
-            <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#E0E7FF' }]}>
-                <Ionicons name="lock-closed" size={20} color="#1F54DD" />
-              </View>
-              <Text style={styles.menuText}>Change Password</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#64748B" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="notifications" size={20} color="#D97706" />
-              </View>
-              <Text style={styles.menuText}>Notification Settings</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#64748B" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Support Section */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => navigation.navigate('Support')}
-          >
-            <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#DCFCE7' }]}>
-                <Ionicons name="help-circle" size={20} color="#16A34A" />
-              </View>
-              <Text style={styles.menuText}>Help & Support</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#64748B" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FEE2E2' }]}>
-                <Ionicons name="alert-circle" size={20} color="#DC2626" />
-              </View>
-              <Text style={styles.menuText}>Report an Issue</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#64748B" />
           </TouchableOpacity>
         </View>
 

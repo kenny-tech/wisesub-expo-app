@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { changePasswordStyles as styles } from '../styles/sharedStyles';
@@ -86,11 +86,11 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
           <Text style={styles.description}>
-            Create a strong password with at least 6 characters including letters and numbers.
+            Create a strong password with at least 8 characters including letters, numbers and special character.
           </Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Current Password</Text>
+            <Text style={[styles.label, {paddingTop: 20}]}>Current Password</Text>
             <View style={[styles.inputContainer, errors.currentPassword && styles.inputError]}>
               <Ionicons name="lock-closed" size={20} color="#64748B" />
               <TextInput

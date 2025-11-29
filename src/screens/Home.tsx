@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Modal,
   StatusBar,
   StyleSheet,
   Text,
@@ -15,14 +16,14 @@ import { formatAmount, formatDate } from "../helper/util";
 
 const { width } = Dimensions.get("window");
 const SERVICE_COLS = 4;
-const SERVICE_SIZE = (width - 40 - (SERVICE_COLS - 1) * 12) / SERVICE_COLS; // padding 20 each side + gaps
+const SERVICE_SIZE = (width - 40 - (SERVICE_COLS - 1) * 12) / SERVICE_COLS;
 
 type Service = {
   id: number;
   name: string;
   icon: React.ReactNode;
   screen: string;
-  color: string; // base color hex
+  color: string;
   comingSoon?: boolean;
 };
 
@@ -44,6 +45,78 @@ const servicesData: Service[] = [
   { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#F97316", comingSoon: true },
 ];
 
+// Fund Wallet Modal Component
+function FundWalletModal({
+  isVisible,
+  onClose,
+  onSelectMethod
+}: {
+  isVisible: boolean;
+  onClose: () => void;
+  onSelectMethod: (method: 'bank' | 'card') => void;
+}) {
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={modalStyles.overlay}
+        activeOpacity={1}
+        onPressOut={onClose} // Close when clicking outside
+      >
+        <View style={modalStyles.container}>
+          {/* Header */}
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Fund Wallet</Text>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
+              <Ionicons name="close" size={24} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Subtitle */}
+          <Text style={modalStyles.subtitle}>Choose your preferred payment method</Text>
+
+          {/* Options */}
+          <TouchableOpacity
+            style={modalStyles.option}
+            onPress={() => onSelectMethod('bank')}
+          >
+            <View style={[modalStyles.optionIcon, { backgroundColor: '#E0E7FF' }]}>
+              <Ionicons name="business" size={24} color="#1F54DD" />
+            </View>
+            <View style={modalStyles.optionText}>
+              <Text style={modalStyles.optionTitle}>Bank Transfer</Text>
+              <Text style={modalStyles.optionDescription}>
+                Transfer directly from your bank account
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#64748B" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={modalStyles.option}
+            onPress={() => onSelectMethod('card')}
+          >
+            <View style={[modalStyles.optionIcon, { backgroundColor: '#DCFCE7' }]}>
+              <Ionicons name="card" size={24} color="#16A34A" />
+            </View>
+            <View style={modalStyles.optionText}>
+              <Text style={modalStyles.optionTitle}>Card Payment</Text>
+              <Text style={modalStyles.optionDescription}>
+                Pay instantly with your debit/credit card
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#64748B" />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 export default function Home({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [walletBalance, setWalletBalance] = useState<string>("15250");
@@ -53,23 +126,30 @@ export default function Home({ navigation }: { navigation: any }) {
   ]);
   const [showBalance, setShowBalance] = useState<boolean>(true);
   const [unreadCount, setUnreadCount] = useState<number>(2);
+  const [showFundModal, setShowFundModal] = useState<boolean>(false); // Changed from showFundSheet
 
-  // refresh when screen focused
   useFocusEffect(
     useCallback(() => {
-      // simulate refresh
       setLoading(true);
       const t = setTimeout(() => {
         setWalletBalance("152500");
-        setTransactions((prev) => prev); // in real app fetch
         setLoading(false);
       }, 800);
       return () => clearTimeout(t);
     }, [])
   );
 
+  const handleFundWalletPress = () => {
+    setShowFundModal(true);
+  };
+
+  const handleSelectPaymentMethod = (method: 'bank' | 'card') => {
+    setShowFundModal(false);
+    navigation.navigate('FundAmount', { method });
+  };
+
   const renderService = ({ item }: { item: Service }) => {
-    const tint = `${item.color}20`; // append alpha approx (works for many hex -> not exact alpha; okay for soft tint)
+    const tint = `${item.color}20`;
     return (
       <TouchableOpacity
         activeOpacity={0.8}
@@ -149,7 +229,6 @@ export default function Home({ navigation }: { navigation: any }) {
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                       <Text style={styles.walletLabel}>Wallet balance </Text>
 
-                      {/* 👁️ Eye Button */}
                       <TouchableOpacity
                         onPress={() => setShowBalance(!showBalance)}
                         style={styles.eyeBtn}
@@ -174,10 +253,10 @@ export default function Home({ navigation }: { navigation: any }) {
                     )}
                   </View>
 
-                  {/* Fund button */}
+                  {/* Fund button - Updated to show modal */}
                   <TouchableOpacity
                     style={styles.fundBtn}
-                    onPress={() => navigation.navigate("Fund")}
+                    onPress={handleFundWalletPress}
                   >
                     <Text style={styles.fundBtnText}>+ Fund Wallet</Text>
                   </TouchableOpacity>
@@ -218,10 +297,89 @@ export default function Home({ navigation }: { navigation: any }) {
           </View>
         }
       />
+
+      {/* Fund Wallet Modal */}
+      <FundWalletModal
+        isVisible={showFundModal}
+        onClose={() => setShowFundModal(false)}
+        onSelectMethod={handleSelectPaymentMethod}
+      />
     </View>
   );
 }
 
+// Modal Styles
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  container: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    minHeight: 300,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    marginBottom: 24,
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  optionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  optionText: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  optionDescription: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    lineHeight: 16,
+  },
+});
+
+// Your existing styles remain the same...
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 10 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
@@ -276,7 +434,7 @@ const styles = StyleSheet.create({
   walletLabel: { color: "rgba(255,255,255,0.9)", fontSize: 13, marginBottom: 6, fontFamily: "Poppins-Medium" },
   balanceRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   currency: { color: "#fff", fontSize: 14, marginBottom: 4, fontFamily: "Poppins-Medium" },
-  balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold" }, // reduced from 36 to 22
+  balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold" },
   eyeBtn: { marginLeft: 1, marginBottom: 5, padding: 6, borderRadius: 8 },
   fundBtn: {
     backgroundColor: "#fff",
@@ -329,13 +487,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 8,
     fontFamily: "Poppins-Bold",
-  },
-  comingSoonLabel: {
-    color: "#94A3B8",
-    fontSize: 9,
-    fontFamily: "Poppins-Regular",
-    marginTop: 2,
-    textAlign: "center",
   },
   comingSoonServiceName: {
     opacity: 0.7,

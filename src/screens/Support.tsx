@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-    Linking,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { supportStyles as styles } from '../styles/sharedStyles';
 
@@ -18,7 +18,7 @@ export default function Support({ navigation }: { navigation: any }) {
       icon: "logo-whatsapp" as const,
       color: "#25D366",
       backgroundColor: "#DCF8C6",
-      onPress: () => Linking.openURL('https://wa.me/1234567890?text=Hello%20I%20need%20support')
+      onPress: () => Linking.openURL('https://wa.me/message/PVDYVHNOSSEEF1?text=Hello%20from%20WiseSub')
     },
     {
       id: 2,
@@ -27,7 +27,7 @@ export default function Support({ navigation }: { navigation: any }) {
       icon: "mail" as const,
       color: "#EA4335",
       backgroundColor: "#FCE8E6",
-      onPress: () => Linking.openURL('mailto:support@yourapp.com?subject=Support%20Request')
+      onPress: () => Linking.openURL('mailto:support@wisesub.com.ng?subject=Support%20Request')
     },
     {
       id: 3,
@@ -36,7 +36,7 @@ export default function Support({ navigation }: { navigation: any }) {
       icon: "call" as const,
       color: "#34A853",
       backgroundColor: "#E6F4EA",
-      onPress: () => Linking.openURL('tel:+1234567890')
+      onPress: () => Linking.openURL('tel:+2348021088554')
     },
     {
       id: 4,
