@@ -9,6 +9,7 @@ import CableTvScreen from '../screens/bill/CableTv';
 import DataScreen from '../screens/bill/Data';
 import ElectricityScreen from '../screens/bill/Electricity';
 import ChangePasswordScreen from '../screens/ChangePassword';
+import DeleteAccountScreen from '../screens/DeleteAccount';
 import FundAmountScreen from '../screens/FundAmount';
 import ProfileInfoScreen from '../screens/ProfileInfo';
 import ReferralScreen from '../screens/Referral';
@@ -33,6 +34,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />
       <Stack.Screen name="FundAmount" component={FundAmountScreen} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

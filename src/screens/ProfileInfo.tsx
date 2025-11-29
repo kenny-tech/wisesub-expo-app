@@ -64,7 +64,7 @@ export default function ProfileInfo({ navigation }: { navigation: any }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.title}>Profile Information</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -114,7 +114,10 @@ export default function ProfileInfo({ navigation }: { navigation: any }) {
         <View style={[styles.card, styles.dangerCard]}>
           <Text style={[styles.sectionTitle, styles.dangerTitle]}>Danger Zone</Text>
           
-          <TouchableOpacity style={styles.dangerItem}>
+          <TouchableOpacity 
+            style={styles.dangerItem}
+            onPress={() => navigation.navigate('DeleteAccount')}
+          >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIcon, { backgroundColor: '#FECACA' }]}>
                 <Ionicons name="trash" size={20} color="#DC2626" />
