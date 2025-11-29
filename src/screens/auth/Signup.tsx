@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  StyleSheet,
-  TextInput,
-  ActivityIndicator,
-} from "react-native";
-import axios, { AxiosError } from "axios";
-import * as Application from "expo-application";
 import { BASE_API, REGISTER } from "@/src/routes";
+import axios, { AxiosError } from "axios";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface ApiErrorResponse {
   message?: string;
@@ -141,7 +140,14 @@ const Signup: React.FC<SignupProps> = ({ navigation }) => {
     <ScrollView keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <View style={{ alignItems: "center" }}>
+          {/* Logo */}
+          <Image
+            source={require("../../../assets/images/logo.png")}
+            style={styles.logo}
+          />
+          
           <Text style={styles.title}>Create an Account</Text>
+          {/* <Text style={styles.subtitle}>Join WiseSub to get started</Text> */}
 
           {/* FORM INPUTS */}
           {/** NAME */}
@@ -256,7 +262,7 @@ const Signup: React.FC<SignupProps> = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: 300 }} />
         </View>
       </View>
     </ScrollView>
@@ -270,13 +276,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     justifyContent: "space-between",
-    paddingVertical: 60,
+    paddingVertical: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: "contain",
   },
   title: {
     color: "#1F2937",
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: "Poppins-Bold",
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: "#64748B",
+    fontSize: 16,
+    fontFamily: "Poppins-Regular",
+    marginBottom: 10,
+    textAlign: "center",
   },
   input: {
     width: 320,

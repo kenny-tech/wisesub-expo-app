@@ -2,7 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Application from "expo-application";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +13,7 @@ import {
 } from "react-native";
 
 export default function Profile({ navigation }: { navigation: any }) {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   // Mock user data - replace with actual user data from your state
@@ -20,7 +22,7 @@ export default function Profile({ navigation }: { navigation: any }) {
     email: "john.doe@example.com",
   };
 
-  const handleModal = () => setIsModalVisible(() => !isModalVisible);
+  const handleLogoutModal = () => setIsLogoutModalVisible(() => !isLogoutModalVisible);
 
   const handleLogout = async () => {
     try {
@@ -28,7 +30,7 @@ export default function Profile({ navigation }: { navigation: any }) {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       setLoading(false);
-      handleModal();
+      handleLogoutModal();
       // Navigate to login screen
       navigation.navigate('Signin');
     } catch (error: any) {
@@ -67,6 +69,60 @@ export default function Profile({ navigation }: { navigation: any }) {
         color={isDestructive ? "#EF4444" : "#94A3B8"}
       />
     </TouchableOpacity>
+  );
+
+  // Logout Confirmation Modal
+  const LogoutConfirmationModal = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isLogoutModalVisible}
+      onRequestClose={handleLogoutModal}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPressOut={handleLogoutModal}
+      >
+        <View style={styles.modalContainer}>
+          {/* Warning Icon */}
+          <View style={styles.modalIcon}>
+            <Ionicons name="log-out-outline" size={32} color="#EF4444" />
+          </View>
+
+          {/* Title */}
+          <Text style={styles.modalTitle}>Log Out</Text>
+
+          {/* Description */}
+          <Text style={styles.modalDescription}>
+            Are you sure you want to log out? You'll need to sign in again to access your account.
+          </Text>
+
+          {/* Buttons */}
+          <View style={styles.modalButtons}>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={handleLogoutModal}
+              disabled={loading}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.logoutButton]}
+              onPress={handleLogout}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.logoutButtonText}>Log Out</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Modal>
   );
 
   return (
@@ -143,7 +199,7 @@ export default function Profile({ navigation }: { navigation: any }) {
             <ProfileItem
               icon={<Ionicons name="log-out-outline" size={20} color="#EF4444" />}
               title="Log Out"
-              onPress={handleModal}
+              onPress={handleLogoutModal}
               isDestructive={true}
             />
           </View>
@@ -156,6 +212,9 @@ export default function Profile({ navigation }: { navigation: any }) {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal />
     </View>
   );
 }
@@ -288,11 +347,29 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
     color: "#94A3B8",
   },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
   modalContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 24,
     alignItems: "center",
+    width: "100%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   modalIcon: {
     width: 80,

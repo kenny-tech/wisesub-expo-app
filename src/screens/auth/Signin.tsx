@@ -1,8 +1,7 @@
-import { BASE_API, LOGIN } from "@/src/routes";
-import axios from "axios";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -71,7 +70,14 @@ const Signin: React.FC<SigninProps> = ({ navigation }) => {
     <ScrollView keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <View style={{ alignItems: "center" }}>
+          {/* Logo */}
+          <Image
+            source={require("../../../assets/images/logo.png")}
+            style={styles.logo}
+          />
+
           <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Kindly login to access your account</Text>
 
           {/* EMAIL */}
           <TextInput
@@ -134,13 +140,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     justifyContent: "space-between",
-    paddingVertical: 100,
+    paddingVertical: 60,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: "contain",
+    marginBottom: 10,
   },
   title: {
     color: "#1F2937",
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: "Poppins-Bold",
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: "#64748B",
+    fontSize: 16,
+    fontFamily: "Poppins-Regular",
+    marginBottom: 30,
+    textAlign: "center",
   },
   input: {
     width: 320,
