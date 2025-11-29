@@ -379,9 +379,8 @@ const modalStyles = StyleSheet.create({
   },
 });
 
-// Your existing styles remain the same...
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 10 },
+  screen: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 15 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
   header: {
     marginTop: 18,
