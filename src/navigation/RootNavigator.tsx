@@ -2,19 +2,22 @@ import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import { RootStackParamList } from './types';
 
-import SigninScreen from '../screens/auth/Signin';
-import SignupScreen from '../screens/auth/Signup';
-import AirtimeScreen from '../screens/bill/Airtime';
-import CableTvScreen from '../screens/bill/CableTv';
-import DataScreen from '../screens/bill/Data';
-import ElectricityScreen from '../screens/bill/Electricity';
-import ChangePasswordScreen from '../screens/ChangePassword';
-import DeleteAccountScreen from '../screens/DeleteAccount';
-import FundAmountScreen from '../screens/FundAmount';
-import ProfileInfoScreen from '../screens/ProfileInfo';
-import ReferralScreen from '../screens/Referral';
-import SupportScreen from '../screens/Support';
-import Welcomecreen from '../screens/Welcome';
+import ForgotPassword from '../screens/auth/ForgotPassword';
+import ForgotPasswordOtp from '../screens/auth/ForgotPasswordOtp';
+import ResetPassword from '../screens/auth/ResetPassword';
+import Signin from '../screens/auth/Signin';
+import Signup from '../screens/auth/Signup';
+import Airtime from '../screens/bill/Airtime';
+import CableTv from '../screens/bill/CableTv';
+import Data from '../screens/bill/Data';
+import Electricity from '../screens/bill/Electricity';
+import ChangePassword from '../screens/ChangePassword';
+import DeleteAccount from '../screens/DeleteAccount';
+import FundAmount from '../screens/FundAmount';
+import ProfileInfo from '../screens/ProfileInfo';
+import Referral from '../screens/Referral';
+import Support from '../screens/Support';
+import Welcome from '../screens/Welcome';
 import TabNavigator from './TabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -22,19 +25,22 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Welcome" component={Welcomecreen} />
-      <Stack.Screen name="Signin" component={SigninScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen name="Airtime" component={AirtimeScreen} />
-      <Stack.Screen name="Data" component={DataScreen} />
-      <Stack.Screen name="CableTv" component={CableTvScreen} />
-      <Stack.Screen name="Electricity" component={ElectricityScreen} />
-      <Stack.Screen name="Referral" component={ReferralScreen} />
-      <Stack.Screen name="ProfileInfo" component={ProfileInfoScreen} />
-      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-      <Stack.Screen name="Support" component={SupportScreen} />
-      <Stack.Screen name="FundAmount" component={FundAmountScreen} />
-      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+      <Stack.Screen name="Welcome" component={Welcome} />
+      <Stack.Screen name="Signin" component={Signin} />
+      <Stack.Screen name="Signup" component={Signup} />
+      <Stack.Screen name="Airtime" component={Airtime} />
+      <Stack.Screen name="Data" component={Data} />
+      <Stack.Screen name="CableTv" component={CableTv} />
+      <Stack.Screen name="Electricity" component={Electricity} />
+      <Stack.Screen name="Referral" component={Referral} />
+      <Stack.Screen name="ProfileInfo" component={ProfileInfo} />
+      <Stack.Screen name="ChangePassword" component={ChangePassword} />
+      <Stack.Screen name="Support" component={Support} />
+      <Stack.Screen name="FundAmount" component={FundAmount} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+      <Stack.Screen name="ForgotPasswordOtp" component={ForgotPasswordOtp} />
+      <Stack.Screen name="ResetPassword" component={ResetPassword} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

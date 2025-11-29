@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -23,47 +24,10 @@ const Signin: React.FC<SigninProps> = ({ navigation }) => {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Get Device ID
-  //   useEffect(() => {
-  //     const loadDeviceId = async () => {
-  //       const id =
-  //         (await Application.getIosIdForVendorAsync()) ||
-  //         Application.machineId ||
-  //         "";
-  //       setDeviceId(id);
-  //     };
-
-  //     loadDeviceId();
-  //   }, []);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     navigation.replace('Tabs')
-    // if (!email.trim()) return setEmailError("Email is required");
-    // setEmailError(null);
-
-    // if (!password.trim()) return setPasswordError("Password is required");
-    // setPasswordError(null);
-
-    // setLoading(true);
-
-    // try {
-    //   const response = await axios.post(`${BASE_API}${LOGIN}`, {
-    //     email: email.toLowerCase(),
-    //     password,
-    //     device_id: deviceId,
-    //   });
-
-    //   setLoading(false);
-
-    //   if (response.data.success) {
-    //     navigation.replace("Dashboard");
-    //   }
-    // } catch (err: any) {
-    //   setLoading(false);
-
-    //   setError(err.response?.data?.message || "Login failed");
-    // }
   };
 
   return (
@@ -91,14 +55,35 @@ const Signin: React.FC<SigninProps> = ({ navigation }) => {
           {emailError && <Text style={styles.error}>{emailError}</Text>}
 
           {/* PASSWORD */}
-          <TextInput
-            placeholder="Password"
-            style={styles.input}
-            secureTextEntry
-            onChangeText={setPassword}
-            value={password}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Password"
+              style={styles.passwordInput}
+              secureTextEntry={!showPassword}
+              onChangeText={setPassword}
+              value={password}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#64748B" 
+              />
+            </TouchableOpacity>
+          </View>
           {passwordError && <Text style={styles.error}>{passwordError}</Text>}
+
+          {/* Forgot Password Link */}
+          <TouchableOpacity 
+            style={styles.forgotPasswordContainer}
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
 
           {error && <Text style={styles.error}>{error}</Text>}
 
@@ -170,6 +155,35 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 20,
     paddingHorizontal: 12,
+    fontFamily: "Poppins-Regular",
+  },
+  passwordContainer: {
+    width: 320,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderRadius: 10,
+    marginTop: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    paddingHorizontal: 12,
+    fontFamily: "Poppins-Regular",
+  },
+  eyeIcon: {
+    padding: 10,
+  },
+  forgotPasswordContainer: {
+    width: 320,
+    alignItems: 'flex-end',
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    color: "#1F54DD",
+    fontSize: 14,
     fontFamily: "Poppins-Regular",
   },
   button: {

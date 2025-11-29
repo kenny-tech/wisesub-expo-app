@@ -17,5 +17,8 @@ export type RootStackParamList = {
     Support: undefined;
     FundAmount: undefined;
     DeleteAccount: undefined;
+    ForgotPassword: undefined;
+    ForgotPasswordOtp: undefined;
+    ResetPassword: undefined;
     Tabs: undefined;
 };

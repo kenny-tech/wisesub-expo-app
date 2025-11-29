@@ -1,4 +1,5 @@
 import { BASE_API, REGISTER } from "@/src/routes";
+import { Ionicons } from "@expo/vector-icons";
 import axios, { AxiosError } from "axios";
 import React, { useState } from "react";
 import {
@@ -45,19 +46,8 @@ const Signup: React.FC<SignupProps> = ({ navigation }) => {
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-
-  // Get Device ID
-  //   useEffect(() => {
-  //     const getDeviceId = async () => {
-  //       if (Application.androidId) {
-  //         setDeviceId(Application.androidId);
-  //       } else {
-  //         const iosId = await Application.getIosIdForVendorAsync();
-  //         setDeviceId(iosId || "");
-  //       }
-  //     };
-  //     getDeviceId();
-  //   }, []);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const updateField = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -147,7 +137,6 @@ const Signup: React.FC<SignupProps> = ({ navigation }) => {
           />
           
           <Text style={styles.title}>Create an Account</Text>
-          {/* <Text style={styles.subtitle}>Join WiseSub to get started</Text> */}
 
           {/* FORM INPUTS */}
           {/** NAME */}
@@ -181,15 +170,27 @@ const Signup: React.FC<SignupProps> = ({ navigation }) => {
           {errors.phone && <Text style={styles.error}>{errors.phone}</Text>}
 
           {/** PASSWORD */}
-          <TextInput
-            placeholder="Enter your password"
-            style={styles.input}
-            secureTextEntry
-            onChangeText={(text) => updateField("password", text)}
-            value={form.password}
-            onFocus={() => setIsPasswordFocused(true)}
-            onBlur={() => setIsPasswordFocused(false)}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Enter your password"
+              style={styles.passwordInput}
+              secureTextEntry={!showPassword}
+              onChangeText={(text) => updateField("password", text)}
+              value={form.password}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)}
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#64748B" 
+              />
+            </TouchableOpacity>
+          </View>
           {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
           {isPasswordFocused && (
@@ -199,13 +200,25 @@ const Signup: React.FC<SignupProps> = ({ navigation }) => {
           )}
 
           {/** CONFIRM PASSWORD */}
-          <TextInput
-            placeholder="Confirm your password"
-            style={styles.input}
-            secureTextEntry
-            onChangeText={(text) => updateField("confirmPassword", text)}
-            value={form.confirmPassword}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Confirm your password"
+              style={styles.passwordInput}
+              secureTextEntry={!showConfirmPassword}
+              onChangeText={(text) => updateField("confirmPassword", text)}
+              value={form.confirmPassword}
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <Ionicons 
+                name={showConfirmPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#64748B" 
+              />
+            </TouchableOpacity>
+          </View>
           {errors.confirmPassword && (
             <Text style={styles.error}>{errors.confirmPassword}</Text>
           )}
@@ -307,6 +320,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontFamily: "Poppins-Regular",
     fontSize: 14,
+  },
+  passwordContainer: {
+    width: 320,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderRadius: 10,
+    marginTop: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    paddingHorizontal: 12,
+    fontFamily: "Poppins-Regular",
+    fontSize: 14,
+  },
+  eyeIcon: {
+    padding: 10,
   },
   button: {
     width: 320,
