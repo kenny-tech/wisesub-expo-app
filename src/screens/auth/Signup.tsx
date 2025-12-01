@@ -134,7 +134,6 @@ const SignupScreen: React.FC = () => {
       >
         <AuthHeader
           title="Create an Account"
-          subtitle="Join us today!"
           showBackButton
           onBackPress={() => navigation.goBack()}
           logo
@@ -238,6 +237,7 @@ const SignupScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        <View style={{ height: 50 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

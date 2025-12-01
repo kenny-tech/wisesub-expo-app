@@ -25,12 +25,13 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
         {...props}
         showLabel={showLabel}
         secureTextEntry={!showPassword}
-        style={[props.style, styles.input]}
+        // No need to override style here
       />
       {showPasswordToggle && (
         <TouchableOpacity
           style={styles.eyeIcon}
           onPress={() => setShowPassword(!showPassword)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons
             name={showPassword ? 'eye-off' : 'eye'}
@@ -48,15 +49,13 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
-  input: {
-    paddingRight: 40,
-  },
   eyeIcon: {
     position: 'absolute',
     right: 12,
-    top: '50%',
+    top: '30%',
     transform: [{ translateY: -10 }],
     padding: 4,
+    zIndex: 10,
   },
 });
 

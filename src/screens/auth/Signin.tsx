@@ -154,6 +154,7 @@ const SigninScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        <View style={{ height: 20 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
