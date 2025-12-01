@@ -3,7 +3,9 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
+import { Provider } from 'react-redux';
 import RootNavigator from './src/navigation/RootNavigator';
+import { store } from './src/redux/store';
 
 // Keep the splash screen visible while fonts load
 SplashScreen.preventAutoHideAsync();
@@ -12,6 +14,7 @@ SplashScreen.preventAutoHideAsync();
 import {
   Poppins_400Regular,
   Poppins_500Medium,
+  Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 
@@ -21,6 +24,7 @@ export default function App() {
     'Poppins-Regular': Poppins_400Regular,
     'Poppins-Medium': Poppins_500Medium,
     'Poppins-Bold': Poppins_700Bold,
+    'Poppins-SemiBold': Poppins_600SemiBold,
     // Add more weights as needed
   });
 
@@ -37,9 +41,11 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <RootNavigator />
-      <Toast />
-    </NavigationContainer>
+    <Provider store={store}>
+      <NavigationContainer>
+        <RootNavigator />
+        <Toast />
+      </NavigationContainer>
+    </Provider>
   );
 }

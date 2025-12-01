@@ -7,6 +7,7 @@ import ForgotPasswordOtp from '../screens/auth/ForgotPasswordOtp';
 import ResetPassword from '../screens/auth/ResetPassword';
 import Signin from '../screens/auth/Signin';
 import Signup from '../screens/auth/Signup';
+import Verification from '../screens/auth/Verification';
 import Airtime from '../screens/bill/Airtime';
 import CableTv from '../screens/bill/CableTv';
 import Data from '../screens/bill/Data';
@@ -41,6 +42,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
       <Stack.Screen name="ForgotPasswordOtp" component={ForgotPasswordOtp} />
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
+      <Stack.Screen name="Verification" component={Verification} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

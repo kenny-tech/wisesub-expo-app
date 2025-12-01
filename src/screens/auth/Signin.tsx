@@ -1,216 +1,162 @@
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useNavigation } from '@react-navigation/native';
+import * as Device from 'expo-device';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
-  StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View
-} from "react-native";
+  View,
+} from 'react-native';
+import AuthHeader from '../../components/auth/AuthHeader';
+import FormInput from '../../components/auth/FormInput';
+import PasswordInput from '../../components/auth/PasswordInput';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { clearError, loginUser } from '../../redux/slices/authSlice';
+import styles from '../../styles/authStyles';
+import { APP_CONSTANTS } from '../../utils/constants';
+import { AuthValidators } from '../../utils/validators';
 
-interface SigninProps {
-  navigation: any;
-}
+const SigninScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector((state) => state.auth);
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
 
-const Signin: React.FC<SigninProps> = ({ navigation }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [deviceId, setDeviceId] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [deviceId, setDeviceId] = useState('');
 
-  const [loading, setLoading] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+  useEffect(() => {
+    getDeviceId();
+  }, []);
 
-  const handleLogin = async () => {
-    navigation.replace('Tabs')
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, dispatch]);
+
+  const getDeviceId = async () => {
+    try {
+      const deviceId = Device.osBuildId || Device.modelId || 'mobile-device';
+      setDeviceId(deviceId);
+    } catch (error) {
+      console.log('Error getting device ID:', error);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const validation = AuthValidators.validateLogin(formData);
+    setErrors(validation.errors);
+    return validation.isValid;
+  };
+
+  const handleSignin = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const payload = {
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        channel: APP_CONSTANTS.CHANNELS.MOBILE,
+        device_id: deviceId,
+      };
+
+      await dispatch(loginUser(payload)).unwrap();
+      // Navigation handled in authSlice
+    } catch (error: any) {
+      console.log('Login error:', error);
+    }
   };
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled">
-      <View style={styles.container}>
-        <View style={{ alignItems: "center" }}>
-          {/* Logo */}
-          <Image
-            source={require("../../../assets/images/logo.png")}
-            style={styles.logo}
-          />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <AuthHeader
+          title="Welcome Back"
+          subtitle="Sign in to your account"
+          showBackButton={false}
+          logo
+        />
 
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Kindly login to access your account</Text>
-
-          {/* EMAIL */}
-          <TextInput
-            placeholder="Email Address"
-            style={styles.input}
-            onChangeText={setEmail}
-            value={email}
-            autoCapitalize="none"
+        <View style={styles.formContainer}>
+          {/* Email Input - No label */}
+          <FormInput
+            placeholder="Enter your email"
+            value={formData.email}
+            onChangeText={(text) => handleInputChange('email', text)}
+            error={errors.email || error}
             keyboardType="email-address"
+            autoCapitalize="none"
+            showLabel={false}
           />
-          {emailError && <Text style={styles.error}>{emailError}</Text>}
 
-          {/* PASSWORD */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              placeholder="Password"
-              style={styles.passwordInput}
-              secureTextEntry={!showPassword}
-              onChangeText={setPassword}
-              value={password}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity 
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Ionicons 
-                name={showPassword ? "eye-off" : "eye"} 
-                size={20} 
-                color="#64748B" 
-              />
-            </TouchableOpacity>
-          </View>
-          {passwordError && <Text style={styles.error}>{passwordError}</Text>}
+          {/* Password Input - No label */}
+          <PasswordInput
+            placeholder="Enter your password"
+            value={formData.password}
+            onChangeText={(text) => handleInputChange('password', text)}
+            error={errors.password}
+            showLabel={false}
+          />
 
-          {/* Forgot Password Link */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.forgotPasswordContainer}
-            onPress={() => navigation.navigate("ForgotPassword")}
+            onPress={() => navigation.navigate('ForgotPassword')}
           >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          {error && <Text style={styles.error}>{error}</Text>}
-
-          {/* BUTTON */}
-          {loading ? (
-            <View style={[styles.button, { opacity: 0.5 }]}>
-              <ActivityIndicator color="#fff" />
-            </View>
-          ) : (
-            <TouchableOpacity onPress={handleLogin}>
-              <View style={styles.button}>
-                <Text style={styles.buttonText}>Sign In</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-
-          {/* SIGNUP LINK */}
           <TouchableOpacity
-            onPress={() => navigation.navigate("Signup")}
-            style={{ marginTop: 15 }}
+            style={[styles.button, isLoading && styles.buttonDisabled]}
+            onPress={handleSignin}
+            disabled={isLoading}
           >
-            <Text style={styles.loginText}>
-              Don't have an account?{" "}
-              <Text style={styles.loginLink}>Sign Up</Text>
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
           </TouchableOpacity>
 
-          <View style={{ height: 400 }} />
+          <TouchableOpacity
+            style={styles.linkContainer}
+            onPress={() => navigation.navigate('Signup')}
+          >
+            <Text style={styles.linkText}>
+              Don't have an account?{' '}
+              <Text style={styles.link}>Sign Up</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
-export default Signin;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "space-between",
-    paddingVertical: 60,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    resizeMode: "contain",
-    marginBottom: 10,
-  },
-  title: {
-    color: "#1F2937",
-    fontSize: 24,
-    fontFamily: "Poppins-Bold",
-    marginTop: 10,
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#64748B",
-    fontSize: 16,
-    fontFamily: "Poppins-Regular",
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  input: {
-    width: 320,
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 10,
-    marginTop: 20,
-    paddingHorizontal: 12,
-    fontFamily: "Poppins-Regular",
-  },
-  passwordContainer: {
-    width: 320,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 10,
-    marginTop: 20,
-    backgroundColor: '#FFFFFF',
-  },
-  passwordInput: {
-    flex: 1,
-    height: 50,
-    paddingHorizontal: 12,
-    fontFamily: "Poppins-Regular",
-  },
-  eyeIcon: {
-    padding: 10,
-  },
-  forgotPasswordContainer: {
-    width: 320,
-    alignItems: 'flex-end',
-    marginTop: 8,
-  },
-  forgotPasswordText: {
-    color: "#1F54DD",
-    fontSize: 14,
-    fontFamily: "Poppins-Regular",
-  },
-  button: {
-    width: 320,
-    height: 48,
-    backgroundColor: "#1F54DD",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 6,
-    marginTop: 30,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontFamily: "Poppins-Regular",
-  },
-  error: {
-    color: "red",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  loginText: {
-    fontSize: 14,
-    color: "#3C3E3E",
-    fontFamily: "Poppins-Regular",
-  },
-  loginLink: {
-    color: "#1F54DD",
-  },
-});
+export default SigninScreen;
