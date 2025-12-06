@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// Base API URL - configure in your environment
-const BASE_API = process.env.EXPO_PUBLIC_BASE_API || 'https://your-api.com/api';
+const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
 
 // Create axios instance with default config
 export const api = axios.create({
@@ -15,13 +14,13 @@ export const api = axios.create({
 
 // API endpoints
 export const API_ENDPOINTS = {
-  REGISTER: 'auth/register',
-  LOGIN: 'auth/login',
-  VERIFY_OTP: 'auth/verify_otp',
-  ACTIVATE_ACCOUNT: 'auth/activate_account',
-  FORGOT_PASSWORD: 'auth/forgot_password',
-  RESET_PASSWORD: 'auth/reset_password',
-  RESEND_OTP: 'auth/resend_otp',
+  REGISTER: `${BASE_API}auth/register`,
+  LOGIN: `${BASE_API}auth/login`,
+  VERIFY_OTP: `${BASE_API}auth/verify_otp`,
+  ACTIVATE_ACCOUNT: `${BASE_API}auth/activate_account`,
+  FORGOT_PASSWORD: `${BASE_API}auth/forgot_password`,
+  RESET_PASSWORD: `${BASE_API}auth/reset_password`,
+  RESEND_OTP: `${BASE_API}auth/resend_otp`,
 };
 
 // Request interceptor for adding tokens

@@ -82,6 +82,8 @@ const SignupScreen: React.FC = () => {
 
       const response = await authService.register(payload);
 
+      console.log('response: ', response);
+
       if (response?.success) {
         Toast.show({
           type: 'success',

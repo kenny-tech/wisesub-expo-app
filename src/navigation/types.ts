@@ -20,6 +20,10 @@ export type RootStackParamList = {
     ForgotPassword: undefined;
     ForgotPasswordOtp: undefined;
     ResetPassword: undefined;
-    Verification: undefined;
+    Verification: {
+        email: string;
+        name: string;
+        otpType: string;
+    };
     Tabs: undefined;
 };
