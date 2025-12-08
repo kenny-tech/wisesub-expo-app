@@ -45,14 +45,43 @@ export const loginUser = createAsyncThunk(
   async (data: LoginData, { rejectWithValue }) => {
     try {
       const response = await authService.login(data);
-      // Store token and user data
-      if (response.data.token) {
-        await AsyncStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN, response.data.token);
-        await AsyncStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+
+      // Check if response has the expected structure
+      if (!response || !response.success) {
+        throw new Error(response?.message || 'Login failed');
       }
-      return response.data;
+
+      if (!response.data) {
+        throw new Error('Invalid response structure from server');
+      }
+
+      const userData = response.data;
+      const token = userData.token;
+
+      if (!token) {
+        throw new Error('Authentication token missing');
+      }
+
+      // Remove token from user object before storing
+      const { token: _, ...user } = userData;
+
+      // Store in AsyncStorage
+      await AsyncStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN, token);
+      await AsyncStorage.setItem(
+        APP_CONSTANTS.STORAGE_KEYS.USER_DATA,
+        JSON.stringify(user)
+      );
+
+      return {
+        token,
+        user
+      };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Login failed');
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data
+      });
+      return rejectWithValue(error.message || 'Login failed. Please check your credentials.');
     }
   }
 );
@@ -76,7 +105,7 @@ export const checkAuthStatus = createAsyncThunk(
     try {
       const token = await AsyncStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
       const userData = await AsyncStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
-      
+
       if (token && userData) {
         return {
           token,

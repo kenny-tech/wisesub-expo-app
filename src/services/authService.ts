@@ -18,6 +18,18 @@ export interface LoginData {
   device_id?: string;
 }
 
+export interface LoginResponse {
+  success: boolean;
+  data: {
+    name: string;
+    email: string;
+    phone: string;
+    referral_code: string;
+    token: string;
+  };
+  message: string;
+}
+
 export interface VerifyOtpData {
   email: string;
   otp: string;
@@ -48,9 +60,9 @@ class AuthService {
   }
 
   // Login user
-  async login(data: LoginData) {
+  async login(data: LoginData): Promise<LoginResponse> {
     try {
-      const response = await api.post(API_ENDPOINTS.LOGIN, data);
+      const response = await api.post<LoginResponse>(API_ENDPOINTS.LOGIN, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -77,7 +89,7 @@ class AuthService {
     }
   }
 
-   async verifyOtp(data: VerifyOtpData) {
+  async verifyOtp(data: VerifyOtpData) {
     try {
       const response = await api.post(API_ENDPOINTS.VERIFY_OTP, data);
       return response.data;

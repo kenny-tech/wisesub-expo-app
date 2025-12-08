@@ -40,7 +40,7 @@ const SigninScreen: React.FC = () => {
     if (error) {
       const timer = setTimeout(() => {
         dispatch(clearError());
-      }, 5000);
+      }, 10000);
       return () => clearTimeout(timer);
     }
   }, [error, dispatch]);
@@ -81,7 +81,7 @@ const SigninScreen: React.FC = () => {
       };
 
       await dispatch(loginUser(payload)).unwrap();
-      // Navigation handled in authSlice
+      navigation.navigate('Tabs');
     } catch (error: any) {
       console.log('Login error:', error);
     }
@@ -110,7 +110,7 @@ const SigninScreen: React.FC = () => {
             placeholder="Enter your email"
             value={formData.email}
             onChangeText={(text) => handleInputChange('email', text)}
-            error={errors.email || error}
+            error={errors.email}
             keyboardType="email-address"
             autoCapitalize="none"
             showLabel={false}
@@ -131,6 +131,8 @@ const SigninScreen: React.FC = () => {
           >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
