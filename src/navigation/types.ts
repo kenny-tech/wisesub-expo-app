@@ -19,7 +19,11 @@ export type RootStackParamList = {
     DeleteAccount: undefined;
     ForgotPassword: undefined;
     ForgotPasswordOtp: undefined;
-    ResetPassword: undefined;
+    ResetPassword: {
+        email: string;
+        otp: string;
+        token: string;
+    };
     Verification: {
         email: string;
         name: string;

@@ -3,7 +3,6 @@ import React from 'react';
 import { RootStackParamList } from './types';
 
 import ForgotPassword from '../screens/auth/ForgotPassword';
-import ForgotPasswordOtp from '../screens/auth/ForgotPasswordOtp';
 import ResetPassword from '../screens/auth/ResetPassword';
 import Signin from '../screens/auth/Signin';
 import Signup from '../screens/auth/Signup';
@@ -40,7 +39,6 @@ export default function RootNavigator() {
       <Stack.Screen name="FundAmount" component={FundAmount} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-      <Stack.Screen name="ForgotPasswordOtp" component={ForgotPasswordOtp} />
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
       <Stack.Screen name="Verification" component={Verification} />
       <Stack.Screen name="Tabs" component={TabNavigator} />

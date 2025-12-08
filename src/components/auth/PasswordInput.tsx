@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import FormInput, { FormInputProps } from './FormInput';
 
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: 'absolute',
     right: 12,
-    top: '30%',
+    top: '50%',
     transform: [{ translateY: -10 }],
     padding: 4,
     zIndex: 10,

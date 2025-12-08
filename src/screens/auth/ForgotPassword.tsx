@@ -1,13 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import AuthHeader from '../../components/auth/AuthHeader';
@@ -25,7 +25,7 @@ const ForgotPasswordScreen: React.FC = () => {
 
   const handleSendOtp = async () => {
     const emailError = AuthValidators.validateEmail(email);
-    
+
     if (emailError) {
       setError(emailError);
       return;
@@ -71,7 +71,7 @@ const ForgotPasswordScreen: React.FC = () => {
           subtitle="Enter your email to reset password"
           showBackButton
           onBackPress={() => navigation.goBack()}
-          logo={false}
+          logo={true}
         />
 
         <View style={styles.formContainer}>
@@ -115,6 +115,7 @@ const ForgotPasswordScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

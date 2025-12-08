@@ -57,8 +57,27 @@ class AuthService {
     }
   }
 
-  // Verify OTP
-  async verifyOtp(data: VerifyOtpData) {
+  // Verify Signup OTP
+  async verifySignupOtp(data: VerifyOtpData) {
+    try {
+      const response = await api.post(API_ENDPOINTS.VERIFY_SIGNUP_OTP, data);
+      return response.data;
+    } catch (error) {
+      this.handleApiError(error);
+    }
+  }
+
+  // Verify Forgot Password OTP
+  async verifyForgotPasswordOtp(data: VerifyOtpData) {
+    try {
+      const response = await api.post(API_ENDPOINTS.VERIFY_FORGOT_PASSWORD_OTP, data);
+      return response.data;
+    } catch (error) {
+      this.handleApiError(error);
+    }
+  }
+
+   async verifyOtp(data: VerifyOtpData) {
     try {
       const response = await api.post(API_ENDPOINTS.VERIFY_OTP, data);
       return response.data;

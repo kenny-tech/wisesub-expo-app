@@ -1,13 +1,13 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import AuthHeader from '../../components/auth/AuthHeader';
@@ -19,7 +19,7 @@ import { AuthValidators } from '../../utils/validators';
 const ResetPasswordScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { email, otp } = route.params as { email: string; otp: string };
+  const { email, otp, token } = route.params as { email: string; otp: string };
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -64,6 +64,7 @@ const ResetPasswordScreen: React.FC = () => {
         otp,
         password: formData.password,
         confirm_password: formData.confirmPassword,
+        token,
       };
 
       const response = await authService.resetPassword(payload);
@@ -103,7 +104,7 @@ const ResetPasswordScreen: React.FC = () => {
           subtitle="Create a new password for your account"
           showBackButton
           onBackPress={() => navigation.goBack()}
-          logo={false}
+          logo={true}
         />
 
         <View style={styles.formContainer}>

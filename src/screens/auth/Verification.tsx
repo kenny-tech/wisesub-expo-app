@@ -69,7 +69,7 @@ const Verification: React.FC = () => {
 
   const verifyOtp = async (otpCode?: string) => {
     const otpToVerify = otpCode || otp;
-    
+
     const otpError = AuthValidators.validateOtp(otpToVerify);
     if (otpError) {
       setError(otpError);
@@ -86,7 +86,21 @@ const Verification: React.FC = () => {
         otp_type: otpType,
       };
 
-      const response = await authService.verifyOtp(payload);
+      let response;
+
+      // Call appropriate API based on OTP type
+      if (otpType === APP_CONSTANTS.OTP_TYPES.SIGNUP) {
+        // For signup OTP verification
+        response = await authService.verifySignupOtp(payload);
+      } else if (otpType === APP_CONSTANTS.OTP_TYPES.FORGOT_PASSWORD) {
+        // For forgot password OTP verification
+        response = await authService.verifyForgotPasswordOtp(payload);
+      } else {
+        // For other OTP types (like general verification)
+        response = await authService.verifyOtp(payload);
+      }
+
+      console.log('response: ',response.data.data)
 
       if (response?.success) {
         Toast.show({
@@ -100,6 +114,7 @@ const Verification: React.FC = () => {
           navigation.navigate('ResetPassword', {
             email,
             otp: otpToVerify,
+            token: response.data.token,
           });
         } else if (otpType === APP_CONSTANTS.OTP_TYPES.SIGNUP) {
           // Activate account after signup OTP verification
@@ -125,7 +140,7 @@ const Verification: React.FC = () => {
           text1: 'Account Activated',
           text2: 'Your account has been activated successfully.',
         });
-        
+
         navigation.navigate('Signin');
       }
     } catch (error: any) {
@@ -177,7 +192,7 @@ const Verification: React.FC = () => {
 
   const getSubtitle = () => {
     const baseText = `We've sent a 6-digit OTP to\n`;
-    
+
     switch (otpType) {
       case APP_CONSTANTS.OTP_TYPES.SIGNUP:
         return `${baseText}${email}`;
@@ -203,7 +218,7 @@ const Verification: React.FC = () => {
           subtitle={getSubtitle()}
           showBackButton
           onBackPress={() => navigation.goBack()}
-          logo={false}
+          logo={true}
         />
 
         <View style={styles.formContainer}>
@@ -245,8 +260,8 @@ const Verification: React.FC = () => {
                 {resendLoading
                   ? 'Sending...'
                   : timer > 0
-                  ? `Resend in ${timer}s`
-                  : 'Resend OTP'}
+                    ? `Resend in ${timer}s`
+                    : 'Resend OTP'}
               </Text>
             </TouchableOpacity>
           </View>

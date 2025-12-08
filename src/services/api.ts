@@ -16,6 +16,8 @@ export const api = axios.create({
 export const API_ENDPOINTS = {
   REGISTER: `${BASE_API}auth/register`,
   LOGIN: `${BASE_API}auth/login`,
+  VERIFY_SIGNUP_OTP: `${BASE_API}auth/verify_user_otp`,
+  VERIFY_FORGOT_PASSWORD_OTP: `${BASE_API}auth/verify_otp`,
   VERIFY_OTP: `${BASE_API}auth/verify_otp`,
   ACTIVATE_ACCOUNT: `${BASE_API}auth/activate_account`,
   FORGOT_PASSWORD: `${BASE_API}auth/forgot_password`,
