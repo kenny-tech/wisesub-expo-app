@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
+import toastConfig from './src/components/AppToast';
 import RootNavigator from './src/navigation/RootNavigator';
 import { store } from './src/redux/store';
 
@@ -44,7 +45,11 @@ export default function App() {
     <Provider store={store}>
       <NavigationContainer>
         <RootNavigator />
-        <Toast />
+        <Toast
+          config={toastConfig}
+          position="top"
+          topOffset={60}
+        />
       </NavigationContainer>
     </Provider>
   );

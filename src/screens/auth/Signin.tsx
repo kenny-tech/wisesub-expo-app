@@ -1,3 +1,4 @@
+import { showError } from '@/src/utils/toast';
 import { useNavigation } from '@react-navigation/native';
 import * as Device from 'expo-device';
 import React, { useEffect, useState } from 'react';
@@ -84,6 +85,7 @@ const SigninScreen: React.FC = () => {
       navigation.navigate('Tabs');
     } catch (error: any) {
       console.log('Login error:', error);
+      showError('Error', error);
     }
   };
 

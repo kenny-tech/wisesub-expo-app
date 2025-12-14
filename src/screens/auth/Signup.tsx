@@ -1,3 +1,4 @@
+import { showError, showSuccess } from '@/src/utils/toast';
 import { useNavigation } from '@react-navigation/native';
 import * as Device from 'expo-device';
 import React, { useEffect, useState } from 'react';
@@ -10,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
 import AuthHeader from '../../components/auth/AuthHeader';
 import FormInput from '../../components/auth/FormInput';
 import PasswordInput from '../../components/auth/PasswordInput';
@@ -85,11 +85,10 @@ const SignupScreen: React.FC = () => {
       console.log('response: ', response);
 
       if (response?.success) {
-        Toast.show({
-          type: 'success',
-          text1: 'Registration Successful',
-          text2: response.message || 'Please check your email for verification.',
-        });
+        showSuccess(
+          'Registration Successful',
+          response.message || 'Please check your email for verification.'
+        );
 
         navigation.navigate('Verification', {
           email: formData.email.toLowerCase().trim(),
@@ -106,7 +105,7 @@ const SignupScreen: React.FC = () => {
 
   const handleApiError = (error: any) => {
     let errorMessage = 'Registration failed. Please try again.';
-    
+
     if (error.errors) {
       const apiErrors: Record<string, string> = {};
       Object.entries(error.errors).forEach(([field, messages]) => {
@@ -116,11 +115,7 @@ const SignupScreen: React.FC = () => {
       });
       setErrors(apiErrors);
     } else if (error.message) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: error.message,
-      });
+      showError('Error', error.message);
     }
   };
 

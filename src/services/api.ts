@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
+const BASE_API = 'https://56ed06cf7480.ngrok-free.app/api/v1/';
 
 // Create axios instance with default config
 export const api = axios.create({
