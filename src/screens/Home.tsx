@@ -6,13 +6,16 @@ import {
   Dimensions,
   FlatList,
   Modal,
+  RefreshControl,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
+import { walletService } from "../services/walletService";
 
 const { width } = Dimensions.get("window");
 const SERVICE_COLS = 4;
@@ -65,7 +68,7 @@ function FundWalletModal({
       <TouchableOpacity
         style={modalStyles.overlay}
         activeOpacity={1}
-        onPressOut={onClose} // Close when clicking outside
+        onPressOut={onClose}
       >
         <View style={modalStyles.container}>
           {/* Header */}
@@ -118,26 +121,61 @@ function FundWalletModal({
 }
 
 export default function Home({ navigation }: { navigation: any }) {
+  const [walletBalance, setWalletBalance] = useState<string>("0");
   const [loading, setLoading] = useState<boolean>(false);
-  const [walletBalance, setWalletBalance] = useState<string>("15250");
-  const [transactions, setTransactions] = useState<Transaction[]>([
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [transactions] = useState<Transaction[]>([
     { id: 1, type: "Wallet Top-up", created_at: new Date().toISOString(), amount: "5000.00" },
     { id: 2, type: "Data Purchase", created_at: new Date().toISOString(), amount: "1000.00" },
   ]);
   const [showBalance, setShowBalance] = useState<boolean>(true);
-  const [unreadCount, setUnreadCount] = useState<number>(2);
-  const [showFundModal, setShowFundModal] = useState<boolean>(false); // Changed from showFundSheet
+  const [unreadCount] = useState<number>(2);
+  const [showFundModal, setShowFundModal] = useState<boolean>(false);
+
+  const fetchWalletBalance = async () => {
+    try {
+      setLoading(true);
+      setWalletError(null);
+      
+      const response = await walletService.getWalletBalance();
+      console.log(response.data)
+      
+      if (response.success) {
+        setWalletBalance(response.data);
+      } else {
+        setWalletError(response.message || 'Failed to fetch balance');
+      }
+    } catch (error: any) {
+      console.error('Wallet balance error:', error);
+      setWalletError(error.message || 'Failed to fetch wallet balance');
+      
+      // Handle session expiration
+      if (error.message?.includes('Session expired') || error.message?.includes('Unauthorized')) {
+        Toast.show({
+          type: 'error',
+          text1: 'Session Expired',
+          text2: 'Please login again to continue.',
+        });
+        // Optional: Navigate to login
+        // navigation.navigate('Signin');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      const t = setTimeout(() => {
-        setWalletBalance("152500");
-        setLoading(false);
-      }, 800);
-      return () => clearTimeout(t);
+      fetchWalletBalance();
     }, [])
   );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchWalletBalance();
+    setRefreshing(false);
+  };
 
   const handleFundWalletPress = () => {
     setShowFundModal(true);
@@ -196,13 +234,21 @@ export default function Home({ navigation }: { navigation: any }) {
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <FlatList
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#1F54DD"]}
+            tintColor="#1F54DD"
+          />
+        }
         ListHeaderComponent={
           <>
             {/* Header */}
             <View style={styles.header}>
               <View>
-                <Text style={styles.greeting}>Hi, John!</Text>
-                <Text style={styles.subtitle}>Welcome back to WiseSub</Text>
+                <Text style={styles.greeting}>Welcome back!</Text>
+                <Text style={styles.subtitle}>Manage your services easily</Text>
               </View>
 
               <View style={styles.headerIcons}>
@@ -242,7 +288,13 @@ export default function Home({ navigation }: { navigation: any }) {
                     </View>
 
                     {loading ? (
-                      <ActivityIndicator color="#fff" />
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : walletError ? (
+                      <TouchableOpacity onPress={fetchWalletBalance}>
+                        <Text style={[styles.balanceText, { fontSize: 14, opacity: 0.8 }]}>
+                          Tap to retry
+                        </Text>
+                      </TouchableOpacity>
                     ) : (
                       <View style={styles.balanceRow}>
                         <Text style={styles.currency}>₦</Text>
@@ -253,10 +305,11 @@ export default function Home({ navigation }: { navigation: any }) {
                     )}
                   </View>
 
-                  {/* Fund button - Updated to show modal */}
+                  {/* Fund button */}
                   <TouchableOpacity
                     style={styles.fundBtn}
                     onPress={handleFundWalletPress}
+                    disabled={loading}
                   >
                     <Text style={styles.fundBtnText}>+ Fund Wallet</Text>
                   </TouchableOpacity>

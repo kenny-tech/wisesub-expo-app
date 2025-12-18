@@ -1,11 +1,13 @@
 import axios from 'axios';
+import { getHeaders } from '../utils/headers';
 
-const BASE_API = 'https://56ed06cf7480.ngrok-free.app/api/v1/';
+// Base API URL
+export const BASE_API = 'https://afc77cedddd3.ngrok-free.app/api/v1/';
 
-// Create axios instance with default config
+// Create axios instance
 export const api = axios.create({
   baseURL: BASE_API,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -14,44 +16,73 @@ export const api = axios.create({
 
 // API endpoints
 export const API_ENDPOINTS = {
-  REGISTER: `${BASE_API}auth/register`,
-  LOGIN: `${BASE_API}auth/login`,
-  VERIFY_SIGNUP_OTP: `${BASE_API}auth/verify_user_otp`,
-  VERIFY_FORGOT_PASSWORD_OTP: `${BASE_API}auth/verify_otp`,
-  VERIFY_OTP: `${BASE_API}auth/verify_otp`,
-  ACTIVATE_ACCOUNT: `${BASE_API}auth/activate_account`,
-  FORGOT_PASSWORD: `${BASE_API}auth/forgot_password`,
-  RESET_PASSWORD: `${BASE_API}auth/reset_password`,
-  RESEND_OTP: `${BASE_API}auth/resend_otp`,
+  // Security endpoints
+  API_KEY: 'security/api-key',
+  SIGNATURE: 'security/signature',
+  
+  // Auth endpoints
+  REGISTER: 'auth/register',
+  LOGIN: 'auth/login',
+  VERIFY_OTP: 'auth/verify_otp',
+  ACTIVATE_ACCOUNT: 'auth/activate_account',
+  FORGOT_PASSWORD: 'auth/forgot_password',
+  RESET_PASSWORD: 'auth/reset_password',
+  RESEND_OTP: 'auth/resend_otp',
+  
+  // Wallet endpoints
+  WALLET_BALANCE: 'user/wallet/get_balance',
+  
+  // Profile endpoints
+  GET_PROFILE: 'profile',
+  UPDATE_PROFILE: 'profile/update',
+  CHANGE_PASSWORD: 'auth/change-password',
 };
 
-// Request interceptor for adding tokens
+// Request interceptor for adding signature headers
 api.interceptors.request.use(
   async (config) => {
-    // Add auth token if available
-    const token = await getTokenFromStorage();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      // Skip signature for security endpoints
+      const isSecurityEndpoint = config.url?.includes('security/');
+      
+      if (!isSecurityEndpoint) {
+        const options = {
+          method: (config.method?.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'),
+          body: config.data,
+        };
+        
+        const headers = await getHeaders(options);
+        config.headers = { ...config.headers, ...headers };
+      }
+    } catch (error) {
+      console.error('Failed to set headers:', error);
+      throw error;
     }
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor for error handling
+// Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      console.log('Unauthorized access - redirect to login');
+      console.log('Unauthorized - session may have expired');
     }
     return Promise.reject(error);
   }
 );
 
-// Helper function to get token (implement based on your storage)
-async function getTokenFromStorage(): Promise<string | null> {
-  // Implement your token retrieval logic
-  return null;
+// Generic API response interface
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message?: string;
 }
