@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { authService, LoginData, RegisterData } from '../../services/authService';
+import { profileService } from '../../services/profileService';
 import { APP_CONSTANTS } from '../../utils/constants';
 
 interface User {
@@ -8,7 +9,13 @@ interface User {
   name: string;
   email: string;
   phone: string;
-  // Add other user fields
+  email_verified_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UpdateProfileData {
+  phone: string;
 }
 
 interface AuthState {
@@ -119,6 +126,47 @@ export const checkAuthStatus = createAsyncThunk(
   }
 );
 
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (data: UpdateProfileData, { rejectWithValue, getState }) => {
+    try {
+
+      const response = await profileService.updateProfile(data);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Profile update failed');
+      }
+
+      // Get current state to update user
+      const state = getState() as { auth: AuthState };
+      const currentUser = state.auth.user;
+
+      if (!currentUser) {
+        throw new Error('User not found in state');
+      }
+
+      // Update user data in AsyncStorage
+      const updatedUser = {
+        ...currentUser,
+        phone: data.phone,
+      };
+
+      await AsyncStorage.setItem(
+        APP_CONSTANTS.STORAGE_KEYS.USER_DATA,
+        JSON.stringify(updatedUser)
+      );
+
+      return {
+        user: updatedUser,
+        message: response.message
+      };
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      return rejectWithValue(error.message || 'Failed to update profile');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -171,6 +219,20 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.user = action.payload.user;
       }
+    });
+
+    // Update Profile
+    builder.addCase(updateUserProfile.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.user = action.payload.user;
+    });
+    builder.addCase(updateUserProfile.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload as string;
     });
   },
 });

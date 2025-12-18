@@ -161,7 +161,6 @@ export default function Home({ navigation }: { navigation: any }) {
       const response = await walletService.getTransactions({ limit: 5 });
       
       if (response.success) {
-        console.log(response.data);
         setTransactions(response.data);
       } else {
         setTransactionsError(response.message || 'Failed to fetch transactions');
