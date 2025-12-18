@@ -17,6 +17,7 @@ import FundAmount from '../screens/FundAmount';
 import ProfileInfo from '../screens/ProfileInfo';
 import Referral from '../screens/Referral';
 import Support from '../screens/Support';
+import TransactionDetail from '../screens/TransactionDetail';
 import Welcome from '../screens/Welcome';
 import TabNavigator from './TabNavigator';
 
@@ -41,6 +42,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
       <Stack.Screen name="Verification" component={Verification} />
+      <Stack.Screen name="TransactionDetail" component={TransactionDetail} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

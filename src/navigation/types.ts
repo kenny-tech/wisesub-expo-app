@@ -29,5 +29,8 @@ export type RootStackParamList = {
         name: string;
         otpType: string;
     };
+    TransactionDetail: {
+        transaction: any;
+    };
     Tabs: undefined;
 };

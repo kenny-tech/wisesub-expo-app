@@ -11,11 +11,11 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
-import { walletService } from "../services/walletService";
+import { Transaction, walletService } from "../services/walletService";
 
 const { width } = Dimensions.get("window");
 const SERVICE_COLS = 4;
@@ -28,13 +28,6 @@ type Service = {
   screen: string;
   color: string;
   comingSoon?: boolean;
-};
-
-type Transaction = {
-  id: number;
-  type: string;
-  created_at: string;
-  amount: string;
 };
 
 const servicesData: Service[] = [
@@ -125,10 +118,9 @@ export default function Home({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [walletError, setWalletError] = useState<string | null>(null);
-  const [transactions] = useState<Transaction[]>([
-    { id: 1, type: "Wallet Top-up", created_at: new Date().toISOString(), amount: "5000.00" },
-    { id: 2, type: "Data Purchase", created_at: new Date().toISOString(), amount: "1000.00" },
-  ]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState<boolean>(false);
+  const [transactionsError, setTransactionsError] = useState<string | null>(null);
   const [showBalance, setShowBalance] = useState<boolean>(true);
   const [unreadCount] = useState<number>(2);
   const [showFundModal, setShowFundModal] = useState<boolean>(false);
@@ -139,7 +131,6 @@ export default function Home({ navigation }: { navigation: any }) {
       setWalletError(null);
       
       const response = await walletService.getWalletBalance();
-      console.log(response.data)
       
       if (response.success) {
         setWalletBalance(response.data);
@@ -150,30 +141,52 @@ export default function Home({ navigation }: { navigation: any }) {
       console.error('Wallet balance error:', error);
       setWalletError(error.message || 'Failed to fetch wallet balance');
       
-      // Handle session expiration
       if (error.message?.includes('Session expired') || error.message?.includes('Unauthorized')) {
         Toast.show({
           type: 'error',
           text1: 'Session Expired',
           text2: 'Please login again to continue.',
         });
-        // Optional: Navigate to login
-        // navigation.navigate('Signin');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchTransactions = async () => {
+    try {
+      setTransactionsLoading(true);
+      setTransactionsError(null);
+      
+      const response = await walletService.getTransactions({ limit: 5 });
+      
+      if (response.success) {
+        console.log(response.data);
+        setTransactions(response.data);
+      } else {
+        setTransactionsError(response.message || 'Failed to fetch transactions');
+      }
+    } catch (error: any) {
+      console.error('Transactions error:', error);
+      setTransactionsError(error.message || 'Failed to fetch transactions');
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  const fetchAllData = async () => {
+    await Promise.all([fetchWalletBalance(), fetchTransactions()]);
+  };
+
   useFocusEffect(
     useCallback(() => {
-      fetchWalletBalance();
+      fetchAllData();
     }, [])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchWalletBalance();
+    await fetchAllData();
     setRefreshing(false);
   };
 
@@ -210,21 +223,114 @@ export default function Home({ navigation }: { navigation: any }) {
     );
   };
 
+  const getTransactionIcon = (transaction: Transaction) => {
+    const isCredit = [
+      'Fund Wallet', 
+      'Commission', 
+      'Referral Commission', 
+      'Refund'
+    ].includes(transaction.name);
+
+    if (isCredit) {
+      return (
+        <View style={[styles.transactionIcon, styles.creditIcon]}>
+          <Ionicons name="arrow-down" size={20} color="#10B981" />
+        </View>
+      );
+    } else {
+      return (
+        <View style={[styles.transactionIcon, styles.debitIcon]}>
+          <Ionicons name="arrow-up" size={20} color="#EF4444" />
+        </View>
+      );
+    }
+  };
+
+  const getTransactionDescription = (transaction: Transaction) => {
+    if (transaction.name === "Commission") {
+      return `Bonus from ${transaction.type} purchase`;
+    } else if (transaction.name === "Fund Wallet") {
+      return "Wallet Funded";
+    } else {
+      let description = transaction.name;
+      if (transaction.type) description += ` ${transaction.type}`;
+      if (transaction.customer) description += ` — ${transaction.customer}`;
+      return description;
+    }
+  };
+
   const renderTransaction = ({ item }: { item: Transaction }) => {
-    const isCredit = item.type === "Wallet Top-up";
+    const isCredit = [
+      'Fund Wallet', 
+      'Commission', 
+      'Referral Commission', 
+      'Refund'
+    ].includes(item.name);
+
     return (
-      <View style={styles.transactionItem}>
+      <TouchableOpacity 
+        style={styles.transactionItem}
+        onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
+      >
         <View style={styles.transactionLeft}>
-          <View style={[styles.transactionIcon, isCredit ? styles.creditIcon : styles.debitIcon]}>
-            <Text style={styles.transactionIconText}>{isCredit ? "↑" : "↓"}</Text>
-          </View>
+          {getTransactionIcon(item)}
           <View style={styles.transactionDetails}>
-            <Text style={styles.transactionTitle}>{isCredit ? "Wallet Funded" : item.type}</Text>
-            <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
+            <Text style={styles.transactionTitle} numberOfLines={1}>
+              {getTransactionDescription(item)}
+            </Text>
+            <Text style={styles.transactionDate}>
+              {formatDate(item.created_at)}
+            </Text>
+            {item.type === "Electricity" && item.electricity_token && (
+              <Text style={styles.electricityToken}>
+                Token: {item.electricity_token}
+              </Text>
+            )}
           </View>
         </View>
-        <Text style={[styles.transactionAmount, isCredit ? styles.amountCredit : styles.amountDebit]}>
-          {isCredit ? "+" : "-"}₦{formatAmount(item.amount)}
+        <Text style={[
+          styles.transactionAmount, 
+          isCredit ? styles.amountCredit : styles.amountDebit
+        ]}>
+          {isCredit ? '+' : '-'}₦{formatAmount(item.amount)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEmptyTransactions = () => {
+    if (transactionsLoading) {
+      return (
+        <View style={styles.empty}>
+          <ActivityIndicator size="large" color="#1F54DD" />
+          <Text style={styles.emptyText}>Loading transactions...</Text>
+        </View>
+      );
+    }
+
+    if (transactionsError) {
+      return (
+        <View style={styles.empty}>
+          <Ionicons name="alert-circle" size={48} color="#EF4444" />
+          <Text style={[styles.emptyText, { color: '#EF4444' }]}>
+            {transactionsError}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={fetchTransactions}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.empty}>
+        <Ionicons name="receipt-outline" size={48} color="#94A3B8" />
+        <Text style={styles.emptyTitle}>No transactions yet</Text>
+        <Text style={styles.emptyDescription}>
+          Your transaction history will appear here once you start using our services.
         </Text>
       </View>
     );
@@ -341,14 +447,11 @@ export default function Home({ navigation }: { navigation: any }) {
         }
         data={transactions}
         renderItem={renderTransaction}
-        keyExtractor={(t) => t.id.toString()}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No recent transactions</Text>
-          </View>
-        }
+        ListEmptyComponent={renderEmptyTransactions()}
+        ListFooterComponent={<View style={{ height: 20 }} />}
       />
 
       {/* Fund Wallet Modal */}
@@ -561,18 +664,77 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   transactionLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  transactionIcon: { width: 42, height: 42, borderRadius: 10, justifyContent: "center", alignItems: "center", marginRight: 10 },
+  transactionIcon: { 
+    width: 42, 
+    height: 42, 
+    borderRadius: 10, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    marginRight: 10 
+  },
   creditIcon: { backgroundColor: "#ECFDF5" },
   debitIcon: { backgroundColor: "#FEF3F2" },
-  transactionIconText: { fontSize: 16, fontFamily: "Poppins-SemiBold" },
   transactionDetails: { flex: 1 },
-  transactionTitle: { fontSize: 14, fontFamily: "Poppins-Medium", color: "#0F172A", marginBottom: 2 },
-  transactionDate: { fontSize: 12, color: "#94A3B8", fontFamily: "Poppins-Regular" },
-  transactionAmount: { fontSize: 14, fontFamily: "Poppins-SemiBold" },
+  transactionTitle: { 
+    fontSize: 14, 
+    fontFamily: "Poppins-Medium", 
+    color: "#0F172A", 
+    marginBottom: 2 
+  },
+  transactionDate: { 
+    fontSize: 12, 
+    color: "#94A3B8", 
+    fontFamily: "Poppins-Regular" 
+  },
+  electricityToken: {
+    fontSize: 11,
+    color: "#64748B",
+    fontFamily: "Poppins-Regular",
+    marginTop: 2,
+  },
+  transactionAmount: { 
+    fontSize: 14, 
+    fontFamily: "Poppins-SemiBold" 
+  },
   amountCredit: { color: "#10B981" },
   amountDebit: { color: "#EF4444" },
 
-  // empty
-  empty: { padding: 12, alignItems: "center" },
-  emptyText: { color: "#94A3B8" },
+  // empty state
+  empty: { 
+    padding: 40, 
+    alignItems: "center", 
+    justifyContent: "center" 
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontFamily: "Poppins-SemiBold",
+    color: "#0F172A",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  emptyText: {
+    color: "#94A3B8",
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    marginTop: 8,
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#1F54DD",
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold",
+  },
 });

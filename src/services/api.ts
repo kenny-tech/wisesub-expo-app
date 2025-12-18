@@ -19,7 +19,7 @@ export const API_ENDPOINTS = {
   // Security endpoints
   API_KEY: 'security/api-key',
   SIGNATURE: 'security/signature',
-  
+
   // Auth endpoints
   REGISTER: 'auth/register',
   LOGIN: 'auth/login',
@@ -28,10 +28,13 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD: 'auth/forgot_password',
   RESET_PASSWORD: 'auth/reset_password',
   RESEND_OTP: 'auth/resend_otp',
-  
+
   // Wallet endpoints
   WALLET_BALANCE: 'user/wallet/get_balance',
-  
+
+  // Transaction endpoints
+  TRANSACTIONS: 'user/transaction/get_user_transactions',
+
   // Profile endpoints
   GET_PROFILE: 'profile',
   UPDATE_PROFILE: 'profile/update',
@@ -44,13 +47,13 @@ api.interceptors.request.use(
     try {
       // Skip signature for security endpoints
       const isSecurityEndpoint = config.url?.includes('security/');
-      
+
       if (!isSecurityEndpoint) {
         const options = {
           method: (config.method?.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'),
           body: config.data,
         };
-        
+
         const headers = await getHeaders(options);
         config.headers = { ...config.headers, ...headers };
       }
@@ -58,7 +61,7 @@ api.interceptors.request.use(
       console.error('Failed to set headers:', error);
       throw error;
     }
-    
+
     return config;
   },
   (error) => {
