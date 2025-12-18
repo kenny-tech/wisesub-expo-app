@@ -33,11 +33,11 @@ interface Props {
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   const { transaction } = route.params;
-
+  
   const isCredit = [
-    'Fund Wallet',
-    'Commission',
-    'Referral Commission',
+    'Fund Wallet', 
+    'Commission', 
+    'Referral Commission', 
     'Refund'
   ].includes(transaction.name);
 
@@ -52,8 +52,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   // Check if this is a WiseSub transaction (no provider logo)
   const isWiseSubTransaction = [
     'Fund Wallet',
-    'Commission',
-    'Referral Commission',
+    'Commission', 
+    'Referral Commission', 
     'Refund'
   ].includes(transaction.name);
 
@@ -72,8 +72,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     if (isWiseSubTransaction) {
       return 'business'; // Bank icon for WiseSub transactions
     }
-
-    switch (transaction.type) {
+    
+    switch(transaction.type) {
       case 'Data':
         return 'wifi';
       case 'Airtime':
@@ -94,7 +94,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <TouchableOpacity
+        <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -112,8 +112,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             isWiseSubTransaction ? styles.wiseSubLogoContainer : styles.providerLogoContainer
           ]}>
             {logoSource ? (
-              <Image
-                source={logoSource}
+              <Image 
+                source={logoSource} 
                 style={[
                   styles.logoImage,
                   isWiseSubTransaction ? styles.wiseSubLogo : styles.providerLogo
@@ -123,15 +123,15 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
               />
             ) : (
               <View style={styles.iconFallback}>
-                <Ionicons
-                  name={serviceIcon}
-                  size={32}
-                  color={isWiseSubTransaction ? "#1F54DD" : "#64748B"}
+                <Ionicons 
+                  name={serviceIcon} 
+                  size={32} 
+                  color={isWiseSubTransaction ? "#1F54DD" : "#64748B"} 
                 />
               </View>
             )}
           </View>
-
+          
           <View style={styles.serviceInfo}>
             <Text style={styles.serviceName}>{transaction.name}</Text>
             <Text style={styles.serviceType}>
@@ -159,42 +159,33 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons name="information-circle" size={20} color="#1F54DD" />
             <Text style={styles.infoTitle}>Transaction Information</Text>
           </View>
-
+          
           <View style={styles.infoGrid}>
-            {transaction?.tx_ref && (
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Transaction Reference</Text>
-                <Text style={styles.infoValue}>{transaction.tx_ref}</Text>
-              </View>
-            )}
-
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Transaction Reference</Text>
+              <Text style={styles.infoValue}>{transaction.reference}</Text>
+            </View>
+            
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Date & Time</Text>
-              <Text style={styles.infoValue}>
-                {formatDate(transaction.created_at)}
-              </Text>
+              <Text style={styles.infoValue}>{formatDate(transaction.created_at)}</Text>
             </View>
 
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Status</Text>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  { backgroundColor: isCredit ? '#10B98120' : '#EF444420' },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.statusIndicatorText,
-                    { color: getStatusColor() },
-                  ]}
-                >
-                  Completed
+              <View style={[
+                styles.statusIndicator, 
+                { backgroundColor: isCredit ? '#10B98120' : '#EF444420' }
+              ]}>
+                <Text style={[
+                  styles.statusIndicatorText, 
+                  { color: getStatusColor() }
+                ]}>
+                  {isCredit ? 'Completed' : 'Completed'}
                 </Text>
               </View>
             </View>
           </View>
-
         </View>
 
         {/* Details Card */}
@@ -203,7 +194,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons name="receipt" size={20} color="#1F54DD" />
             <Text style={styles.detailsTitle}>Transaction Details</Text>
           </View>
-
+          
           <View style={styles.detailsContent}>
             <View style={styles.detailRow}>
               <View style={styles.detailLeft}>
