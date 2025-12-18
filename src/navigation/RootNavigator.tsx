@@ -3,10 +3,10 @@ import React from 'react';
 import { RootStackParamList } from './types';
 
 import ForgotPassword from '../screens/auth/ForgotPassword';
-import ForgotPasswordOtp from '../screens/auth/ForgotPasswordOtp';
 import ResetPassword from '../screens/auth/ResetPassword';
 import Signin from '../screens/auth/Signin';
 import Signup from '../screens/auth/Signup';
+import Verification from '../screens/auth/Verification';
 import Airtime from '../screens/bill/Airtime';
 import CableTv from '../screens/bill/CableTv';
 import Data from '../screens/bill/Data';
@@ -17,6 +17,7 @@ import FundAmount from '../screens/FundAmount';
 import ProfileInfo from '../screens/ProfileInfo';
 import Referral from '../screens/Referral';
 import Support from '../screens/Support';
+import TransactionDetail from '../screens/TransactionDetail';
 import Welcome from '../screens/Welcome';
 import TabNavigator from './TabNavigator';
 
@@ -39,8 +40,9 @@ export default function RootNavigator() {
       <Stack.Screen name="FundAmount" component={FundAmount} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-      <Stack.Screen name="ForgotPasswordOtp" component={ForgotPasswordOtp} />
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
+      <Stack.Screen name="Verification" component={Verification} />
+      <Stack.Screen name="TransactionDetail" component={TransactionDetail} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );
