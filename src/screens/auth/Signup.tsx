@@ -17,7 +17,7 @@ import PasswordInput from '../../components/auth/PasswordInput';
 import { authService } from '../../services/authService';
 import styles from '../../styles/authStyles';
 import { APP_CONSTANTS } from '../../utils/constants';
-import { AuthValidators } from '../../utils/validators';
+import { AuthValidators } from '../../utils/validators/authValidators';
 
 const SignupScreen: React.FC = () => {
   const navigation = useNavigation();

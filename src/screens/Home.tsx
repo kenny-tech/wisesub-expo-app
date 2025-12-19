@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
+import { useProfile } from "../redux/hooks/useProfile";
 import { Transaction, walletService } from "../services/walletService";
 
 const { width } = Dimensions.get("window");
@@ -30,15 +31,26 @@ type Service = {
   comingSoon?: boolean;
 };
 
+// const servicesData: Service[] = [
+//   { id: 1, name: "Data", icon: <Ionicons name="wifi" size={20} />, screen: "Data", color: "#6366F1" },
+//   { id: 2, name: "Airtime", icon: <Ionicons name="call" size={20} />, screen: "Airtime", color: "#10B981" },
+//   { id: 3, name: "Cable", icon: <MaterialIcons name="live-tv" size={20} />, screen: "CableTv", color: "#F59E0B" },
+//   { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity", color: "#EF4444" },
+//   { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards", color: "#8B5CF6" },
+//   { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#06B6D4" },
+//   { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#84CC16", comingSoon: true },
+//   { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#F97316", comingSoon: true },
+// ];
+
 const servicesData: Service[] = [
-  { id: 1, name: "Data", icon: <Ionicons name="wifi" size={20} />, screen: "Data", color: "#6366F1" },
-  { id: 2, name: "Airtime", icon: <Ionicons name="call" size={20} />, screen: "Airtime", color: "#10B981" },
-  { id: 3, name: "Cable", icon: <MaterialIcons name="live-tv" size={20} />, screen: "CableTv", color: "#F59E0B" },
-  { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity", color: "#EF4444" },
-  { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards", color: "#8B5CF6" },
-  { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#06B6D4" },
-  { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#84CC16", comingSoon: true },
-  { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#F97316", comingSoon: true },
+  { id: 1, name: "Data", icon: <Ionicons name="wifi" size={20} />, screen: "Data", color: "#1F54DD" },
+  { id: 2, name: "Airtime", icon: <Ionicons name="call" size={20} />, screen: "Airtime", color: "#1F54DD" },
+  { id: 3, name: "Cable", icon: <MaterialIcons name="live-tv" size={20} />, screen: "CableTv", color: "#1F54DD" },
+  { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity", color: "#1F54DD" },
+  { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards", color: "#1F54DD" },
+  { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#1F54DD" },
+  { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#1F54DD", comingSoon: true },
+  { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#1F54DD", comingSoon: true },
 ];
 
 // Fund Wallet Modal Component
@@ -125,13 +137,15 @@ export default function Home({ navigation }: { navigation: any }) {
   const [unreadCount] = useState<number>(2);
   const [showFundModal, setShowFundModal] = useState<boolean>(false);
 
+  const { user } = useProfile();
+
   const fetchWalletBalance = async () => {
     try {
       setLoading(true);
       setWalletError(null);
-      
+
       const response = await walletService.getWalletBalance();
-      
+
       if (response.success) {
         setWalletBalance(response.data);
       } else {
@@ -140,7 +154,7 @@ export default function Home({ navigation }: { navigation: any }) {
     } catch (error: any) {
       console.error('Wallet balance error:', error);
       setWalletError(error.message || 'Failed to fetch wallet balance');
-      
+
       if (error.message?.includes('Session expired') || error.message?.includes('Unauthorized')) {
         Toast.show({
           type: 'error',
@@ -157,9 +171,9 @@ export default function Home({ navigation }: { navigation: any }) {
     try {
       setTransactionsLoading(true);
       setTransactionsError(null);
-      
+
       const response = await walletService.getTransactions({ limit: 5 });
-      
+
       if (response.success) {
         setTransactions(response.data);
       } else {
@@ -224,9 +238,9 @@ export default function Home({ navigation }: { navigation: any }) {
 
   const getTransactionIcon = (transaction: Transaction) => {
     const isCredit = [
-      'Fund Wallet', 
-      'Commission', 
-      'Referral Commission', 
+      'Fund Wallet',
+      'Commission',
+      'Referral Commission',
       'Refund'
     ].includes(transaction.name);
 
@@ -253,21 +267,23 @@ export default function Home({ navigation }: { navigation: any }) {
     } else {
       let description = transaction.name;
       if (transaction.type) description += ` ${transaction.type}`;
-      if (transaction.customer) description += ` — ${transaction.customer}`;
+      // if (transaction.customer) description += ` — ${transaction.customer}`;
+      if (transaction.customer) description;
+
       return description;
     }
   };
 
   const renderTransaction = ({ item }: { item: Transaction }) => {
     const isCredit = [
-      'Fund Wallet', 
-      'Commission', 
-      'Referral Commission', 
+      'Fund Wallet',
+      'Commission',
+      'Referral Commission',
       'Refund'
     ].includes(item.name);
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.transactionItem}
         onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
       >
@@ -288,7 +304,7 @@ export default function Home({ navigation }: { navigation: any }) {
           </View>
         </View>
         <Text style={[
-          styles.transactionAmount, 
+          styles.transactionAmount,
           isCredit ? styles.amountCredit : styles.amountDebit
         ]}>
           {isCredit ? '+' : '-'}₦{formatAmount(item.amount)}
@@ -314,7 +330,7 @@ export default function Home({ navigation }: { navigation: any }) {
           <Text style={[styles.emptyText, { color: '#EF4444' }]}>
             {transactionsError}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.retryButton}
             onPress={fetchTransactions}
           >
@@ -352,8 +368,8 @@ export default function Home({ navigation }: { navigation: any }) {
             {/* Header */}
             <View style={styles.header}>
               <View>
-                <Text style={styles.greeting}>Welcome back!</Text>
-                <Text style={styles.subtitle}>Manage your services easily</Text>
+                <Text style={styles.greeting}>Hi {user?.name?.split(' ')[0]}!</Text>
+                <Text style={styles.subtitle}>Welcome back to WiseSub</Text>
               </View>
 
               <View style={styles.headerIcons}>
@@ -422,9 +438,9 @@ export default function Home({ navigation }: { navigation: any }) {
               </View>
             </View>
 
-            {/* Quick Services */}
+            {/* Services */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Quick Services</Text>
+              <Text style={styles.sectionTitle}>Services</Text>
               <FlatList
                 data={servicesData}
                 renderItem={renderService}
@@ -587,7 +603,7 @@ const styles = StyleSheet.create({
   },
   walletLabel: { color: "rgba(255,255,255,0.9)", fontSize: 13, marginBottom: 6, fontFamily: "Poppins-Medium" },
   balanceRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
-  currency: { color: "#fff", fontSize: 14, marginBottom: 4, fontFamily: "Poppins-Medium" },
+  currency: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Medium" },
   balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold" },
   eyeBtn: { marginLeft: 1, marginBottom: 5, padding: 6, borderRadius: 8 },
   fundBtn: {
@@ -603,7 +619,7 @@ const styles = StyleSheet.create({
   fundBtnText: { color: "#1F54DD", fontSize: 14, fontFamily: "Poppins-Medium" },
 
   // services
-  section: { marginTop: 6, marginBottom: 18 },
+  section: { marginTop: 18, marginBottom: 18 },
   sectionTitle: { fontSize: 16, fontFamily: "Poppins-Medium", color: "#0F172A", marginBottom: 12 },
   servicesGrid: { paddingBottom: 6 },
   serviceCard: {
@@ -652,38 +668,41 @@ const styles = StyleSheet.create({
 
   transactionItem: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.02,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   transactionLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  transactionIcon: { 
-    width: 42, 
-    height: 42, 
-    borderRadius: 10, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    marginRight: 10 
+  transactionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10
   },
   creditIcon: { backgroundColor: "#ECFDF5" },
   debitIcon: { backgroundColor: "#FEF3F2" },
   transactionDetails: { flex: 1 },
-  transactionTitle: { 
-    fontSize: 14, 
-    fontFamily: "Poppins-Medium", 
-    color: "#0F172A", 
-    marginBottom: 2 
+  transactionTitle: {
+    fontSize: 14,
+    fontFamily: "Poppins-Medium",
+    color: "#0F172A",
+    marginBottom: 2
   },
-  transactionDate: { 
-    fontSize: 12, 
-    color: "#94A3B8", 
-    fontFamily: "Poppins-Regular" 
+  transactionDate: {
+    fontSize: 12,
+    color: "#94A3B8",
+    fontFamily: "Poppins-Regular"
   },
   electricityToken: {
     fontSize: 11,
@@ -691,18 +710,18 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
     marginTop: 2,
   },
-  transactionAmount: { 
-    fontSize: 14, 
-    fontFamily: "Poppins-SemiBold" 
+  transactionAmount: {
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold"
   },
   amountCredit: { color: "#10B981" },
   amountDebit: { color: "#EF4444" },
 
   // empty state
-  empty: { 
-    padding: 40, 
-    alignItems: "center", 
-    justifyContent: "center" 
+  empty: {
+    padding: 40,
+    alignItems: "center",
+    justifyContent: "center"
   },
   emptyTitle: {
     fontSize: 18,
