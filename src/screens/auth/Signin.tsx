@@ -18,7 +18,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { clearError, loginUser } from '../../redux/slices/authSlice';
 import styles from '../../styles/authStyles';
 import { APP_CONSTANTS } from '../../utils/constants';
-import { AuthValidators } from '../../utils/validators';
+import { AuthValidators } from '../../utils/validators/authValidators';
 
 const SigninScreen: React.FC = () => {
   const navigation = useNavigation();

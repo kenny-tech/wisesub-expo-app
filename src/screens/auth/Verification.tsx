@@ -15,7 +15,7 @@ import OtpInput from '../../components/auth/OtpInput';
 import { authService } from '../../services/authService';
 import styles from '../../styles/authStyles';
 import { APP_CONSTANTS } from '../../utils/constants';
-import { AuthValidators } from '../../utils/validators';
+import { AuthValidators } from '../../utils/validators/authValidators';
 
 const Verification: React.FC = () => {
   const navigation = useNavigation();

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
+import { useProfile } from "../redux/hooks/useProfile";
 import { Transaction, walletService } from "../services/walletService";
 
 const { width } = Dimensions.get("window");
@@ -125,6 +126,8 @@ export default function Home({ navigation }: { navigation: any }) {
   const [unreadCount] = useState<number>(2);
   const [showFundModal, setShowFundModal] = useState<boolean>(false);
 
+  const { user } = useProfile();
+  
   const fetchWalletBalance = async () => {
     try {
       setLoading(true);
@@ -352,8 +355,8 @@ export default function Home({ navigation }: { navigation: any }) {
             {/* Header */}
             <View style={styles.header}>
               <View>
-                <Text style={styles.greeting}>Welcome back!</Text>
-                <Text style={styles.subtitle}>Manage your services easily</Text>
+                <Text style={styles.greeting}>Hi {user?.name?.split(' ')[0]}!</Text>
+                <Text style={styles.subtitle}>Welcome back to WiseSub</Text>
               </View>
 
               <View style={styles.headerIcons}>
@@ -422,9 +425,9 @@ export default function Home({ navigation }: { navigation: any }) {
               </View>
             </View>
 
-            {/* Quick Services */}
+            {/* Services */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Quick Services</Text>
+              <Text style={styles.sectionTitle}>Services</Text>
               <FlatList
                 data={servicesData}
                 renderItem={renderService}
@@ -587,7 +590,7 @@ const styles = StyleSheet.create({
   },
   walletLabel: { color: "rgba(255,255,255,0.9)", fontSize: 13, marginBottom: 6, fontFamily: "Poppins-Medium" },
   balanceRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
-  currency: { color: "#fff", fontSize: 14, marginBottom: 4, fontFamily: "Poppins-Medium" },
+  currency: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Medium" },
   balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold" },
   eyeBtn: { marginLeft: 1, marginBottom: 5, padding: 6, borderRadius: 8 },
   fundBtn: {
