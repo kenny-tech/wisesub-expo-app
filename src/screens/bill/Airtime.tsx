@@ -1,4 +1,3 @@
-// src/components/bills/Airtime.tsx
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';

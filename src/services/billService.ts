@@ -62,6 +62,26 @@ export interface ValidateDecoderResponse {
   };
 }
 
+export interface ValidateMeterPayload {
+  serviceID: string;
+  billersCode: string;
+  type: string; // prepaid or postpaid
+}
+
+export interface ValidateMeterResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    code: string;
+    response_description?: string;
+    content: {
+      Customer_Name?: string;
+      Min_Purchase_Amount?: string;
+      error?: string;
+    };
+  };
+}
+
 class BillService {
   async getDataPlans(serviceID: string): Promise<DataPlansResponse> {
     try {
@@ -99,6 +119,26 @@ class BillService {
       };
     } catch (error: any) {
       console.error('Decoder validation error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Validation failed. Please try again.'
+      };
+    }
+  }
+
+  async validateMeter(payload: ValidateMeterPayload): Promise<ValidateMeterResponse> {
+    try {
+      const response = await api.post(`${API_ENDPOINTS.VERIFY_METER_NUMBER}`, payload);
+      
+      console.log('Meter validation response:', response.data);
+      
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Meter validation error:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Validation failed. Please try again.'
