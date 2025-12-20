@@ -21,7 +21,7 @@ import {
 
 const { width } = Dimensions.get('window');
 
-// Define networks with URL paths like the web app
+// Define networks with URL paths
 const NETWORKS = [
   { 
     id: 'mtn', 
