@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
   // Pay bill endpoints
   VTPASS_VARIATION_CODES: 'vtpass/get-variation-codes',
   PAY_BILL: 'user/wallet/pay_bill',
+  VERIFY_DECODER_NUMBER: '/vtpass/verify-decoder-number',
   VTPASS_COMMISSION: '/vtpass/commission',
 
   // Wallet endpoints
