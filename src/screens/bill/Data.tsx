@@ -494,12 +494,13 @@ export default function Data({ navigation }: { navigation: any }) {
         </TouchableOpacity>
 
         {/* Additional Info */}
-        <View style={styles.infoSection}>
+        {/* <View style={styles.infoSection}>
           <Ionicons name="information-circle-outline" size={20} color="#64748B" />
           <Text style={styles.infoText}>
-            Data will be delivered to the phone number within 2-5 minutes after successful payment
+            Data will be delivered to the phone number within 1-3 minutes after successful payment
           </Text>
-        </View>
+        </View> */}
+        <View style={{ height: 320 }} />
       </ScrollView>
 
       {/* Data Plan Modal */}
