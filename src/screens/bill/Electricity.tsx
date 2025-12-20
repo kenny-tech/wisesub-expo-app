@@ -10,6 +10,8 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,42 +20,50 @@ import {
   View
 } from 'react-native';
 
-// Define electricity providers
+const { width } = Dimensions.get('window');
+
+// Define electricity providers with both local image for UI and URL for backend
 const PROVIDERS = [
   { 
     id: 'ikedc', 
     name: 'Ikeja Electric', 
-    logo: `${IMAGE_BASE_URL}/ikedc.jpg`,
+    logoLocal: require('../../../assets/images/ikedc.jpg'), // LOCAL for UI display
+    logoUrl: `${IMAGE_BASE_URL}/ikedc.jpg`, // URL for backend
     serviceID: 'ikeja-electric'
   },
   { 
     id: 'ekedc', 
     name: 'Eko Electric', 
-    logo: `${IMAGE_BASE_URL}/ekedc.jpg`,
+    logoLocal: require('../../../assets/images/ekedc.jpg'), // LOCAL for UI display
+    logoUrl: `${IMAGE_BASE_URL}/ekedc.jpg`, // URL for backend
     serviceID: 'eko-electric'
   },
   { 
     id: 'kedco', 
     name: 'Kano Electric', 
-    logo: `${IMAGE_BASE_URL}/kedco.jpg`,
+    logoLocal: require('../../../assets/images/kedco.jpg'), // LOCAL for UI display
+    logoUrl: `${IMAGE_BASE_URL}/kedco.jpg`, // URL for backend
     serviceID: 'kano-electric'
   },
   { 
     id: 'phedc', 
     name: 'Port Harcourt Electric', 
-    logo: `${IMAGE_BASE_URL}/phedc.jpg`,
+    logoLocal: require('../../../assets/images/phedc.jpg'), // LOCAL for UI display
+    logoUrl: `${IMAGE_BASE_URL}/phedc.jpg`, // URL for backend
     serviceID: 'portharcourt-electric'
   },
   { 
     id: 'ibedc', 
     name: 'Ibadan Electric', 
-    logo: `${IMAGE_BASE_URL}/ibedc.jpg`,
+    logoLocal: require('../../../assets/images/ibedc.jpg'), // LOCAL for UI display
+    logoUrl: `${IMAGE_BASE_URL}/ibedc.jpg`, // URL for backend
     serviceID: 'ibadan-electric'
   },
   { 
     id: 'aedc', 
     name: 'Abuja Electric', 
-    logo: `${IMAGE_BASE_URL}/aedc.jpg`,
+    logoLocal: require('../../../assets/images/aedc.jpg'), // LOCAL for UI display
+    logoUrl: `${IMAGE_BASE_URL}/aedc.jpg`, // URL for backend
     serviceID: 'abuja-electric'
   },
 ];
@@ -90,12 +100,12 @@ export default function Electricity({ navigation }: { navigation: any }) {
   const [meterType, setMeterType] = useState<string>('prepaid');
   const [customerName, setCustomerName] = useState<string>('');
   const [minPurchaseAmount, setMinPurchaseAmount] = useState<number>(0);
-  
+
   // Commission state
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [commission, setCommission] = useState<number>(0);
   const [loadingCommission, setLoadingCommission] = useState<boolean>(false);
-  
+
   // Token display state
   const [showToken, setShowToken] = useState(false);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
@@ -167,7 +177,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
     setAmount(selectedAmount);
     setCustomAmount(''); // Clear custom amount if preset is selected
     clearFieldError('amount');
-    
+
     // Calculate commission
     calculateCommissionForAmount(Number(selectedAmount));
   };
@@ -176,20 +186,20 @@ export default function Electricity({ navigation }: { navigation: any }) {
   const handleCustomAmountChange = (text: string) => {
     // Allow only numbers and one decimal point
     const cleanedText = text.replace(/[^\d.]/g, '');
-    
+
     // Ensure only one decimal point
     const parts = cleanedText.split('.');
     if (parts.length > 2) {
       return;
     }
-    
+
     // Allow up to 2 decimal places
     if (parts[1] && parts[1].length > 2) {
       return;
     }
-    
+
     setCustomAmount(cleanedText);
-    
+
     if (cleanedText) {
       setAmount(cleanedText);
       calculateCommissionForAmount(Number(cleanedText));
@@ -197,7 +207,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
       setAmount('');
       setCommission(0);
     }
-    
+
     clearFieldError('amount');
   };
 
@@ -239,16 +249,16 @@ export default function Electricity({ navigation }: { navigation: any }) {
 
     setValidating(true);
     setCustomerName('');
-    
+
     try {
       const payload = {
         serviceID: selectedProvider.serviceID,
         billersCode: meterNumber,
         type: meterType,
       };
-      
+
       console.log('Meter validation payload:', payload);
-      
+
       const response = await billService.validateMeter(payload);
 
       console.log('Full validation response:', JSON.stringify(response, null, 2));
@@ -258,11 +268,11 @@ export default function Electricity({ navigation }: { navigation: any }) {
         if (response.data.content?.Customer_Name) {
           // Valid meter with customer name
           setCustomerName(response.data.content.Customer_Name);
-          
+
           // Store minimum purchase amount
           const apiMinAmount = parseFloat(response.data.content.Min_Purchase_Amount || '500');
           setMinPurchaseAmount(apiMinAmount);
-          
+
           setErrors(prev => {
             const newErrors = { ...prev };
             delete newErrors.meterNumber;
@@ -279,9 +289,9 @@ export default function Electricity({ navigation }: { navigation: any }) {
                 text: 'Cancel',
                 style: 'cancel',
                 onPress: () => {
-                  setErrors(prev => ({ 
-                    ...prev, 
-                    meterNumber: response.data.content.error 
+                  setErrors(prev => ({
+                    ...prev,
+                    meterNumber: response.data.content.error
                   }));
                   setCustomerName('');
                 }
@@ -316,20 +326,20 @@ export default function Electricity({ navigation }: { navigation: any }) {
         }
       } else {
         // Validation failed
-        const errorMessage = response.data?.response_description || 
-                            response.data?.content?.error || 
-                            response.message || 
-                            'Invalid meter number';
-        
+        const errorMessage = response.data?.response_description ||
+          response.data?.content?.error ||
+          response.message ||
+          'Invalid meter number';
+
         setErrors(prev => ({ ...prev, meterNumber: errorMessage }));
         setCustomerName('');
         showError('Validation Failed', errorMessage);
       }
     } catch (error: any) {
       console.error('Validation error:', error);
-      setErrors(prev => ({ 
-        ...prev, 
-        meterNumber: error.response?.data?.message || 'Validation failed. Please try again.' 
+      setErrors(prev => ({
+        ...prev,
+        meterNumber: error.response?.data?.message || 'Validation failed. Please try again.'
       }));
       setCustomerName('');
       showError('Error', 'Validation failed. Please try again.');
@@ -369,9 +379,9 @@ export default function Electricity({ navigation }: { navigation: any }) {
     // Check minimum amount
     const amountValue = parseFloat(amount);
     if (amountValue < minPurchaseAmount) {
-      setErrors(prev => ({ 
-        ...prev, 
-        amount: `Minimum purchase amount is ₦${minPurchaseAmount}` 
+      setErrors(prev => ({
+        ...prev,
+        amount: `Minimum purchase amount is ₦${minPurchaseAmount}`
       }));
       showError('Error', `Minimum purchase amount is ₦${minPurchaseAmount}`);
       return false;
@@ -402,7 +412,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         customer: meterNumber,
         type: 'Electricity',
         service_type: 'Electricity',
-        provider_logo: selectedProvider.logo,
+        provider_logo: selectedProvider.logoUrl, // Use URL for backend
         name: selectedProvider.name,
         billersCode: meterNumber,
         meterType: meterType,
@@ -411,7 +421,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
       };
 
       console.log('Electricity purchase payload:', payload);
-      
+
       const response = await billService.purchaseData(payload);
 
       if (response.success) {
@@ -515,11 +525,11 @@ export default function Electricity({ navigation }: { navigation: any }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Provider Selection */}
+        {/* Provider Selection with Logos */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Provider</Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.providersScrollContent}
           >
@@ -533,10 +543,17 @@ export default function Electricity({ navigation }: { navigation: any }) {
                 onPress={() => handleProviderSelect(provider)}
                 activeOpacity={0.7}
               >
+                <View style={styles.providerLogoContainer}>
+                  <Image
+                    source={provider.logoLocal} // Use local image for display
+                    style={styles.providerLogo}
+                    resizeMode="contain"
+                  />
+                </View>
                 <Text style={[
                   styles.providerName,
                   selectedProvider?.id === provider.id && styles.providerNameSelected
-                ]} numberOfLines={1}>
+                ]} numberOfLines={2}>
                   {provider.name}
                 </Text>
               </TouchableOpacity>
@@ -615,14 +632,14 @@ export default function Electricity({ navigation }: { navigation: any }) {
           {errors.meterNumber && (
             <Text style={styles.errorText}>{errors.meterNumber}</Text>
           )}
-          
+
           {/* Customer Name Display */}
           {customerName && (
             <View style={styles.customerInfoContainer}>
-              <Ionicons 
-                name={customerName === 'Customer (Validation Warning)' ? "warning" : "checkmark-circle"} 
-                size={16} 
-                color={customerName === 'Customer (Validation Warning)' ? "#F59E0B" : "#10B981"} 
+              <Ionicons
+                name={customerName === 'Customer (Validation Warning)' ? "warning" : "checkmark-circle"}
+                size={16}
+                color={customerName === 'Customer (Validation Warning)' ? "#F59E0B" : "#10B981"}
               />
               <Text style={[
                 styles.customerNameText,
@@ -631,7 +648,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
                 {customerName}
               </Text>
               {customerName === 'Customer (Validation Warning)' && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => {
                     Alert.alert(
                       'Unverified Meter',
@@ -657,7 +674,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
           ]}>
             <TextInput
               style={styles.input}
-              placeholder="Enter phone number (e.g., 08012345678)"
+              placeholder="Enter phone number"
               value={phoneNumber}
               onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
@@ -672,7 +689,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         {/* Amount Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Amount</Text>
-          
+
           {/* Custom amount input */}
           <View style={[
             styles.inputContainer,
@@ -690,9 +707,9 @@ export default function Electricity({ navigation }: { navigation: any }) {
           </View>
 
           {/* Quick select amounts */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
             style={styles.amountsScroll}
             contentContainerStyle={styles.amountsScrollContent}
           >
@@ -714,7 +731,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
               </TouchableOpacity>
             ))}
           </ScrollView>
-          
+
           {errors.amount && (
             <Text style={styles.errorText}>{errors.amount}</Text>
           )}
@@ -726,7 +743,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
                 <Text style={styles.amountDisplayLabel}>Amount to pay:</Text>
                 <Text style={styles.amountDisplayValue}>₦{formatAmount(amount)}</Text>
               </View>
-              
+
               {/* Minimum amount warning */}
               {minPurchaseAmount > 0 && parseFloat(amount) < minPurchaseAmount && (
                 <View style={styles.minAmountWarning}>
@@ -736,7 +753,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
                   </Text>
                 </View>
               )}
-              
+
               {/* Commission Display */}
               {commission > 0 && (
                 <View style={styles.commissionContainer}>
@@ -765,22 +782,22 @@ export default function Electricity({ navigation }: { navigation: any }) {
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text style={styles.proceedButtonText}>
-              {!customerName ? 'Validate Meter First' : 
-               customerName === 'Customer (Validation Warning)' ? 'Proceed with Unverified Meter' : 
-               'Buy Electricity'}
+              {!customerName ? 'Validate Meter First' :
+                customerName === 'Customer (Validation Warning)' ? 'Proceed with Unverified Meter' :
+                  'Buy Electricity'}
             </Text>
           )}
         </TouchableOpacity>
 
         {/* Additional Info */}
-        {/* <View style={styles.infoSection}>
+        <View style={styles.infoSection}>
           <Ionicons name="information-circle-outline" size={20} color="#64748B" />
           <Text style={styles.infoText}>
-            {meterType === 'prepaid' 
+            {meterType === 'prepaid'
               ? 'Electricity token will be generated instantly after successful payment'
               : 'Postpaid bill payment will be processed within 24 hours'}
           </Text>
-        </View> */}
+        </View>
         <View style={{ height: 320 }} />
       </ScrollView>
 
@@ -859,26 +876,42 @@ const styles = StyleSheet.create({
   providersScrollContent: {
     flexDirection: 'row',
     gap: 12,
+    paddingRight: 20,
   },
   providerCard: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minWidth: 120,
+    padding: 12,
+    width: 100,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   providerCardSelected: {
     backgroundColor: '#F1F6FF',
     borderColor: '#1F54DD',
   },
+  providerLogoContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  providerLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+  },
   providerName: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Poppins-Medium',
     color: '#64748B',
     textAlign: 'center',
+    lineHeight: 16,
   },
   providerNameSelected: {
     color: '#1F54DD',
