@@ -296,11 +296,11 @@ export default function Home({ navigation }: { navigation: any }) {
             <Text style={styles.transactionDate}>
               {formatDate(item.created_at)}
             </Text>
-            {item.type === "Electricity" && item.electricity_token && (
+            {/* {item.type === "Electricity" && item.electricity_token && (
               <Text style={styles.electricityToken}>
                 Token: {item.electricity_token}
               </Text>
-            )}
+            )} */}
           </View>
         </View>
         <Text style={[
