@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, API_ENDPOINTS } from './api';
 
 export interface UpdateProfileData {
   phone: string;
@@ -21,7 +21,7 @@ export interface ApiError {
 class ProfileService {
   async updateProfile(data: UpdateProfileData): Promise<UpdateProfileResponse> {
     try {
-      const response = await api.post<UpdateProfileResponse>('user/update_profile', data);
+      const response = await api.post<UpdateProfileResponse>(API_ENDPOINTS.UPDATE_PROFILE, data);
       return response.data;
     } catch (error: any) {
       return this.handleApiError(error);

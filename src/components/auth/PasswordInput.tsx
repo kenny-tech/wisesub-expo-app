@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: 'absolute',
     right: 12,
-    top: '50%',
+    top: '30%',
     transform: [{ translateY: -10 }],
     padding: 4,
     zIndex: 10,

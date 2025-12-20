@@ -2,7 +2,8 @@ import axios from 'axios';
 import { getHeaders } from '../utils/headers';
 
 // Base API URL
-export const BASE_API = 'https://0b7ad2fb42b8.ngrok-free.app/api/v1/';
+export const BASE_API = 'https://cdfc8fa2c1d5.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL='https://cdfc8fa2c1d5.ngrok-free.app/images';
 
 // Create axios instance
 export const api = axios.create({
@@ -29,6 +30,13 @@ export const API_ENDPOINTS = {
   RESET_PASSWORD: 'auth/reset_password',
   RESEND_OTP: 'auth/resend_otp',
 
+  // Pay bill endpoints
+  VTPASS_VARIATION_CODES: 'vtpass/get-variation-codes',
+  PAY_BILL: 'user/wallet/pay_bill',
+  VERIFY_DECODER_NUMBER: '/vtpass/verify-decoder-number',
+  VERIFY_METER_NUMBER: '/vtpass/verify-meter-number',
+  VTPASS_COMMISSION: '/vtpass/commission',
+
   // Wallet endpoints
   WALLET_BALANCE: 'user/wallet/get_balance',
 
@@ -37,7 +45,7 @@ export const API_ENDPOINTS = {
 
   // Profile endpoints
   GET_PROFILE: 'profile',
-  UPDATE_PROFILE: 'profile/update',
+  UPDATE_PROFILE: 'user/update_profile',
   CHANGE_PASSWORD: 'auth/change-password',
 };
 
