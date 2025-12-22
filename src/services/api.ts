@@ -2,8 +2,8 @@ import axios from 'axios';
 import { getHeaders } from '../utils/headers';
 
 // Base API URL
-export const BASE_API = 'https://cdfc8fa2c1d5.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL='https://cdfc8fa2c1d5.ngrok-free.app/images';
+export const BASE_API = 'https://bc7300cc1b2b.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL='https://bc7300cc1b2b.ngrok-free.app/images';
 
 // Create axios instance
 export const api = axios.create({

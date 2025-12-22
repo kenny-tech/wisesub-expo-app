@@ -1,14 +1,15 @@
 import { formatAmount } from '@/src/helper/util';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import React from 'react';
 import {
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 interface ElectricityTokenDisplayProps {
@@ -34,14 +35,22 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
   customerName,
   phoneNumber,
 }) => {
-  const handleCopyToken = () => {
-    // Implement clipboard copy functionality
-    // For now, we'll show an alert
-    Alert.alert(
-      'Token Copied',
-      'Electricity token has been copied to clipboard',
-      [{ text: 'OK', style: 'default' }]
-    );
+  const handleCopyToken = async () => {
+    try {
+      await Clipboard.setStringAsync(token);
+
+      Alert.alert(
+        'Token Copied',
+        'Electricity token has been copied to clipboard',
+        [{ text: 'OK', style: 'default' }]
+      );
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to copy token. Please try again.',
+        [{ text: 'OK', style: 'default' }]
+      );
+    }
   };
 
   const formatProviderName = (providerCode: string) => {
@@ -73,7 +82,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
             </TouchableOpacity>
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
@@ -93,7 +102,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
               <Text style={styles.sectionTitle}>Token Number</Text>
               <View style={styles.tokenContainer}>
                 <Text style={styles.tokenText}>{token}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.copyButton}
                   onPress={handleCopyToken}
                 >
@@ -106,32 +115,32 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
             {/* Token Details */}
             <View style={styles.detailsSection}>
               <Text style={styles.sectionTitle}>Transaction Details</Text>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Meter Number:</Text>
                 <Text style={styles.detailValue}>{meterNumber}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Customer Name:</Text>
                 <Text style={styles.detailValue}>{customerName}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Provider:</Text>
                 <Text style={styles.detailValue}>{formatProviderName(provider)}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Units:</Text>
                 <Text style={styles.detailValue}>{units} kWh</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Amount Paid:</Text>
                 <Text style={styles.amountValue}>₦{formatAmount(amount)}</Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Phone Number:</Text>
                 <Text style={styles.detailValue}>{phoneNumber}</Text>
@@ -139,7 +148,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
             </View>
 
             {/* Usage Instructions */}
-            <View style={styles.instructionsSection}>
+            {/* <View style={styles.instructionsSection}>
               <Text style={styles.sectionTitle}>How to Use Your Token</Text>
               <View style={styles.instructionItem}>
                 <View style={styles.instructionNumber}>
@@ -173,10 +182,10 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
                   Press "Enter" or "OK" to load the units
                 </Text>
               </View>
-            </View>
+            </View> */}
 
             {/* Important Notes */}
-            <View style={styles.notesSection}>
+            {/* <View style={styles.notesSection}>
               <Text style={styles.notesTitle}>
                 <Ionicons name="information-circle" size={16} color="#64748B" />
                 <Text> Important Notes</Text>
@@ -193,12 +202,12 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
               <Text style={styles.noteText}>
                 • Contact your electricity provider for assistance
               </Text>
-            </View>
+            </View> */}
           </ScrollView>
 
           {/* Action Button */}
           <View style={styles.actionSection}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.doneButton}
               onPress={onClose}
             >
