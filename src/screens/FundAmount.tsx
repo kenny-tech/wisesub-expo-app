@@ -11,6 +11,9 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { useProfile } from '../redux/hooks/useProfile';
+import { walletService } from '../services/walletService';
+import { showError } from '../utils/toast';
 
 type FundAmountRouteProps = {
   FundAmount: {
@@ -19,6 +22,7 @@ type FundAmountRouteProps = {
 };
 
 export default function FundAmount({ navigation }: { navigation: any }) {
+  const { user } = useProfile();
   const route = useRoute<RouteProp<FundAmountRouteProps, 'FundAmount'>>();
   const { method } = route.params;
 
@@ -58,45 +62,88 @@ export default function FundAmount({ navigation }: { navigation: any }) {
     return true;
   };
 
+  const handleBankTransfer = async () => {
+    if (!validateAmount()) return;
+
+    if (!user?.email) {
+      showError('Error', 'User email not found. Please login again.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await walletService.generateBankTransfer({
+        email: user.email,
+        amount: parseFloat(amount),
+      });
+
+      console.log('Bank transfer response:', response);
+
+      if (response?.status === 'success') {
+        // showSuccess('Success', response.message || 'Transfer details generated successfully');
+        // Navigate to bank transfer details screen
+        navigation.navigate('BankTransferDetails', {
+          transferDetails: response.data,
+          amount: amount,
+        });
+      } else {
+        // Handle errors
+        showError('Error', response?.message || 'Failed to generate transfer details');
+      }
+    } catch (error: any) {
+      console.error('Bank transfer error:', error);
+      showError('Error', error.message || 'Failed to process bank transfer');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCardPayment = () => {
+    // This will be implemented later for card payments
+    // For now, just show a message
+    Toast.show({
+      type: 'info',
+      text1: 'Coming Soon',
+      text2: 'Card payment integration is in progress',
+    });
+    setLoading(false);
+  };
+
   const handleSubmit = async () => {
     if (!validateAmount()) return;
 
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: `₦${amount} will be added to your wallet`,
-      });
-      
-      // Navigate based on payment method
+
+    try {
       if (method === 'bank') {
-        navigation.navigate('BankTransfer', { amount });
+        await handleBankTransfer();
       } else {
-        navigation.navigate('CardPayment', { amount });
+        handleCardPayment();
       }
-    }, 1500);
+    } catch (error) {
+      console.error('Payment error:', error);
+      showError('Error', 'An unexpected error occurred');
+      setLoading(false);
+    }
   };
 
   const getMethodDetails = () => {
-    return method === 'bank' 
+    return method === 'bank'
       ? {
-          title: 'Bank Transfer',
-          icon: 'business',
-          color: '#1F54DD',
-          description: 'Transfer directly from your bank account',
-          instructions: 'You will be provided with bank details to complete the transfer'
-        }
+        title: 'Bank Transfer',
+        icon: 'business',
+        color: '#1F54DD',
+        description: 'Transfer directly from your bank account',
+        instructions: 'You will be provided with bank details to complete the transfer'
+      }
       : {
-          title: 'Card Payment',
-          icon: 'card',
-          color: '#16A34A',
-          description: 'Pay instantly with your debit/credit card',
-          instructions: 'You will be redirected to a secure payment page'
-        };
+        title: 'Card Payment',
+        icon: 'card',
+        color: '#16A34A',
+        description: 'Pay instantly with your debit/credit card',
+        instructions: 'You will be redirected to a secure payment page'
+      };
   };
 
   const methodDetails = getMethodDetails();
@@ -124,7 +171,7 @@ export default function FundAmount({ navigation }: { navigation: any }) {
         {/* Amount Input */}
         <View style={styles.amountSection}>
           <Text style={styles.sectionTitle}>Enter Amount</Text>
-          
+
           <View style={styles.amountInputContainer}>
             <Text style={styles.currencySymbol}>₦</Text>
             <TextInput
@@ -139,7 +186,7 @@ export default function FundAmount({ navigation }: { navigation: any }) {
               placeholderTextColor="#94A3B8"
             />
           </View>
-          
+
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           {/* Quick Amounts */}
@@ -167,16 +214,35 @@ export default function FundAmount({ navigation }: { navigation: any }) {
           </View>
         </View>
 
+        {/* User Info (for debugging/confirmation) */}
+        {user && (
+          <View style={styles.userInfoCard}>
+            <Text style={styles.userInfoText}>
+              Payment will be processed for: {user.email || user.phone || user.name}
+            </Text>
+          </View>
+        )}
+
         {/* Instructions */}
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color="#1F54DD" />
           <Text style={styles.infoText}>{methodDetails.instructions}</Text>
         </View>
+
+        {/* Additional Info for Bank Transfer */}
+        {method === 'bank' && (
+          <View style={styles.additionalInfoCard}>
+            <Ionicons name="time-outline" size={20} color="#F59E0B" />
+            <Text style={styles.additionalInfoText}>
+              Bank transfers are processed within 1-5 minutes. Your wallet will be credited automatically.
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* Submit Button */}
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.submitButton, (!amount || loading) && styles.submitButtonDisabled]}
           onPress={handleSubmit}
           disabled={!amount || loading}
@@ -195,9 +261,9 @@ export default function FundAmount({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { 
-    flex: 1, 
-    backgroundColor: "#FFFFFF" 
+  screen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF"
   },
   header: {
     flexDirection: "row",
@@ -334,12 +400,45 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: "#E0F2FE",
+    marginBottom: 16,
   },
   infoText: {
     flex: 1,
     fontSize: 12,
     fontFamily: "Poppins-Regular",
     color: "#64748B",
+    marginLeft: 8,
+    lineHeight: 16,
+  },
+  userInfoCard: {
+    backgroundColor: "#F1F5F9",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  userInfoText: {
+    fontSize: 12,
+    fontFamily: "Poppins-Medium",
+    color: "#475569",
+    textAlign: "center",
+  },
+  additionalInfoCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#FFFBEB",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    marginBottom: 16,
+  },
+  additionalInfoText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Poppins-Regular",
+    color: "#92400E",
     marginLeft: 8,
     lineHeight: 16,
   },

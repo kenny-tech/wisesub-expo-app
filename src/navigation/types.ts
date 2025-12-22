@@ -15,7 +15,6 @@ export type RootStackParamList = {
     ProfileInfo: undefined;
     ChangePassword: undefined;
     Support: undefined;
-    FundAmount: undefined;
     DeleteAccount: undefined;
     ForgotPassword: undefined;
     ForgotPasswordOtp: undefined;
@@ -31,6 +30,26 @@ export type RootStackParamList = {
     };
     TransactionDetail: {
         transaction: any;
+    };
+    FundAmount: {
+        method: 'bank' | 'card';
+    };
+    BankTransferDetails: {
+        transferDetails: {
+            account_number: string;
+            account_status: string;
+            amount: string;
+            bank_name: string;
+            created_at: string;
+            expiry_date: string;
+            flw_ref: string;
+            frequency: number;
+            note: string;
+            order_ref: string;
+            response_code: string;
+            response_message: string;
+        };
+        amount: string;
     };
     Tabs: undefined;
 };

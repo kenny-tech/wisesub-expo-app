@@ -13,6 +13,7 @@ import Data from '../screens/bill/Data';
 import Electricity from '../screens/bill/Electricity';
 import ChangePassword from '../screens/ChangePassword';
 import DeleteAccount from '../screens/DeleteAccount';
+import BankTransferDetails from '../screens/fund/BankTransferDetails';
 import FundAmount from '../screens/FundAmount';
 import ProfileInfo from '../screens/ProfileInfo';
 import Referral from '../screens/Referral';
@@ -43,6 +44,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
       <Stack.Screen name="Verification" component={Verification} />
       <Stack.Screen name="TransactionDetail" component={TransactionDetail} />
+      <Stack.Screen name="BankTransferDetails" component={BankTransferDetails} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

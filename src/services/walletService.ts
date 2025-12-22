@@ -30,6 +30,32 @@ export interface TransactionsParams {
   type?: string;
 }
 
+export interface BankTransferRequest {
+  email: string;
+  amount: number;
+}
+
+export interface BankTransferData {
+  account_number: string;
+  account_status: string;
+  amount: string;
+  bank_name: string;
+  created_at: string;
+  expiry_date: string;
+  flw_ref: string;
+  frequency: number;
+  note: string;
+  order_ref: string;
+  response_code: string;
+  response_message: string;
+}
+
+export interface BankTransferResponse {
+  status: 'success' | 'error';
+  data: BankTransferData;
+  message: string;
+}
+
 class WalletService {
   async getWalletBalance(): Promise<WalletBalanceResponse> {
     try {
@@ -52,6 +78,18 @@ class WalletService {
       return response.data;
     } catch (error: any) {
       this.handleApiError(error);
+    }
+  }
+
+  async generateBankTransfer(data: BankTransferRequest): Promise<BankTransferResponse> {
+    try {
+      const response = await api.post<BankTransferResponse>(
+        API_ENDPOINTS.GENERATE_BANK_TRANSFER,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      return this.handleApiError(error);
     }
   }
 

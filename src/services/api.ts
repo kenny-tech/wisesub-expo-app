@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
 
   // Wallet endpoints
   WALLET_BALANCE: 'user/wallet/get_balance',
+  GENERATE_BANK_TRANSFER: 'user/virtual_account_number',
 
   // Transaction endpoints
   TRANSACTIONS: 'user/transaction/get_user_transactions',
