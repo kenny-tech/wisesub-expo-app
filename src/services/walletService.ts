@@ -30,6 +30,50 @@ export interface TransactionsParams {
   type?: string;
 }
 
+export interface BankTransferRequest {
+  email: string;
+  amount: number;
+}
+
+export interface BankTransferData {
+  account_number: string;
+  account_status: string;
+  amount: string;
+  bank_name: string;
+  created_at: string;
+  expiry_date: string;
+  flw_ref: string;
+  frequency: number;
+  note: string;
+  order_ref: string;
+  response_code: string;
+  response_message: string;
+}
+
+export interface BankTransferResponse {
+  status: 'success' | 'error';
+  data: BankTransferData;
+  message: string;
+}
+
+export interface CardPaymentRequest {
+  amount: number;
+  tx_ref: string;
+  status: string;
+  transaction_id: string;
+}
+
+export interface CardPaymentResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    transaction_id: string;
+    amount: number;
+    status: string;
+    reference: string;
+  };
+}
+
 class WalletService {
   async getWalletBalance(): Promise<WalletBalanceResponse> {
     try {
@@ -53,6 +97,67 @@ class WalletService {
     } catch (error: any) {
       this.handleApiError(error);
     }
+  }
+
+  async generateBankTransfer(data: BankTransferRequest): Promise<BankTransferResponse> {
+    try {
+      const response = await api.post<BankTransferResponse>(
+        API_ENDPOINTS.GENERATE_BANK_TRANSFER,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      return this.handleApiError(error);
+    }
+  }
+
+  async createCardPayment(data: CardPaymentRequest): Promise<CardPaymentResponse> {
+    try {
+      const response = await api.post<CardPaymentResponse>(
+        API_ENDPOINTS.CREATE_PAYMENT,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Card payment error:', error);
+      return this.handleCardPaymentError(error);
+    }
+  }
+
+  private handleCardPaymentError(error: any): CardPaymentResponse {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      if (status === 422) {
+        // Validation errors
+        let errorMessage = 'Validation failed';
+        if (data.errors) {
+          const errors = data.errors;
+          errorMessage = errorMessage;
+        }
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
+
+      if (status === 401) {
+        return {
+          success: false,
+          message: 'Unauthenticated. Please login again.',
+        };
+      }
+
+      return {
+        success: false,
+        message: data?.message || 'Payment processing failed',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
   }
 
   private handleApiError(error: any): never {
