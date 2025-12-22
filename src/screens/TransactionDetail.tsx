@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import * as Clipboard from 'expo-clipboard';
 import React from 'react';
 import {
   Image,
@@ -11,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { formatAmount, formatDate } from '../helper/util';
+import { showError, showSuccess } from '../utils/toast';
 
 type RootStackParamList = {
   TransactionDetail: { transaction: any };
@@ -33,11 +35,11 @@ interface Props {
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   const { transaction } = route.params;
-  
+
   const isCredit = [
-    'Fund Wallet', 
-    'Commission', 
-    'Referral Commission', 
+    'Fund Wallet',
+    'Commission',
+    'Referral Commission',
     'Refund'
   ].includes(transaction.name);
 
@@ -52,8 +54,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   // Check if this is a WiseSub transaction (no provider logo)
   const isWiseSubTransaction = [
     'Fund Wallet',
-    'Commission', 
-    'Referral Commission', 
+    'Commission',
+    'Referral Commission',
     'Refund'
   ].includes(transaction.name);
 
@@ -72,8 +74,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     if (isWiseSubTransaction) {
       return 'business'; // Bank icon for WiseSub transactions
     }
-    
-    switch(transaction.type) {
+
+    switch (transaction.type) {
       case 'Data':
         return 'wifi';
       case 'Airtime':
@@ -91,10 +93,19 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   const logoSource = getLogoSource();
   const serviceIcon = getServiceIcon();
 
+  const handleCopyToken = async (token: string) => {
+    try {
+      await Clipboard.setStringAsync(token);
+      showSuccess('Token Copied', 'Electricity token has been copied to clipboard')
+    } catch (error) {
+      showError('Error', 'Failed to copy token. Please try again.')
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -112,8 +123,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             isWiseSubTransaction ? styles.wiseSubLogoContainer : styles.providerLogoContainer
           ]}>
             {logoSource ? (
-              <Image 
-                source={logoSource} 
+              <Image
+                source={logoSource}
                 style={[
                   styles.logoImage,
                   isWiseSubTransaction ? styles.wiseSubLogo : styles.providerLogo
@@ -123,15 +134,15 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
               />
             ) : (
               <View style={styles.iconFallback}>
-                <Ionicons 
-                  name={serviceIcon} 
-                  size={32} 
-                  color={isWiseSubTransaction ? "#1F54DD" : "#64748B"} 
+                <Ionicons
+                  name={serviceIcon}
+                  size={32}
+                  color={isWiseSubTransaction ? "#1F54DD" : "#64748B"}
                 />
               </View>
             )}
           </View>
-          
+
           <View style={styles.serviceInfo}>
             <Text style={styles.serviceName}>{transaction.name}</Text>
             <Text style={styles.serviceType}>
@@ -159,13 +170,13 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons name="information-circle" size={20} color="#1F54DD" />
             <Text style={styles.infoTitle}>Transaction Information</Text>
           </View>
-          
+
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Transaction Reference</Text>
               <Text style={styles.infoValue}>{transaction.reference}</Text>
             </View>
-            
+
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Date & Time</Text>
               <Text style={styles.infoValue}>{formatDate(transaction.created_at)}</Text>
@@ -174,11 +185,11 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Status</Text>
               <View style={[
-                styles.statusIndicator, 
+                styles.statusIndicator,
                 { backgroundColor: isCredit ? '#10B98120' : '#EF444420' }
               ]}>
                 <Text style={[
-                  styles.statusIndicatorText, 
+                  styles.statusIndicatorText,
                   { color: getStatusColor() }
                 ]}>
                   {isCredit ? 'Completed' : 'Completed'}
@@ -194,7 +205,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons name="receipt" size={20} color="#1F54DD" />
             <Text style={styles.detailsTitle}>Transaction Details</Text>
           </View>
-          
+
           <View style={styles.detailsContent}>
             <View style={styles.detailRow}>
               <View style={styles.detailLeft}>
@@ -230,10 +241,20 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                 </View>
                 <View style={styles.tokenContainer}>
                   <Text style={styles.tokenValue}>{transaction.electricity_token}</Text>
-                  <TouchableOpacity style={styles.copyButton}>
+                  <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyToken(transaction.electricity_token)}>
                     <Ionicons name="copy-outline" size={14} color="#1F54DD" />
                   </TouchableOpacity>
                 </View>
+              </View>
+            )}
+
+            {transaction.units && (
+              <View style={styles.detailRow}>
+                <View style={styles.detailLeft}>
+                  <Ionicons name="person" size={16} color="#64748B" />
+                  <Text style={styles.detailLabel}>Units</Text>
+                </View>
+                <Text style={styles.detailValue}>{transaction.units}</Text>
               </View>
             )}
 

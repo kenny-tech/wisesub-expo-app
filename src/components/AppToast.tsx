@@ -37,12 +37,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Poppins-SemiBold',
     color: '#0F172A',
   },
   message: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Poppins-Regular',
     color: '#334155',
   },

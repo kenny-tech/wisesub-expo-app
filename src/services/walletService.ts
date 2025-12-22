@@ -15,6 +15,7 @@ export interface Transaction {
   provider_logo?: string;
   electricity_token?: string;
   customer?: string;
+  units?: string;
 }
 
 export interface TransactionsResponse {
