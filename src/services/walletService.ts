@@ -56,6 +56,24 @@ export interface BankTransferResponse {
   message: string;
 }
 
+export interface CardPaymentRequest {
+  amount: number;
+  tx_ref: string;
+  status: string;
+  transaction_id: string;
+}
+
+export interface CardPaymentResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    transaction_id: string;
+    amount: number;
+    status: string;
+    reference: string;
+  };
+}
+
 class WalletService {
   async getWalletBalance(): Promise<WalletBalanceResponse> {
     try {
@@ -91,6 +109,55 @@ class WalletService {
     } catch (error: any) {
       return this.handleApiError(error);
     }
+  }
+
+  async createCardPayment(data: CardPaymentRequest): Promise<CardPaymentResponse> {
+    try {
+      const response = await api.post<CardPaymentResponse>(
+        API_ENDPOINTS.CREATE_PAYMENT,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Card payment error:', error);
+      return this.handleCardPaymentError(error);
+    }
+  }
+
+  private handleCardPaymentError(error: any): CardPaymentResponse {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      if (status === 422) {
+        // Validation errors
+        let errorMessage = 'Validation failed';
+        if (data.errors) {
+          const errors = data.errors;
+          errorMessage = errorMessage;
+        }
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
+
+      if (status === 401) {
+        return {
+          success: false,
+          message: 'Unauthenticated. Please login again.',
+        };
+      }
+
+      return {
+        success: false,
+        message: data?.message || 'Payment processing failed',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
   }
 
   private handleApiError(error: any): never {

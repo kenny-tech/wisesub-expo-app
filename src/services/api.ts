@@ -3,7 +3,8 @@ import { getHeaders } from '../utils/headers';
 
 // Base API URL
 export const BASE_API = 'https://bc7300cc1b2b.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL='https://bc7300cc1b2b.ngrok-free.app/images';
+export const IMAGE_BASE_URL = 'https://bc7300cc1b2b.ngrok-free.app/images';
+export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
 // Create axios instance
 export const api = axios.create({
@@ -40,6 +41,7 @@ export const API_ENDPOINTS = {
   // Wallet endpoints
   WALLET_BALANCE: 'user/wallet/get_balance',
   GENERATE_BANK_TRANSFER: 'user/virtual_account_number',
+  CREATE_PAYMENT: 'user/payment/create',
 
   // Transaction endpoints
   TRANSACTIONS: 'user/transaction/get_user_transactions',

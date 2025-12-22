@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
 import { useProfile } from '../redux/hooks/useProfile';
 import { walletService } from '../services/walletService';
 import { showError } from '../utils/toast';
@@ -100,14 +99,18 @@ export default function FundAmount({ navigation }: { navigation: any }) {
   };
 
   const handleCardPayment = () => {
-    // This will be implemented later for card payments
-    // For now, just show a message
-    Toast.show({
-      type: 'info',
-      text1: 'Coming Soon',
-      text2: 'Card payment integration is in progress',
+    if (!validateAmount()) return;
+
+    if (!user?.email) {
+      showError('Error', 'User email not found. Please login again.');
+      return;
+    }
+
+    // Navigate to webview payment screen with amount
+    navigation.navigate('WebViewPayment', {
+      amount: amount,
+      user: user // Pass user object for payment details
     });
-    setLoading(false);
   };
 
   const handleSubmit = async () => {
@@ -124,6 +127,7 @@ export default function FundAmount({ navigation }: { navigation: any }) {
     } catch (error) {
       console.error('Payment error:', error);
       showError('Error', 'An unexpected error occurred');
+    } finally {
       setLoading(false);
     }
   };
