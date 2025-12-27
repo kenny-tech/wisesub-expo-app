@@ -1,3 +1,4 @@
+import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { ElectricityTokenDisplay } from '@/src/components/bills/ElectricityTokenDisplay';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
@@ -27,43 +28,43 @@ const PROVIDERS = [
   { 
     id: 'ikedc', 
     name: 'Ikeja Electric', 
-    logoLocal: require('../../../assets/images/ikedc.jpg'), // LOCAL for UI display
-    logoUrl: `${IMAGE_BASE_URL}/ikedc.jpg`, // URL for backend
+    logoLocal: require('../../../assets/images/ikedc.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/ikedc.jpg`,
     serviceID: 'ikeja-electric'
   },
   { 
     id: 'ekedc', 
     name: 'Eko Electric', 
-    logoLocal: require('../../../assets/images/ekedc.jpg'), // LOCAL for UI display
-    logoUrl: `${IMAGE_BASE_URL}/ekedc.jpg`, // URL for backend
+    logoLocal: require('../../../assets/images/ekedc.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/ekedc.jpg`,
     serviceID: 'eko-electric'
   },
   { 
     id: 'kedco', 
     name: 'Kano Electric', 
-    logoLocal: require('../../../assets/images/kedco.jpg'), // LOCAL for UI display
-    logoUrl: `${IMAGE_BASE_URL}/kedco.jpg`, // URL for backend
+    logoLocal: require('../../../assets/images/kedco.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/kedco.jpg`,
     serviceID: 'kano-electric'
   },
   { 
     id: 'phedc', 
     name: 'Port Harcourt Electric', 
-    logoLocal: require('../../../assets/images/phedc.jpg'), // LOCAL for UI display
-    logoUrl: `${IMAGE_BASE_URL}/phedc.jpg`, // URL for backend
+    logoLocal: require('../../../assets/images/phedc.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/phedc.jpg`,
     serviceID: 'portharcourt-electric'
   },
   { 
     id: 'ibedc', 
     name: 'Ibadan Electric', 
-    logoLocal: require('../../../assets/images/ibedc.jpg'), // LOCAL for UI display
-    logoUrl: `${IMAGE_BASE_URL}/ibedc.jpg`, // URL for backend
+    logoLocal: require('../../../assets/images/ibedc.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/ibedc.jpg`,
     serviceID: 'ibadan-electric'
   },
   { 
     id: 'aedc', 
     name: 'Abuja Electric', 
-    logoLocal: require('../../../assets/images/aedc.jpg'), // LOCAL for UI display
-    logoUrl: `${IMAGE_BASE_URL}/aedc.jpg`, // URL for backend
+    logoLocal: require('../../../assets/images/aedc.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/aedc.jpg`,
     serviceID: 'abuja-electric'
   },
 ];
@@ -93,6 +94,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validating, setValidating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -175,7 +177,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
   // Amount selection handler
   const handleAmountSelect = (selectedAmount: string) => {
     setAmount(selectedAmount);
-    setCustomAmount(''); // Clear custom amount if preset is selected
+    setCustomAmount('');
     clearFieldError('amount');
 
     // Calculate commission
@@ -184,16 +186,13 @@ export default function Electricity({ navigation }: { navigation: any }) {
 
   // Custom amount input handler
   const handleCustomAmountChange = (text: string) => {
-    // Allow only numbers and one decimal point
     const cleanedText = text.replace(/[^\d.]/g, '');
 
-    // Ensure only one decimal point
     const parts = cleanedText.split('.');
     if (parts.length > 2) {
       return;
     }
 
-    // Allow up to 2 decimal places
     if (parts[1] && parts[1].length > 2) {
       return;
     }
@@ -264,14 +263,10 @@ export default function Electricity({ navigation }: { navigation: any }) {
       console.log('Full validation response:', JSON.stringify(response, null, 2));
 
       if (response.success && response.data?.code === "000") {
-        // Success case
         if (response.data.content?.Customer_Name) {
-          // Valid meter with customer name
-          setCustomerName(response.data.content.Customer_Name);
-
-          // Store minimum purchase amount
           const apiMinAmount = parseFloat(response.data.content.Min_Purchase_Amount || '500');
           setMinPurchaseAmount(apiMinAmount);
+          setCustomerName(response.data.content.Customer_Name);
 
           setErrors(prev => {
             const newErrors = { ...prev };
@@ -280,7 +275,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
           });
           Alert.alert('Success', 'Meter validated successfully!');
         } else if (response.data.content?.error) {
-          // Warning case - ask user to confirm
           Alert.alert(
             'Meter Validation Warning',
             response.data.content.error,
@@ -300,9 +294,8 @@ export default function Electricity({ navigation }: { navigation: any }) {
                 text: 'Proceed Anyway',
                 style: 'destructive',
                 onPress: () => {
-                  // User acknowledges the warning
                   setCustomerName('Customer (Validation Warning)');
-                  setMinPurchaseAmount(500); // Default minimum
+                  setMinPurchaseAmount(500);
                   setErrors(prev => {
                     const newErrors = { ...prev };
                     delete newErrors.meterNumber;
@@ -314,9 +307,8 @@ export default function Electricity({ navigation }: { navigation: any }) {
             ]
           );
         } else {
-          // Valid meter but no specific info
           setCustomerName('Customer');
-          setMinPurchaseAmount(500); // Default minimum
+          setMinPurchaseAmount(500);
           setErrors(prev => {
             const newErrors = { ...prev };
             delete newErrors.meterNumber;
@@ -325,7 +317,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
           Alert.alert('Success', 'Meter validated successfully!');
         }
       } else {
-        // Validation failed
         const errorMessage = response.data?.response_description ||
           response.data?.content?.error ||
           response.message ||
@@ -361,7 +352,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
     if (!validation.isValid) {
       setErrors(validation.errors);
 
-      // Show first error in toast
       const firstError = Object.values(validation.errors)[0];
       if (firstError) {
         showError('Validation Error', firstError);
@@ -370,13 +360,11 @@ export default function Electricity({ navigation }: { navigation: any }) {
       return false;
     }
 
-    // Additional validation: meter must be validated
     if (!customerName) {
       showError('Error', 'Please validate your meter number first');
       return false;
     }
 
-    // Check minimum amount
     const amountValue = parseFloat(amount);
     if (amountValue < minPurchaseAmount) {
       setErrors(prev => ({
@@ -390,12 +378,22 @@ export default function Electricity({ navigation }: { navigation: any }) {
     return true;
   };
 
-  // Purchase electricity
-  const purchaseElectricity = async () => {
+  // Show confirmation modal
+  const handleProceed = () => {
     if (!validateForm()) {
-      return { success: false };
+      return;
+    }
+    
+    if (!selectedProvider) {
+      showError('Error', 'Please select a provider');
+      return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  // Purchase electricity (called from confirmation modal)
+  const purchaseElectricity = async () => {
     if (!selectedProvider) {
       showError('Error', 'Please select a provider');
       return { success: false };
@@ -412,7 +410,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         customer: meterNumber,
         type: 'Electricity',
         service_type: 'Electricity',
-        provider_logo: selectedProvider.logoUrl, // Use URL for backend
+        provider_logo: selectedProvider.logoUrl,
         name: selectedProvider.name,
         billersCode: meterNumber,
         meterType: meterType,
@@ -425,9 +423,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
       const response = await billService.purchaseData(payload);
 
       if (response.success) {
-        // Check if token is returned
         if (response.data?.token) {
-          // Set token data for display
           setTokenData({
             token: response.data.token,
             units: response.data.units || '0',
@@ -440,6 +436,17 @@ export default function Electricity({ navigation }: { navigation: any }) {
           setShowToken(true);
         } else {
           Alert.alert('Success', response.message || 'Electricity purchase successful!');
+          
+          // Reset form
+          setMeterNumber('');
+          setPhoneNumber('');
+          setAmount('');
+          setCustomAmount('');
+          setSelectedProvider(null);
+          setCustomerName('');
+          setCommission(0);
+          
+          setShowConfirmModal(false);
           navigation.navigate('Tabs');
         }
         return { success: true, data: response.data };
@@ -461,7 +468,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
         });
         setErrors(apiErrors);
 
-        // Show first error in toast
         const firstError = Object.values(apiErrors)[0];
         if (firstError) {
           showError('Validation Error', firstError);
@@ -473,25 +479,84 @@ export default function Electricity({ navigation }: { navigation: any }) {
         showError('Error', errorMessage);
       }
 
+      setShowConfirmModal(false);
       return { success: false, message: errorMessage };
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Proceed button handler
-  const handleProceed = async () => {
-    const result = await purchaseElectricity();
-    if (result.success && !showToken) {
-      // Reset form if no token display
-      setMeterNumber('');
-      setPhoneNumber('');
-      setAmount('');
-      setCustomAmount('');
-      setSelectedProvider(null);
-      setCustomerName('');
-      setCommission(0);
+  // Prepare details for confirmation modal
+  const getConfirmationDetails = (): PurchaseDetail[] => {
+    const details: PurchaseDetail[] = [];
+    
+    // if (selectedProvider) {
+    //   details.push({
+    //     label: 'Provider',
+    //     value: selectedProvider.name,
+    //     icon: 'flash-outline',
+    //     iconColor: '#64748B',
+    //     customComponent: (
+    //       <View style={styles.providerValueContainer}>
+    //         {selectedProvider.logoLocal && (
+    //           <Image 
+    //             source={selectedProvider.logoLocal} 
+    //             style={styles.providerLogoSmall}
+    //             resizeMode="contain"
+    //           />
+    //         )}
+    //         <Text style={styles.providerValueText}>{selectedProvider.name}</Text>
+    //       </View>
+    //     ),
+    //   });
+    // }
+    
+    details.push({
+      label: 'Meter Type',
+      value: meterType === 'prepaid' ? 'Prepaid' : 'Postpaid',
+      icon: meterType === 'prepaid' ? 'battery-charging-outline' : 'receipt-outline',
+      iconColor: '#64748B',
+    });
+    
+    if (meterNumber) {
+      details.push({
+        label: 'Meter Number',
+        value: meterNumber,
+        icon: 'home-outline',
+        iconColor: '#64748B',
+      });
     }
+    
+    if (customerName) {
+      details.push({
+        label: 'Customer Name',
+        value: customerName,
+        icon: customerName === 'Customer (Validation Warning)' ? 'warning-outline' : 'person-outline',
+        iconColor: customerName === 'Customer (Validation Warning)' ? '#F59E0B' : '#64748B',
+        valueColor: customerName === 'Customer (Validation Warning)' ? '#F59E0B' : '#0F172A',
+      });
+    }
+    
+    if (phoneNumber) {
+      details.push({
+        label: 'Phone Number',
+        value: phoneNumber,
+        icon: 'call-outline',
+        iconColor: '#64748B',
+      });
+    }
+    
+    if (amount) {
+      details.push({
+        label: 'Amount',
+        value: `₦${formatAmount(amount)}`,
+        icon: 'cash-outline',
+        iconColor: '#64748B',
+        valueColor: '#10B981',
+      });
+    }
+    
+    return details;
   };
 
   // Handle closing token display
@@ -506,6 +571,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
     setSelectedProvider(null);
     setCustomerName('');
     setCommission(0);
+    setShowConfirmModal(false);
     navigation.navigate('Tabs');
   };
 
@@ -545,7 +611,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
               >
                 <View style={styles.providerLogoContainer}>
                   <Image
-                    source={provider.logoLocal} // Use local image for display
+                    source={provider.logoLocal}
                     style={styles.providerLogo}
                     resizeMode="contain"
                   />
@@ -595,7 +661,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Meter Number</Text>
-            <TouchableOpacity onPress={() => { /* Implement beneficiary selection */ }}>
+            <TouchableOpacity onPress={() => { }}>
               <Text style={styles.beneficiaryLink}>Choose from saved</Text>
             </TouchableOpacity>
           </View>
@@ -784,7 +850,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
             <Text style={styles.proceedButtonText}>
               {!customerName ? 'Validate Meter First' :
                 customerName === 'Customer (Validation Warning)' ? 'Proceed with Unverified Meter' :
-                  'Buy Electricity'}
+                  'Proceed to Buy'}
             </Text>
           )}
         </TouchableOpacity>
@@ -800,6 +866,26 @@ export default function Electricity({ navigation }: { navigation: any }) {
         </View>
         <View style={{ height: 320 }} />
       </ScrollView>
+
+      {/* Confirmation Modal */}
+      <ConfirmPurchaseModal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={purchaseElectricity}
+        title="Confirm Electricity Purchase"
+        providerLogo={selectedProvider?.logoLocal}
+        providerName={selectedProvider?.name}
+        details={getConfirmationDetails()}
+        amount={parseFloat(amount) || 0}
+        commission={commission}
+        loading={isSubmitting}
+        confirmButtonText={meterType === 'prepaid' ? 'Buy Electricity Token' : 'Pay Electricity Bill'}
+        infoNote={
+          meterType === 'prepaid' 
+            ? 'Electricity token will be generated instantly after successful payment' 
+            : 'Postpaid bill payment will be processed within 24 hours'
+        }
+      />
 
       {/* Token Display Modal */}
       {tokenData && (
@@ -1088,7 +1174,6 @@ const styles = StyleSheet.create({
     color: '#F59E0B',
     marginLeft: 6,
   },
-  // Commission styles
   commissionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1155,5 +1240,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 20,
     marginTop: 16,
+  },
+  // Add these new styles for the custom component
+  providerValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  providerLogoSmall: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    borderRadius: 10,
+  },
+  providerValueText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    color: '#0F172A',
   },
 });

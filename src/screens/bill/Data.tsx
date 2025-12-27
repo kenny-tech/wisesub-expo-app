@@ -315,26 +315,26 @@ export default function Data({ navigation }: { navigation: any }) {
   const getConfirmationDetails = (): PurchaseDetail[] => {
     const details: PurchaseDetail[] = [];
     
-    if (selectedNetwork) {
-      details.push({
-        label: 'Network',
-        value: selectedNetwork.name,
-        icon: 'cellular-outline',
-        iconColor: '#64748B',
-        customComponent: (
-          <View style={styles.networkValueContainer}>
-            {selectedNetwork.logoLocal && (
-              <Image 
-                source={selectedNetwork.logoLocal} 
-                style={styles.networkLogoSmall}
-                resizeMode="contain"
-              />
-            )}
-            <Text style={styles.networkValueText}>{selectedNetwork.name}</Text>
-          </View>
-        ),
-      });
-    }
+    // if (selectedNetwork) {
+    //   details.push({
+    //     label: 'Network',
+    //     value: selectedNetwork.name,
+    //     icon: 'cellular-outline',
+    //     iconColor: '#64748B',
+    //     customComponent: (
+    //       <View style={styles.networkValueContainer}>
+    //         {selectedNetwork.logoLocal && (
+    //           <Image 
+    //             source={selectedNetwork.logoLocal} 
+    //             style={styles.networkLogoSmall}
+    //             resizeMode="contain"
+    //           />
+    //         )}
+    //         <Text style={styles.networkValueText}>{selectedNetwork.name}</Text>
+    //       </View>
+    //     ),
+    //   });
+    // }
     
     if (selectedPlan) {
       details.push({
