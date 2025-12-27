@@ -65,7 +65,6 @@ export default function Rewards({ navigation }: { navigation: any }) {
       setCommissionsError(null);
 
       const response = await walletService.getCommissions({ limit: 20 });
-      console.log(response.data);
       
       if (response.success) {
         setCommissions(response.data);
