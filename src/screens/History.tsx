@@ -9,36 +9,121 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-type Transaction = {
-  id: number;
-  type: string;
-  created_at: string;
-  amount: string;
-  provider_logo?: string;
-};
-
-const mockTransactions: Transaction[] = [
-  { id: 1, type: "Wallet Top-up", created_at: new Date().toISOString(), amount: "5000.00" },
-  { id: 2, type: "Data Purchase", created_at: new Date().toISOString(), amount: "1000.00" },
-  { id: 3, type: "Airtime Purchase", created_at: new Date().toISOString(), amount: "500.00" },
-  { id: 4, type: "Commission", created_at: new Date().toISOString(), amount: "250.00" },
-];
+import { Transaction, walletService } from "../services/walletService";
 
 export default function History({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState<boolean>(false);
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState<boolean>(false);
+  const [transactionsError, setTransactionsError] = useState<string | null>(null);
+
+  const fetchTransactions = async () => {
+    try {
+      setTransactionsLoading(true);
+      setTransactionsError(null);
+
+      const response = await walletService.getTransactions({ limit: 20 });
+
+      if (response.success) {
+        setTransactions(response.data);
+      } else {
+        setTransactionsError(response.message || 'Failed to fetch transactions');
+      }
+    } catch (error: any) {
+      console.error('Transactions error:', error);
+      setTransactionsError(error.message || 'Failed to fetch transactions');
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  const fetchAllData = async () => {
+    await Promise.all([fetchTransactions()]);
+  };
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      const t = setTimeout(() => {
-        setTransactions(mockTransactions);
-        setLoading(false);
-      }, 1000);
-      return () => clearTimeout(t);
+      fetchAllData();
     }, [])
   );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchAllData();
+    setRefreshing(false);
+  };
+
+  const getTransactionIcon = (transaction: Transaction) => {
+    const isCredit = [
+      'Fund Wallet',
+      'Commission',
+      'Referral Commission',
+      'Refund'
+    ].includes(transaction.name);
+
+    if (isCredit) {
+      return (
+        <View style={[styles.transactionIcon, styles.creditIcon]}>
+          <Ionicons name="arrow-down" size={20} color="#10B981" />
+        </View>
+      );
+    } else {
+      return (
+        <View style={[styles.transactionIcon, styles.debitIcon]}>
+          <Ionicons name="arrow-up" size={20} color="#EF4444" />
+        </View>
+      );
+    }
+  };
+
+  const getTransactionDescription = (transaction: Transaction) => {
+    if (transaction.name === "Commission") {
+      return `Bonus from ${transaction.type} purchase`;
+    } else if (transaction.name === "Fund Wallet") {
+      return "Wallet Funded";
+    } else {
+      let description = transaction.name;
+      if (transaction.type) description += ` ${transaction.type}`;
+      if (transaction.customer) description += ` — ${transaction.customer}`;
+
+      return description;
+    }
+  };
+
+  const renderTransaction = ({ item }: { item: Transaction }) => {
+    const isCredit = [
+      'Fund Wallet',
+      'Commission',
+      'Referral Commission',
+      'Refund'
+    ].includes(item.name);
+
+    return (
+      <TouchableOpacity
+        style={styles.transactionItem}
+        onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
+      >
+        <View style={styles.transactionLeft}>
+          {getTransactionIcon(item)}
+          <View style={styles.transactionDetails}>
+            <Text style={styles.transactionTitle} numberOfLines={1}>
+              {getTransactionDescription(item)}
+            </Text>
+            <Text style={styles.transactionDate}>
+              {formatDate(item.created_at)}
+            </Text>
+          </View>
+        </View>
+        <Text style={[
+          styles.transactionAmount,
+          isCredit ? styles.amountCredit : styles.amountDebit
+        ]}>
+          {isCredit ? '+' : '-'}₦{formatAmount(item.amount)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   const formatAmount = (amt: string) =>
     parseFloat(amt || "0").toLocaleString("en-US", {
@@ -54,36 +139,6 @@ export default function History({ navigation }: { navigation: any }) {
     });
   };
 
-  const renderTransaction = ({ item }: { item: Transaction }) => {
-    const isCredit = item.type === "Wallet Top-up" ||
-      item.type === "Commission" ||
-      item.type === "Referral Commission" ||
-      item.type === "Refund";
-
-    return (
-      <View style={styles.transactionItem}>
-        <View style={styles.transactionLeft}>
-          <View style={[styles.transactionIcon, isCredit ? styles.creditIcon : styles.debitIcon]}>
-            <Ionicons
-              name={isCredit ? "arrow-down" : "arrow-up"}
-              size={16}
-              color={isCredit ? "#10B981" : "#EF4444"}
-            />
-          </View>
-          <View style={styles.transactionDetails}>
-            <Text style={styles.transactionTitle}>
-              {item.type === "Wallet Top-up" ? "Wallet Funded" : item.type}
-            </Text>
-            <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
-          </View>
-        </View>
-        <Text style={[styles.transactionAmount, isCredit ? styles.amountCredit : styles.amountDebit]}>
-          {isCredit ? "+" : "-"}₦{formatAmount(item.amount)}
-        </Text>
-      </View>
-    );
-  };
-
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -91,6 +146,68 @@ export default function History({ navigation }: { navigation: any }) {
       </View>
     );
   }
+
+  // Determine what to render based on state
+  const renderContent = () => {
+    if (transactionsLoading && transactions.length === 0) {
+      return (
+        <View style={styles.empty}>
+          <ActivityIndicator size="large" color="#1F54DD" />
+          <Text style={styles.emptyText}>Loading transactions...</Text>
+        </View>
+      );
+    }
+
+    if (transactionsError && transactions.length === 0) {
+      return (
+        <View style={styles.empty}>
+          <Ionicons name="alert-circle" size={48} color="#EF4444" />
+          <Text style={[styles.emptyText, { color: '#EF4444' }]}>
+            {transactionsError}
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchTransactions}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (transactions.length === 0) {
+      return (
+        <View style={styles.empty}>
+          <Ionicons name="receipt-outline" size={64} color="#94A3B8" />
+          <Text style={styles.emptyTitle}>No Transaction Yet</Text>
+          <Text style={styles.emptyDescription}>
+            Get started by making transactions to track your financial activities!
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={transactions}
+        renderItem={renderTransaction}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={() => (
+          transactionsLoading && transactions.length > 0 ? (
+            <View style={styles.loadingMore}>
+              <ActivityIndicator size="small" color="#1F54DD" />
+              <Text style={styles.loadingMoreText}>Updating...</Text>
+            </View>
+          ) : null
+        )}
+      />
+    );
+  };
 
   return (
     <View style={styles.screen}>
@@ -102,23 +219,7 @@ export default function History({ navigation }: { navigation: any }) {
         <View style={styles.placeholder} />
       </View>
 
-      <FlatList
-        data={transactions}
-        renderItem={renderTransaction}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="receipt-outline" size={64} color="#94A3B8" />
-            <Text style={styles.emptyTitle}>No Transaction Yet</Text>
-            <Text style={styles.emptyDescription}>
-              Get started by making transactions to track your financial activities!
-            </Text>
-          </View>
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      {renderContent()}
     </View>
   );
 }
@@ -220,6 +321,7 @@ const styles = StyleSheet.create({
     color: "#EF4444"
   },
   empty: {
+    flex: 1,
     padding: 40,
     alignItems: "center",
     justifyContent: "center",
@@ -237,5 +339,35 @@ const styles = StyleSheet.create({
     color: "#64748B",
     textAlign: "center",
     lineHeight: 20,
+  },
+  emptyText: {
+    color: "#94A3B8",
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    marginTop: 8,
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#1F54DD",
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold",
+  },
+  loadingMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  loadingMoreText: {
+    marginLeft: 8,
+    color: '#64748B',
+    fontSize: 12,
+    fontFamily: "Poppins-Regular",
   },
 });

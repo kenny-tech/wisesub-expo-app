@@ -1,3 +1,4 @@
+import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { DataPlanModal } from '@/src/components/bills/DataPlanModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
@@ -26,8 +27,8 @@ const NETWORKS = [
   { 
     id: 'mtn', 
     name: 'MTN', 
-    logo: `${IMAGE_BASE_URL}/mtn.png`, // Use URL instead of require
-    logoLocal: require('../../../assets/images/mtn.png') // Keep local for display
+    logo: `${IMAGE_BASE_URL}/mtn.png`,
+    logoLocal: require('../../../assets/images/mtn.png')
   },
   { 
     id: 'airtel', 
@@ -56,14 +57,15 @@ const NETWORK_OPTIONS = NETWORKS.map(network => ({
   serviceID: network.id === 'mtn' ? 'mtn-data' :
     network.id === 'airtel' ? 'airtel-data' :
       network.id === 'glo' ? 'glo-data' : 'etisalat-data',
-  logo: network.logo, // URL for backend
-  logoLocal: network.logoLocal, // Local image for display
+  logo: network.logo,
+  logoLocal: network.logoLocal,
 }));
 
 export default function Data({ navigation }: { navigation: any }) {
   // State
   const [phone, setPhone] = useState('');
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
@@ -125,7 +127,7 @@ export default function Data({ navigation }: { navigation: any }) {
     setSelectedPlan(null);
     setDataPlans([]);
     clearFieldError('network');
-    setCommission(0); // Reset commission when network changes
+    setCommission(0);
 
     // Fetch data plans for the selected network
     await fetchDataPlans(network.serviceID);
@@ -142,15 +144,12 @@ export default function Data({ navigation }: { navigation: any }) {
     try {
       const response = await billService.getDataPlans(serviceID);
 
-      // Check if success is true and we have variations data
       if (response.success && response.content?.varations) {
-        // Extract validity from plan name (e.g., "N100 100MB - 24 hrs" -> "24 hrs")
         const extractValidity = (name: string) => {
           const match = name.match(/- (\d+ (hrs|days|Month|Months|Year))$/i);
           return match ? match[1] : '';
         };
 
-        // Map the variations to our DataPlan structure
         const plans = response.content.varations.map((plan: any) => {
           const validity = extractValidity(plan.name);
           return {
@@ -163,7 +162,6 @@ export default function Data({ navigation }: { navigation: any }) {
         });
         setDataPlans(plans);
       } else if (response.success && response.content?.varations) {
-        // Fallback to check variations (with correct spelling)
         const plans = response.content.varations.map((plan: any) => ({
           variation_code: plan.variation_code || '',
           name: plan.name || '',
@@ -186,12 +184,10 @@ export default function Data({ navigation }: { navigation: any }) {
 
   // Data plan selection handler
   const handlePlanSelect = (plan: DataPlan) => {
-    console.log('Selected data plan:', plan);
     setSelectedPlan(plan);
     clearFieldError('plan');
-    setShowPlanModal(false); // Close modal after selection
+    setShowPlanModal(false);
     
-    // Calculate commission for the selected plan
     calculateCommissionForPlan(Number(plan.variation_amount));
   };
 
@@ -214,7 +210,6 @@ export default function Data({ navigation }: { navigation: any }) {
     if (!validation.isValid) {
       setErrors(validation.errors);
 
-      // Show first error in toast
       const firstError = Object.values(validation.errors)[0];
       if (firstError) {
         showError('Validation Error', firstError);
@@ -226,12 +221,22 @@ export default function Data({ navigation }: { navigation: any }) {
     return true;
   };
 
-  // Purchase data
-  const purchaseData = async () => {
+  // Show confirmation modal
+  const handleProceed = () => {
     if (!validateForm()) {
-      return { success: false };
+      return;
+    }
+    
+    if (!selectedNetwork || !selectedPlan) {
+      showError('Error', 'Please select both network and data plan');
+      return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  // Purchase data (called from confirmation modal)
+  const purchaseData = async () => {
     if (!selectedNetwork || !selectedPlan) {
       showError('Error', 'Please select both network and data plan');
       return { success: false };
@@ -246,12 +251,11 @@ export default function Data({ navigation }: { navigation: any }) {
         customer: phone,
         type: 'Data',
         service_type: 'Data',
-        provider_logo: selectedNetwork.logo, // Send URL to backend
+        provider_logo: selectedNetwork.logo,
         name: selectedPlan.name,
         billersCode: phone,
         phone: phone,
         amount: parseFloat(selectedPlan.variation_amount.toString()),
-        // Include network info for better tracking
         network: selectedNetwork.value,
         network_name: selectedNetwork.name,
       };
@@ -259,8 +263,16 @@ export default function Data({ navigation }: { navigation: any }) {
       const response = await billService.purchaseData(payload);
 
       if (response.success) {
-        // Alert.alert('Success', response.message || 'Data purchase successful!');
         showSuccess('Success', response.message || 'Data purchase successful!');
+        
+        // Reset form
+        setPhone('');
+        setSelectedPlan(null);
+        setSelectedNetwork(null);
+        setDataPlans([]);
+        setCommission(0);
+        
+        setShowConfirmModal(false);
         navigation.navigate('Tabs');
         return { success: true, data: response.data };
       } else {
@@ -281,7 +293,6 @@ export default function Data({ navigation }: { navigation: any }) {
         });
         setErrors(apiErrors);
 
-        // Show first error in toast
         const firstError = Object.values(apiErrors)[0];
         if (firstError) {
           showError('Validation Error', firstError);
@@ -293,23 +304,67 @@ export default function Data({ navigation }: { navigation: any }) {
         showError('Error', errorMessage);
       }
 
+      setShowConfirmModal(false);
       return { success: false, message: errorMessage };
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Proceed button handler
-  const handleProceed = async () => {
-    const result = await purchaseData();
-    if (result.success) {
-      // Reset form
-      setPhone('');
-      setSelectedPlan(null);
-      setSelectedNetwork(null);
-      setDataPlans([]);
-      setCommission(0);
+  // Prepare details for confirmation modal
+  const getConfirmationDetails = (): PurchaseDetail[] => {
+    const details: PurchaseDetail[] = [];
+    
+    if (selectedNetwork) {
+      details.push({
+        label: 'Network',
+        value: selectedNetwork.name,
+        icon: 'cellular-outline',
+        iconColor: '#64748B',
+        customComponent: (
+          <View style={styles.networkValueContainer}>
+            {selectedNetwork.logoLocal && (
+              <Image 
+                source={selectedNetwork.logoLocal} 
+                style={styles.networkLogoSmall}
+                resizeMode="contain"
+              />
+            )}
+            <Text style={styles.networkValueText}>{selectedNetwork.name}</Text>
+          </View>
+        ),
+      });
     }
+    
+    if (selectedPlan) {
+      details.push({
+        label: 'Data Plan',
+        value: selectedPlan.name,
+        icon: 'layers-outline',
+        iconColor: '#64748B',
+        valueColor: '#0F172A',
+      });
+    }
+    
+    if (phone) {
+      details.push({
+        label: 'Phone Number',
+        value: phone,
+        icon: 'call-outline',
+        iconColor: '#64748B',
+      });
+    }
+    
+    if (selectedPlan?.validity) {
+      details.push({
+        label: 'Validity',
+        value: selectedPlan.validity,
+        icon: 'time-outline',
+        iconColor: '#64748B',
+      });
+    }
+    
+    return details;
   };
 
   // Handle opening the data plan modal
@@ -349,7 +404,7 @@ export default function Data({ navigation }: { navigation: any }) {
               >
                 <View style={styles.networkLogoContainer}>
                   <Image
-                    source={network.logoLocal} // Use local image for display
+                    source={network.logoLocal}
                     style={styles.networkLogo}
                     resizeMode="contain"
                   />
@@ -431,7 +486,6 @@ export default function Data({ navigation }: { navigation: any }) {
                 ₦{formatAmount(selectedPlan.variation_amount)}
               </Text>
             </View>
-            {/* Commission Display - Similar to web app */}
             {commission > 0 && (
               <View style={styles.commissionContainer}>
                 <Text style={styles.commissionText}>
@@ -488,18 +542,11 @@ export default function Data({ navigation }: { navigation: any }) {
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text style={styles.proceedButtonText}>
-              {selectedPlan ? 'Buy Now' : 'Select Plan First'}
+              {selectedPlan ? 'Proceed to Buy' : 'Select Plan First'}
             </Text>
           )}
         </TouchableOpacity>
 
-        {/* Additional Info */}
-        {/* <View style={styles.infoSection}>
-          <Ionicons name="information-circle-outline" size={20} color="#64748B" />
-          <Text style={styles.infoText}>
-            Data will be delivered to the phone number within 1-3 minutes after successful payment
-          </Text>
-        </View> */}
         <View style={{ height: 320 }} />
       </ScrollView>
 
@@ -511,6 +558,22 @@ export default function Data({ navigation }: { navigation: any }) {
         selectedPlan={selectedPlan}
         onSelectPlan={handlePlanSelect}
         loading={loading}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmPurchaseModal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={purchaseData}
+        title="Confirm Data Purchase"
+        providerLogo={selectedNetwork?.logoLocal}
+        providerName={selectedNetwork?.name}
+        details={getConfirmationDetails()}
+        amount={selectedPlan ? parseFloat(selectedPlan.variation_amount.toString()) : 0}
+        commission={commission}
+        loading={isSubmitting}
+        confirmButtonText="Buy Data"
+        infoNote="Data will be delivered within 1-3 minutes after successful payment"
       />
     </View>
   );
@@ -696,7 +759,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
     color: '#10B981',
   },
-  // Commission styles
   commissionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -766,5 +828,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 20,
     marginTop: 16,
+  },
+  // Add these new styles for the custom component
+  networkValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  networkLogoSmall: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    borderRadius: 10,
+  },
+  networkValueText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    color: '#0F172A',
   },
 });
