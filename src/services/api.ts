@@ -2,8 +2,8 @@ import axios from 'axios';
 import { getHeaders } from '../utils/headers';
 
 // Base API URL
-export const BASE_API = 'https://2d241660cd76.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL = 'https://2d241660cd76.ngrok-free.app/images';
+export const BASE_API = 'https://4519ae74ffb9.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL = 'https://4519ae74ffb9.ngrok-free.app/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
 // Create axios instance
@@ -45,6 +45,7 @@ export const API_ENDPOINTS = {
 
   // Transaction endpoints
   TRANSACTIONS: 'user/transaction/get_user_transactions',
+  COMMISSION_TOTAL: 'user/transaction/sum_user_transaction_by_type',
 
   // Profile endpoints
   GET_PROFILE: 'profile',

@@ -74,6 +74,22 @@ export interface CardPaymentResponse {
   };
 }
 
+export interface CommissionTotal {
+  type: string;
+  total_amount: string;
+  transaction_count: number;
+}
+
+export interface CommissionTotalsResponse {
+  success: boolean;
+  data: CommissionTotal[];
+  message?: string;
+}
+
+export interface CommissionTotalsParams {
+  type?: 'COMMISSION' | 'REFERRAL_COMMISSION' | string;
+}
+
 class WalletService {
   async getWalletBalance(): Promise<WalletBalanceResponse> {
     try {
@@ -98,6 +114,38 @@ class WalletService {
       this.handleApiError(error);
     }
   }
+
+  async getCommissionTotals(params?: CommissionTotalsParams): Promise<CommissionTotalsResponse> {
+    try {
+      const response = await api.get<CommissionTotalsResponse>(
+        API_ENDPOINTS.COMMISSION_TOTAL,
+        {
+          params: {
+            type: params?.type || 'COMMISSION',
+          }
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      this.handleApiError(error);
+    }
+  }
+
+  async getCommissions(params?: TransactionsParams): Promise<TransactionsResponse> {
+    try {
+      const response = await api.get<TransactionsResponse>(API_ENDPOINTS.TRANSACTIONS, {
+        params: {
+          limit: params?.limit || 20,
+          page: params?.page || 1,
+          type: 'COMMISSION',
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      this.handleApiError(error);
+    }
+  }
+
 
   async generateBankTransfer(data: BankTransferRequest): Promise<BankTransferResponse> {
     try {
