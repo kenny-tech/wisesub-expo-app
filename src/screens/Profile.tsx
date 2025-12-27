@@ -11,16 +11,13 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { useProfile } from "../redux/hooks/useProfile";
 
 export default function Profile({ navigation }: { navigation: any }) {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Mock user data - replace with actual user data from your state
-  const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-  };
+  const { user } = useProfile();
 
   const handleLogoutModal = () => setIsLogoutModalVisible(() => !isLogoutModalVisible);
 
@@ -79,7 +76,7 @@ export default function Profile({ navigation }: { navigation: any }) {
       visible={isLogoutModalVisible}
       onRequestClose={handleLogoutModal}
     >
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
         onPressOut={handleLogoutModal}
@@ -100,7 +97,7 @@ export default function Profile({ navigation }: { navigation: any }) {
 
           {/* Buttons */}
           <View style={styles.modalButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.modalButton, styles.cancelButton]}
               onPress={handleLogoutModal}
               disabled={loading}
@@ -108,7 +105,7 @@ export default function Profile({ navigation }: { navigation: any }) {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.modalButton, styles.logoutButton]}
               onPress={handleLogout}
               disabled={loading}

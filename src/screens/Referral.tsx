@@ -11,7 +11,8 @@ import {
     View,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import Toast from 'react-native-toast-message';
+import { useProfile } from "../redux/hooks/useProfile";
+import { showSuccess } from "../utils/toast";
 
 // Mock data - replace with your actual API calls and user context
 const mockReferralData = {
@@ -25,6 +26,8 @@ export default function Referral({ navigation }: { navigation: any }) {
     const [referralEarnings, setReferralEarnings] = useState<string>("0.00");
     const [referralCount, setReferralCount] = useState<number>(0);
     const [referralCode, setReferralCode] = useState<string>("");
+
+    const { user } = useProfile();
 
     useFocusEffect(
         useCallback(() => {
@@ -41,18 +44,17 @@ export default function Referral({ navigation }: { navigation: any }) {
     );
 
     const copyToClipboard = async () => {
-        await Clipboard.setStringAsync(referralCode);
-        Toast.show({
-            type: 'success',
-            text1: 'Copied!',
-            text2: 'Referral code copied to clipboard.'
-        });
+        await Clipboard.setStringAsync(user?.referral_code);
+        showSuccess(
+            'Copied',
+            'Referral code copied to clipboard.'
+        );
     };
 
     const onShare = async () => {
         try {
             await Share.share({
-                message: `Join me using my referral code: ${referralCode}`,
+                message: `Join me using my referral code: ${user?.referral_code}`,
             });
         } catch (error: any) {
             Alert.alert('Error', error.message);
@@ -113,7 +115,7 @@ export default function Referral({ navigation }: { navigation: any }) {
 
                         <View style={styles.referralInputContainer}>
                             <View style={styles.referralInput}>
-                                <Text style={styles.referralCodeText}>{referralCode}</Text>
+                                <Text style={styles.referralCodeText}>{user?.referral_code}</Text>
                             </View>
                             <TouchableOpacity onPress={copyToClipboard} style={styles.copyButton}>
                                 <Ionicons name="copy" size={20} color="#64748B" />

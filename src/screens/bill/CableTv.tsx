@@ -1,4 +1,5 @@
 import { CablePlanModal } from '@/src/components/bills/CablePlanModal';
+import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
@@ -66,6 +67,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -147,7 +149,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
 
     setLoading(true);
     try {
-      const response = await billService.getDataPlans(serviceID); // Using same endpoint as data
+      const response = await billService.getDataPlans(serviceID);
 
       if (response.success && response.content?.varations) {
         const plans = response.content.varations.map((plan: any) => ({
@@ -183,7 +185,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
   // Decoder number change handler
   const handleDecoderChange = (text: string) => {
     setDecoderNumber(text);
-    setCustomerName(''); // Clear customer name when decoder changes
+    setCustomerName('');
     if (errors.decoderNumber) {
       clearFieldError('decoderNumber');
     }
@@ -217,7 +219,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
     }
 
     setValidating(true);
-    setCustomerName(''); // Clear any existing customer name
+    setCustomerName('');
 
     try {
       const response = await billService.validateDecoder({
@@ -228,10 +230,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
       console.log('Validation response:', response);
 
       if (response.success && response.data?.code === "000") {
-        // Check if there's an error message in content
         if (response.data.content?.error) {
-          // This is a special case: API returns success but with error message
-          // Ask user to confirm if they want to proceed
           Alert.alert(
             'Decoder Validation',
             response.data.content.error,
@@ -248,7 +247,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
                 text: 'Proceed Anyway',
                 style: 'destructive',
                 onPress: () => {
-                  // User wants to proceed despite the warning
                   setCustomerName('Customer (Unverified)');
                   setErrors(prev => {
                     const newErrors = { ...prev };
@@ -261,7 +259,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
             ]
           );
         } else if (response.data.content?.Customer_Name) {
-          // Valid decoder with customer name
           setCustomerName(response.data.content.Customer_Name);
           setErrors(prev => {
             const newErrors = { ...prev };
@@ -270,7 +267,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
           });
           Alert.alert('Success', 'Decoder number validated successfully!');
         } else {
-          // Valid decoder but no customer name
           setCustomerName('Customer');
           setErrors(prev => {
             const newErrors = { ...prev };
@@ -280,7 +276,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
           Alert.alert('Success', 'Decoder number validated successfully!');
         }
       } else {
-        // Validation failed
         const errorMessage = response.data?.content?.error ||
           response.message ||
           'Invalid decoder number';
@@ -315,7 +310,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
     if (!validation.isValid) {
       setErrors(validation.errors);
 
-      // Show first error in toast
       const firstError = Object.values(validation.errors)[0];
       if (firstError) {
         showError('Validation Error', firstError);
@@ -324,8 +318,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
       return false;
     }
 
-    // Additional validation: decoder must be validated
-    // But we allow proceeding even with warning (when customerName is "Customer (Unverified)")
     if (!customerName) {
       showError('Error', 'Please validate your decoder number first');
       return false;
@@ -334,12 +326,22 @@ export default function CableTv({ navigation }: { navigation: any }) {
     return true;
   };
 
-  // Purchase cable subscription
-  const purchaseCable = async () => {
+  // Show confirmation modal
+  const handleProceed = () => {
     if (!validateForm()) {
-      return { success: false };
+      return;
+    }
+    
+    if (!selectedProvider || !selectedPlan) {
+      showError('Error', 'Please select both provider and cable plan');
+      return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  // Purchase cable subscription (called from confirmation modal)
+  const purchaseCable = async () => {
     if (!selectedProvider || !selectedPlan) {
       showError('Error', 'Please select both provider and cable plan');
       return { success: false };
@@ -361,7 +363,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
         phone: phoneNumber,
         subscription_type: subscriptionType,
         customer_name: customerName,
-        // Add validation status
         validation_status: customerName === 'Customer (Unverified)' ? 'warning' : 'validated',
         validation_message: customerName === 'Customer (Unverified)' ? 'Decoder may be invalid, user confirmed' : 'Validated successfully',
       };
@@ -371,9 +372,18 @@ export default function CableTv({ navigation }: { navigation: any }) {
       const response = await billService.purchaseData(payload);
 
       if (response.success) {
-        // Alert.alert('Success', response.message || 'Cable subscription successful!');
         showSuccess('Success', response.message || 'Cable subscription successful!');
-      
+        
+        // Reset form
+        setDecoderNumber('');
+        setPhoneNumber('');
+        setAmount('');
+        setSelectedPlan(null);
+        setSelectedProvider(null);
+        setCustomerName('');
+        setCommission(0);
+        
+        setShowConfirmModal(false);
         navigation.navigate('Tabs');
         return { success: true, data: response.data };
       } else {
@@ -394,7 +404,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
         });
         setErrors(apiErrors);
 
-        // Show first error in toast
         const firstError = Object.values(apiErrors)[0];
         if (firstError) {
           showError('Validation Error', firstError);
@@ -406,25 +415,84 @@ export default function CableTv({ navigation }: { navigation: any }) {
         showError('Error', errorMessage);
       }
 
+      setShowConfirmModal(false);
       return { success: false, message: errorMessage };
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Proceed button handler
-  const handleProceed = async () => {
-    const result = await purchaseCable();
-    if (result.success) {
-      // Reset form
-      setDecoderNumber('');
-      setPhoneNumber('');
-      setAmount('');
-      setSelectedPlan(null);
-      setSelectedProvider(null);
-      setCustomerName('');
-      setCommission(0);
+  // Prepare details for confirmation modal
+  const getConfirmationDetails = (): PurchaseDetail[] => {
+    const details: PurchaseDetail[] = [];
+    
+    // if (selectedProvider) {
+    //   details.push({
+    //     label: 'Provider',
+    //     value: selectedProvider.name,
+    //     icon: 'tv-outline',
+    //     iconColor: '#64748B',
+    //     customComponent: (
+    //       <View style={styles.providerValueContainer}>
+    //         {selectedProvider.logoLocal && (
+    //           <Image 
+    //             source={selectedProvider.logoLocal} 
+    //             style={styles.providerLogoSmall}
+    //             resizeMode="contain"
+    //           />
+    //         )}
+    //         <Text style={styles.providerValueText}>{selectedProvider.name}</Text>
+    //       </View>
+    //     ),
+    //   });
+    // }
+    
+    if (selectedPlan) {
+      details.push({
+        label: 'Cable Plan',
+        value: selectedPlan.name,
+        icon: 'layers-outline',
+        iconColor: '#64748B',
+        valueColor: '#0F172A',
+      });
     }
+    
+    details.push({
+      label: 'Subscription Type',
+      value: subscriptionType === 'renewal' ? 'Renewal' : 'Change Package',
+      icon: 'repeat-outline',
+      iconColor: '#64748B',
+    });
+    
+    if (decoderNumber) {
+      details.push({
+        label: 'Decoder Number',
+        value: decoderNumber,
+        icon: 'hardware-chip-outline',
+        iconColor: '#64748B',
+      });
+    }
+    
+    if (customerName) {
+      details.push({
+        label: 'Customer Name',
+        value: customerName,
+        icon: customerName === 'Customer (Unverified)' ? 'warning-outline' : 'person-outline',
+        iconColor: customerName === 'Customer (Unverified)' ? '#F59E0B' : '#64748B',
+        valueColor: customerName === 'Customer (Unverified)' ? '#F59E0B' : '#0F172A',
+      });
+    }
+    
+    if (phoneNumber) {
+      details.push({
+        label: 'Phone Number',
+        value: phoneNumber,
+        icon: 'call-outline',
+        iconColor: '#64748B',
+      });
+    }
+    
+    return details;
   };
 
   // Handle opening the cable plan modal
@@ -583,7 +651,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
                 ₦{formatAmount(amount)}
               </Text>
             </View>
-            {/* Commission Display */}
             {commission > 0 && (
               <View style={styles.commissionContainer}>
                 <Text style={styles.commissionText}>
@@ -601,7 +668,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Decoder Number</Text>
-            <TouchableOpacity onPress={() => { /* Implement beneficiary selection */ }}>
+            <TouchableOpacity onPress={() => { }}>
               <Text style={styles.beneficiaryLink}>Choose from saved</Text>
             </TouchableOpacity>
           </View>
@@ -705,18 +772,11 @@ export default function CableTv({ navigation }: { navigation: any }) {
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text style={styles.proceedButtonText}>
-              {!customerName ? 'Validate Decoder First' : 'Subscribe Now'}
+              {!customerName ? 'Validate Decoder First' : 'Proceed to Subscribe'}
             </Text>
           )}
         </TouchableOpacity>
 
-        {/* Additional Info */}
-        {/* <View style={styles.infoSection}>
-          <Ionicons name="information-circle-outline" size={20} color="#64748B" />
-          <Text style={styles.infoText}>
-            Cable subscription will be activated within 2-5 minutes after successful payment
-          </Text>
-        </View> */}
         <View style={{ height: 320 }} />
       </ScrollView>
 
@@ -729,6 +789,22 @@ export default function CableTv({ navigation }: { navigation: any }) {
         onSelectPlan={handlePlanSelect}
         loading={loading}
         providerName={selectedProvider?.name}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmPurchaseModal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={purchaseCable}
+        title="Confirm Cable TV Subscription"
+        providerLogo={selectedProvider?.logoLocal}
+        providerName={selectedProvider?.name}
+        details={getConfirmationDetails()}
+        amount={parseFloat(amount) || 0}
+        commission={commission}
+        loading={isSubmitting}
+        confirmButtonText="Subscribe Now"
+        infoNote="Cable subscription will be activated within 2-5 minutes after successful payment"
       />
     </View>
   );
@@ -983,7 +1059,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
     color: '#10B981',
   },
-  // Commission styles
   commissionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1054,5 +1129,21 @@ const styles = StyleSheet.create({
   infoIcon: {
     marginLeft: 6,
     padding: 2,
+  },
+  // Add these new styles for the custom component
+  providerValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  providerLogoSmall: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    borderRadius: 10,
+  },
+  providerValueText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    color: '#0F172A',
   },
 });

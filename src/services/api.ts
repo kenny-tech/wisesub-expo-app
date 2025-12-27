@@ -2,8 +2,8 @@ import axios from 'axios';
 import { getHeaders } from '../utils/headers';
 
 // Base API URL
-export const BASE_API = 'https://bc7300cc1b2b.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL = 'https://bc7300cc1b2b.ngrok-free.app/images';
+export const BASE_API = 'https://2d241660cd76.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL = 'https://2d241660cd76.ngrok-free.app/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
 // Create axios instance

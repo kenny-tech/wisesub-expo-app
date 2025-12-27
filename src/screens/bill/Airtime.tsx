@@ -1,3 +1,4 @@
+import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
@@ -52,8 +53,8 @@ const NETWORK_OPTIONS = NETWORKS.map(network => ({
   serviceID: network.id === 'mtn' ? 'mtn' :
     network.id === 'airtel' ? 'airtel' :
       network.id === 'glo' ? 'glo' : 'etisalat',
-  logo: network.logo, // URL for backend
-  logoLocal: network.logoLocal, // Local image for display
+  logo: network.logo,
+  logoLocal: network.logoLocal,
 }));
 
 // Predefined airtime amounts
@@ -64,6 +65,7 @@ export default function Airtime({ navigation }: { navigation: any }) {
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedNetwork, setSelectedNetwork] = useState<(typeof NETWORK_OPTIONS)[0] | null>(null);
@@ -125,25 +127,21 @@ export default function Airtime({ navigation }: { navigation: any }) {
   // Amount selection handler
   const handleAmountSelect = (selectedAmount: string) => {
     setAmount(selectedAmount);
-    setCustomAmount(''); // Clear custom amount if preset is selected
+    setCustomAmount('');
     clearFieldError('amount');
 
-    // Calculate commission
     calculateCommissionForAmount(Number(selectedAmount));
   };
 
   // Custom amount input handler
   const handleCustomAmountChange = (text: string) => {
-    // Allow only numbers and one decimal point
     const cleanedText = text.replace(/[^\d.]/g, '');
 
-    // Ensure only one decimal point
     const parts = cleanedText.split('.');
     if (parts.length > 2) {
       return;
     }
 
-    // Allow up to 2 decimal places
     if (parts[1] && parts[1].length > 2) {
       return;
     }
@@ -180,7 +178,6 @@ export default function Airtime({ navigation }: { navigation: any }) {
     if (!validation.isValid) {
       setErrors(validation.errors);
 
-      // Show first error in toast
       const firstError = Object.values(validation.errors)[0];
       if (firstError) {
         showError('Validation Error', firstError);
@@ -192,12 +189,22 @@ export default function Airtime({ navigation }: { navigation: any }) {
     return true;
   };
 
-  // Purchase airtime
-  const purchaseAirtime = async () => {
+  // Show confirmation modal
+  const handleProceed = () => {
     if (!validateForm()) {
-      return { success: false };
+      return;
+    }
+    
+    if (!selectedNetwork) {
+      showError('Error', 'Please select a network');
+      return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  // Purchase airtime (called from confirmation modal)
+  const purchaseAirtime = async () => {
     if (!selectedNetwork) {
       showError('Error', 'Please select a network');
       return { success: false };
@@ -214,22 +221,28 @@ export default function Airtime({ navigation }: { navigation: any }) {
         provider_logo: selectedNetwork.logo,
         name: selectedNetwork.name,
         service_type: 'Airtime',
-        // VTPass specific fields
         billersCode: phone,
         variation_code: 'default',
         phone: phone,
-        // Additional info for tracking
         network: selectedNetwork.value,
         network_name: selectedNetwork.name,
       };
 
       console.log('Airtime purchase payload:', payload);
 
-      const response = await billService.purchaseData(payload); // Using same endpoint as data
+      const response = await billService.purchaseData(payload);
 
       if (response.success) {
-        // Alert.alert('Success', response.message || 'Airtime purchase successful!');
         showSuccess('Success', response.message || 'Airtime purchase successful!');
+        
+        // Reset form
+        setPhone('');
+        setAmount('');
+        setCustomAmount('');
+        setSelectedNetwork(null);
+        setCommission(0);
+        
+        setShowConfirmModal(false);
         navigation.navigate('Tabs');
         return { success: true, data: response.data };
       } else {
@@ -250,7 +263,6 @@ export default function Airtime({ navigation }: { navigation: any }) {
         });
         setErrors(apiErrors);
 
-        // Show first error in toast
         const firstError = Object.values(apiErrors)[0];
         if (firstError) {
           showError('Validation Error', firstError);
@@ -262,23 +274,58 @@ export default function Airtime({ navigation }: { navigation: any }) {
         showError('Error', errorMessage);
       }
 
+      setShowConfirmModal(false);
       return { success: false, message: errorMessage };
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Proceed button handler
-  const handleProceed = async () => {
-    const result = await purchaseAirtime();
-    if (result.success) {
-      // Reset form
-      setPhone('');
-      setAmount('');
-      setCustomAmount('');
-      setSelectedNetwork(null);
-      setCommission(0);
+  // Prepare details for confirmation modal
+  const getConfirmationDetails = (): PurchaseDetail[] => {
+    const details: PurchaseDetail[] = [];
+    
+    // if (selectedNetwork) {
+    //   details.push({
+    //     label: 'Network',
+    //     value: selectedNetwork.name,
+    //     icon: 'cellular-outline',
+    //     iconColor: '#64748B',
+    //     customComponent: (
+    //       <View style={styles.networkValueContainer}>
+    //         {selectedNetwork.logoLocal && (
+    //           <Image 
+    //             source={selectedNetwork.logoLocal} 
+    //             style={styles.networkLogoSmall}
+    //             resizeMode="contain"
+    //           />
+    //         )}
+    //         <Text style={styles.networkValueText}>{selectedNetwork.name}</Text>
+    //       </View>
+    //     ),
+    //   });
+    // }
+    
+    if (amount) {
+      details.push({
+        label: 'Amount',
+        value: `₦${formatAmount(amount)}`,
+        icon: 'cash-outline',
+        iconColor: '#64748B',
+        valueColor: '#10B981',
+      });
     }
+    
+    if (phone) {
+      details.push({
+        label: 'Phone Number',
+        value: phone,
+        icon: 'call-outline',
+        iconColor: '#64748B',
+      });
+    }
+    
+    return details;
   };
 
   return (
@@ -336,7 +383,7 @@ export default function Airtime({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Phone Number</Text>
-            <TouchableOpacity onPress={() => { /* Implement beneficiary selection */ }}>
+            <TouchableOpacity onPress={() => { }}>
               <Text style={styles.beneficiaryLink}>Choose from saved</Text>
             </TouchableOpacity>
           </View>
@@ -353,7 +400,7 @@ export default function Airtime({ navigation }: { navigation: any }) {
               maxLength={11}
               placeholderTextColor="#94A3B8"
             />
-            <TouchableOpacity style={styles.contactButton} onPress={() => { /* Implement contacts */ }}>
+            <TouchableOpacity style={styles.contactButton} onPress={() => { }}>
               <Ionicons name="person-outline" size={20} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -420,7 +467,6 @@ export default function Airtime({ navigation }: { navigation: any }) {
                 <Text style={styles.amountDisplayValue}>₦{formatAmount(amount)}</Text>
               </View>
 
-              {/* Commission Display - Similar to web app */}
               {commission > 0 && (
                 <View style={styles.commissionContainer}>
                   <Text style={styles.commissionText}>
@@ -448,20 +494,29 @@ export default function Airtime({ navigation }: { navigation: any }) {
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text style={styles.proceedButtonText}>
-              {!amount || !selectedNetwork || !phone ? 'Fill all fields' : 'Buy Airtime'}
+              {!amount || !selectedNetwork || !phone ? 'Fill all fields' : 'Proceed to Buy'}
             </Text>
           )}
         </TouchableOpacity>
 
-        {/* Additional Info */}
-        {/* <View style={styles.infoSection}>
-          <Ionicons name="information-circle-outline" size={20} color="#64748B" />
-          <Text style={styles.infoText}>
-            Airtime will be delivered to the phone number instantly after successful payment
-          </Text>
-        </View> */}
         <View style={{ height: 320 }} />
       </ScrollView>
+
+      {/* Confirmation Modal */}
+      <ConfirmPurchaseModal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={purchaseAirtime}
+        title="Confirm Airtime Purchase"
+        providerLogo={selectedNetwork?.logoLocal}
+        providerName={selectedNetwork?.name}
+        details={getConfirmationDetails()}
+        amount={parseFloat(amount) || 0}
+        commission={commission}
+        loading={isSubmitting}
+        confirmButtonText="Buy Airtime"
+        infoNote="Airtime will be delivered instantly after successful payment"
+      />
     </View>
   );
 }
@@ -649,7 +704,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
     color: '#10B981',
   },
-  // Commission styles
   commissionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -716,5 +770,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 20,
     marginTop: 16,
+  },
+  // Add these new styles for the custom component
+  networkValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  networkLogoSmall: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    borderRadius: 10,
+  },
+  networkValueText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    color: '#0F172A',
   },
 });
