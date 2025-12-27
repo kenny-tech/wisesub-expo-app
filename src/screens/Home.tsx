@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   walletLabel: { color: "rgba(255,255,255,0.9)", fontSize: 13, marginBottom: 6, fontFamily: "Poppins-Medium" },
   balanceRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
-  currency: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Medium" },
+  currency: { color: "#fff", fontSize: 22, marginBottom: 8, fontFamily: "Poppins-Medium" },
   balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold" },
   eyeBtn: { marginLeft: 1, marginBottom: 5, padding: 6, borderRadius: 8 },
   fundBtn: {
