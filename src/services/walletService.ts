@@ -2,7 +2,7 @@ import { api, API_ENDPOINTS } from './api';
 
 export interface WalletBalanceResponse {
   success: boolean;
-  data: string;
+  data: any;
   message?: string;
 }
 
@@ -133,7 +133,7 @@ class WalletService {
 
   async getCommissions(params?: TransactionsParams): Promise<TransactionsResponse> {
     try {
-      const response = await api.get<TransactionsResponse>(API_ENDPOINTS.TRANSACTIONS, {
+      const response = await api.get<TransactionsResponse>(API_ENDPOINTS.COMMISSIONS, {
         params: {
           limit: params?.limit || 20,
           page: params?.page || 1,

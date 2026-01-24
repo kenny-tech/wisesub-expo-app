@@ -31,17 +31,6 @@ type Service = {
   comingSoon?: boolean;
 };
 
-// const servicesData: Service[] = [
-//   { id: 1, name: "Data", icon: <Ionicons name="wifi" size={20} />, screen: "Data", color: "#6366F1" },
-//   { id: 2, name: "Airtime", icon: <Ionicons name="call" size={20} />, screen: "Airtime", color: "#10B981" },
-//   { id: 3, name: "Cable", icon: <MaterialIcons name="live-tv" size={20} />, screen: "CableTv", color: "#F59E0B" },
-//   { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity", color: "#EF4444" },
-//   { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards", color: "#8B5CF6" },
-//   { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#06B6D4" },
-//   { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#84CC16", comingSoon: true },
-//   { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#F97316", comingSoon: true },
-// ];
-
 const servicesData: Service[] = [
   { id: 1, name: "Data", icon: <Ionicons name="wifi" size={20} />, screen: "Data", color: "#1F54DD" },
   { id: 2, name: "Airtime", icon: <Ionicons name="call" size={20} />, screen: "Airtime", color: "#1F54DD" },
@@ -127,6 +116,7 @@ function FundWalletModal({
 
 export default function Home({ navigation }: { navigation: any }) {
   const [walletBalance, setWalletBalance] = useState<string>("0");
+  const [commissionBalance, setCommissionBalance] = useState<string>("0");
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -147,7 +137,8 @@ export default function Home({ navigation }: { navigation: any }) {
       const response = await walletService.getWalletBalance();
 
       if (response.success) {
-        setWalletBalance(response.data);
+        setWalletBalance(response.data.wallet_balance);
+        setCommissionBalance(response.data.commission_balance);
       } else {
         setWalletError(response.message || 'Failed to fetch balance');
       }
@@ -210,6 +201,10 @@ export default function Home({ navigation }: { navigation: any }) {
   const handleSelectPaymentMethod = (method: 'bank' | 'card') => {
     setShowFundModal(false);
     navigation.navigate('FundAmount', { method });
+  };
+
+  const handleViewRewards = () => {
+    navigation.navigate('Rewards');
   };
 
   const renderService = ({ item }: { item: Service }) => {
@@ -351,6 +346,9 @@ export default function Home({ navigation }: { navigation: any }) {
     );
   };
 
+  // Check if user has earned commission (balance > 0)
+  const hasCommission = parseFloat(commissionBalance) > 0;
+
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -435,6 +433,28 @@ export default function Home({ navigation }: { navigation: any }) {
                     <Text style={styles.fundBtnText}>+ Fund Wallet</Text>
                   </TouchableOpacity>
                 </View>
+
+                {/* Commission Balance Display - Only show if user has commission */}
+                {hasCommission && (
+                  <View style={styles.commissionContainer}>
+                    <View style={styles.commissionRow}>
+                      <View style={styles.commissionIconContainer}>
+                        <Ionicons name="gift" size={14} color="#10B981" />
+                      </View>
+                      <Text style={styles.commissionLabel}>You have bonus balance:</Text>
+                      <Text style={styles.commissionAmount}>
+                        ₦{formatAmount(commissionBalance)}
+                      </Text>
+                      {/* <TouchableOpacity 
+                        style={styles.viewRewardsBtn}
+                        onPress={handleViewRewards}
+                      >
+                        <Text style={styles.viewRewardsText}>View Rewards</Text>
+                        <Ionicons name="arrow-forward" size={12} color="#10B981" />
+                      </TouchableOpacity> */}
+                    </View>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -604,7 +624,7 @@ const styles = StyleSheet.create({
   walletLabel: { color: "rgba(255,255,255,0.9)", fontSize: 13, marginBottom: 6, fontFamily: "Poppins-Medium" },
   balanceRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   currency: { color: "#fff", fontSize: 22, marginBottom: 8, fontFamily: "Poppins-Medium" },
-  balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold" },
+  balanceText: { color: "#fff", fontSize: 22, fontFamily: "Poppins-Bold", marginBottom: 7 },
   eyeBtn: { marginLeft: 1, marginBottom: 5, padding: 6, borderRadius: 8 },
   fundBtn: {
     backgroundColor: "#fff",
@@ -617,6 +637,55 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   fundBtnText: { color: "#1F54DD", fontSize: 14, fontFamily: "Poppins-Medium" },
+
+  // Commission display
+  commissionContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.2)",
+  },
+  commissionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  commissionIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  commissionLabel: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 12,
+    fontFamily: "Poppins-Regular",
+    marginRight: 6,
+  },
+  commissionAmount: {
+    color: "#10B981",
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold",
+    marginRight: 12,
+  },
+  viewRewardsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginLeft: "auto",
+  },
+  viewRewardsText: {
+    color: "#fff",
+    fontSize: 11,
+    fontFamily: "Poppins-Medium",
+    marginRight: 4,
+  },
 
   // services
   section: { marginTop: 18, marginBottom: 18 },
