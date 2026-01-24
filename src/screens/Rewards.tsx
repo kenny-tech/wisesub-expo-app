@@ -10,64 +10,45 @@ import {
   View,
 } from "react-native";
 import { formatAmount, formatDate } from "../helper/util";
-import { CommissionTotal, Transaction, walletService } from "../services/walletService";
+import { walletService } from "../services/walletService";
+
+interface CommissionItem {
+  reference: string;
+  type: string;
+  amount: string;
+  description: string;
+  transaction_name: string | null;
+  created_at: string;
+}
+
+interface CommissionsResponse {
+  success: boolean;
+  data: {
+    balance: string;
+    commissions: CommissionItem[];
+  };
+  message: string;
+}
 
 export default function Rewards({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [commissions, setCommissions] = useState<Transaction[]>([]);
-  const [commissionTotal, setCommissionTotal] = useState<number>(0);
-  const [commissionCount, setCommissionCount] = useState<number>(0);
+  const [commissions, setCommissions] = useState<CommissionItem[]>([]);
+  const [currentBalance, setCurrentBalance] = useState<string>("0.00");
   const [commissionsLoading, setCommissionsLoading] = useState<boolean>(false);
   const [commissionsError, setCommissionsError] = useState<string | null>(null);
   const [totalsError, setTotalsError] = useState<string | null>(null);
-
-  const fetchCommissionTotals = async () => {
-    try {
-      const response = await walletService.getCommissionTotals({ type: 'COMMISSION' });
-      
-      if (response.success) {
-        const data: CommissionTotal[] = response.data;
-        if (data.length === 0) {
-          setCommissionTotal(0);
-          setCommissionCount(0);
-        } else {
-          const {total_amount, transaction_count} = data.reduce(
-            (acc: any, entry: CommissionTotal) => {
-              const total_amount = acc.total_amount + parseFloat(entry.total_amount);
-              const transaction_count = acc.transaction_count + entry.transaction_count;
-              return {total_amount, transaction_count};
-            },
-            {total_amount: 0, transaction_count: 0},
-          );
-
-          setCommissionTotal(total_amount);
-          setCommissionCount(transaction_count);
-        }
-        setTotalsError(null);
-      } else {
-        setTotalsError(response.message || 'Failed to fetch commission totals');
-      }
-    } catch (error: any) {
-      console.error('Commission totals error:', error);
-      
-      if (error.message) {
-        setTotalsError(error.message);
-      } else {
-        setTotalsError('Failed to fetch commission totals');
-      }
-    }
-  };
 
   const fetchCommissions = async () => {
     try {
       setCommissionsLoading(true);
       setCommissionsError(null);
 
-      const response = await walletService.getCommissions({ limit: 20 });
+      const response = await walletService.getCommissions({ limit: 20 }) as unknown as CommissionsResponse;
       
       if (response.success) {
-        setCommissions(response.data);
+        setCurrentBalance(response.data.balance);
+        setCommissions(response.data.commissions);
       } else {
         setCommissionsError(response.message || 'Failed to fetch commissions');
       }
@@ -84,70 +65,91 @@ export default function Rewards({ navigation }: { navigation: any }) {
     }
   };
 
-  const fetchAllData = async () => {
-    await Promise.all([fetchCommissionTotals(), fetchCommissions()]);
-  };
-
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      fetchAllData().finally(() => setLoading(false));
+      fetchCommissions().finally(() => setLoading(false));
     }, [])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchAllData();
+    await fetchCommissions();
     setRefreshing(false);
   };
 
-  const getTransactionIcon = (transaction: Transaction) => {
-    const isReferral = transaction.name.includes('Referral');
-    
-    return (
-      <View style={[
-        styles.transactionIcon, 
-        isReferral ? styles.referralIcon : styles.commissionIcon
-      ]}>
-        <Ionicons 
-          name={isReferral ? "people" : "gift"} 
-          size={20} 
-          color={isReferral ? "#8B5CF6" : "#10B981"} 
-        />
-      </View>
-    );
+  // Helper function to format description by removing duplicates (same as web)
+  const formatDescription = (description: string) => {
+    return description.replace(/Commission from Commission from/g, 'Commission from');
   };
 
-  const getTransactionDescription = (transaction: Transaction) => {
-    if (transaction.name === "Commission") {
-      return `Bonus from ${transaction.type} purchase`;
-    } else if (transaction.name === "Referral Commission") {
-      return `Referral bonus from ${transaction.customer || 'user'}`;
+  const getTransactionIcon = (type: string) => {
+    if (type === "earned") {
+      return (
+        <View style={styles.iconContainerEarned}>
+          <Ionicons name="gift" size={20} color="#10B981" />
+        </View>
+      );
     } else {
-      let description = transaction.name;
-      if (transaction.type) description += ` - ${transaction.type}`;
-      if (transaction.customer) description += ` (${transaction.customer})`;
-      return description;
+      return (
+        <View style={styles.iconContainerUsed}>
+          <Ionicons name="card" size={20} color="#1F54DD" />
+        </View>
+      );
     }
   };
 
-  const renderCommission = ({ item }: { item: Transaction }) => {
+  const renderCommission = ({ item }: { item: CommissionItem }) => {
+    const isEarned = item.type === "earned";
+    const amountColor = isEarned ? "#10B981" : "#1F54DD";
+    const amountPrefix = isEarned ? "+" : "";
+    
     return (
-      <View style={styles.commissionItem}>
-        <View style={styles.commissionLeft}>
-          {getTransactionIcon(item)}
-          <View style={styles.commissionDetails}>
-            <Text style={styles.commissionTitle} numberOfLines={1}>
-              {getTransactionDescription(item)}
+      <View style={styles.commissionCard}>
+        <View style={styles.commissionContent}>
+          {/* Left Section */}
+          <View style={styles.commissionLeft}>
+            {getTransactionIcon(item.type)}
+            <View style={styles.commissionDetails}>
+              <Text style={styles.description} numberOfLines={2}>
+                {formatDescription(item.description)}
+              </Text>
+              <View style={styles.detailsRow}>
+                <Text style={styles.date}>
+                  {formatDate(item.created_at)}
+                </Text>
+                <View style={styles.tagsContainer}>
+                  <View style={[
+                    styles.typeTag,
+                    isEarned ? styles.earnedTag : styles.usedTag
+                  ]}>
+                    <Text style={[
+                      styles.typeText,
+                      isEarned ? styles.earnedText : styles.usedText
+                    ]}>
+                      {isEarned ? 'Earned' : 'Used'}
+                    </Text>
+                  </View>
+                  {item.transaction_name && (
+                    <View style={styles.nameTag}>
+                      <Text style={styles.nameText}>{item.transaction_name}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Right Section */}
+          <View style={styles.commissionRight}>
+            <Text style={[styles.amount, { color: amountColor }]}>
+              {amountPrefix}₦{formatAmount(item.amount)}
             </Text>
-            <Text style={styles.commissionDate}>
-              {formatDate(item.created_at)}
+            <Text style={styles.amountLabel}>
+              {isEarned ? 'Bonus Earned' : 'Payment Applied'}
             </Text>
           </View>
         </View>
-        <Text style={styles.commissionAmount}>
-          +₦{formatAmount(item.amount)}
-        </Text>
       </View>
     );
   };
@@ -171,17 +173,16 @@ export default function Rewards({ navigation }: { navigation: any }) {
       );
     }
 
-    if ((commissionsError || totalsError) && commissions.length === 0) {
-      const errorMessage = commissionsError || totalsError;
+    if (commissionsError && commissions.length === 0) {
       return (
         <View style={styles.empty}>
           <Ionicons name="alert-circle" size={48} color="#EF4444" />
           <Text style={[styles.emptyText, { color: '#EF4444' }]}>
-            {errorMessage}
+            {commissionsError}
           </Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={fetchAllData}
+            onPress={fetchCommissions}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
@@ -192,10 +193,12 @@ export default function Rewards({ navigation }: { navigation: any }) {
     if (commissions.length === 0) {
       return (
         <View style={styles.empty}>
-          <Ionicons name="gift-outline" size={64} color="#94A3B8" />
-          <Text style={styles.emptyTitle}>No Rewards Yet</Text>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="gift-outline" size={32} color="#94A3B8" />
+          </View>
+          <Text style={styles.emptyTitle}>No bonus transactions yet</Text>
           <Text style={styles.emptyDescription}>
-            Complete transactions and refer friends to start earning rewards!
+            Your bonus and commission history will appear here when you start earning rewards.
           </Text>
         </View>
       );
@@ -205,7 +208,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
       <FlatList
         data={commissions}
         renderItem={renderCommission}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.reference}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshing={refreshing}
@@ -213,33 +216,35 @@ export default function Rewards({ navigation }: { navigation: any }) {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={() => (
           <>
-            {/* Total Commission Card */}
-            <View style={styles.commissionCard}>
-              <View style={styles.commissionContent}>
-                <Ionicons name="trophy" size={32} color="#1F54DD" />
-                <View style={styles.commissionText}>
-                  <Text style={styles.commissionLabel}>Total Commission Earned</Text>
-                  <Text style={styles.commissionAmountTotal}>
-                    ₦{formatAmount(commissionTotal.toString())}
-                  </Text>
-                  <Text style={styles.commissionCount}>
-                    From {commissionCount} transaction{commissionCount !== 1 ? 's' : ''}
-                  </Text>
-                  {totalsError && (
-                    <Text style={styles.commissionError}>
-                      {totalsError}
-                    </Text>
-                  )}
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={20} color="#3B82F6" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageTitle}>Rewards History</Text>
+              <View style={styles.headerPlaceholder} />
+            </View>
+
+            {/* Balance Card */}
+            <View style={styles.balanceCard}>
+              <View style={styles.balanceHeader}>
+                <View style={styles.balanceTitleContainer}>
+                  <Ionicons name="gift" size={24} color="#10B981" />
+                  <Text style={styles.balanceTitle}>Bonus Balance</Text>
                 </View>
+              </View>
+              
+              <View style={styles.balanceContent}>
+                <Text style={styles.balanceAmount}>
+                  ₦{formatAmount(currentBalance)}
+                </Text>
               </View>
             </View>
 
-            {/* Recent Commissions Header */}
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Commissions</Text>
-              {commissionsError && (
-                <Text style={styles.sectionError}>{commissionsError}</Text>
-              )}
+            {/* Bonus Transactions Header */}
+            <View style={styles.transactionsHeader}>
+              <Text style={styles.transactionsTitle}>Bonus Transactions</Text>
             </View>
 
             {/* Loading indicator when refreshing with existing data */}
@@ -255,7 +260,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
           commissions.length > 0 && (
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                Showing {commissions.length} most recent commissions
+                Showing {commissions.length} most recent transactions
               </Text>
             </View>
           )
@@ -266,14 +271,6 @@ export default function Rewards({ navigation }: { navigation: any }) {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Rewards</Text>
-        <View style={styles.placeholder} />
-      </View>
-
       {renderContent()}
     </View>
   );
@@ -282,14 +279,22 @@ export default function Rewards({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF"
+    backgroundColor: "#F3F4F6"
   },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F3F4F6",
   },
+  listContent: {
+    paddingBottom: 20,
+  },
+  separator: {
+    height: 12,
+  },
+  
+  // Header Styles
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -300,151 +305,221 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   backButton: {
-    padding: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: "Poppins-SemiBold",
-    color: "#0F172A",
-  },
-  placeholder: {
-    width: 32,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  separator: {
-    height: 8,
-  },
-  commissionCard: {
-    backgroundColor: "#F1F6FF",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#1F54DD",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  commissionContent: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 4,
   },
-  commissionText: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  commissionLabel: {
+  backText: {
     fontSize: 14,
     fontFamily: "Poppins-Regular",
-    color: "#64748B",
-    marginBottom: 4,
+    color: "#3B82F6",
+    marginLeft: 4,
   },
-  commissionAmountTotal: {
-    fontSize: 28,
-    fontFamily: "Poppins-Bold",
-    color: "#1F54DD",
-    marginBottom: 4,
-  },
-  commissionCount: {
-    fontSize: 12,
-    fontFamily: "Poppins-Regular",
-    color: "#94A3B8",
-  },
-  commissionError: {
-    fontSize: 12,
-    fontFamily: "Poppins-Regular",
-    color: "#EF4444",
-    marginTop: 4,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
+  pageTitle: {
+    fontSize: 18,
     fontFamily: "Poppins-SemiBold",
-    color: "#0F172A",
+    color: "#111827",
   },
-  sectionError: {
-    fontSize: 12,
-    fontFamily: "Poppins-Regular",
-    color: "#EF4444",
-    marginTop: 4,
+  headerPlaceholder: {
+    width: 60,
   },
-  commissionItem: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
+
+  // Balance Card Styles
+  balanceCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#D1FAE5",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: "#000",
-    shadowOpacity: 0.02,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    marginBottom: 16,
   },
-  commissionLeft: {
+  balanceTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    flex: 1
   },
-  transactionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+  balanceTitle: {
+    fontSize: 20,
+    fontFamily: "Poppins-Bold",
+    color: "#111827",
+    marginLeft: 8,
+  },
+  balanceContent: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    color: "#6B7280",
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontFamily: "Poppins-Bold",
+    color: "#10B981",
+  },
+
+  // Transactions Header
+  transactionsHeader: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  transactionsTitle: {
+    fontSize: 18,
+    fontFamily: "Poppins-Bold",
+    color: "#111827",
+  },
+
+  // Commission Card Styles
+  commissionCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  commissionContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  commissionLeft: {
+    flex: 1,
+    flexDirection: "row",
+    marginRight: 12,
+  },
+  iconContainerEarned: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#D1FAE5",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10
+    marginRight: 12,
   },
-  commissionIcon: {
-    backgroundColor: "#ECFDF5"
-  },
-  referralIcon: {
-    backgroundColor: "#F5F3FF"
+  iconContainerUsed: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#DBEAFE",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   commissionDetails: {
-    flex: 1
+    flex: 1,
   },
-  commissionTitle: {
+  description: {
     fontSize: 14,
     fontFamily: "Poppins-Medium",
-    color: "#0F172A",
-    marginBottom: 2
+    color: "#111827",
+    marginBottom: 8,
+    lineHeight: 20,
   },
-  commissionDate: {
+  detailsRow: {
+    flexDirection: "column",
+  },
+  date: {
     fontSize: 12,
-    color: "#94A3B8",
-    fontFamily: "Poppins-Regular"
+    fontFamily: "Poppins-Regular",
+    color: "#6B7280",
+    marginBottom: 8,
   },
-  commissionAmount: {
-    fontSize: 14,
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  typeTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  earnedTag: {
+    backgroundColor: "#D1FAE5",
+  },
+  usedTag: {
+    backgroundColor: "#DBEAFE",
+  },
+  typeText: {
+    fontSize: 11,
+    fontFamily: "Poppins-Medium",
+  },
+  earnedText: {
+    color: "#10B981",
+  },
+  usedText: {
+    color: "#1F54DD",
+  },
+  nameTag: {
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  nameText: {
+    fontSize: 11,
+    fontFamily: "Poppins-Regular",
+    color: "#6B7280",
+  },
+  commissionRight: {
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  amount: {
+    fontSize: 16,
     fontFamily: "Poppins-SemiBold",
-    color: "#10B981"
+    marginBottom: 4,
   },
+  amountLabel: {
+    fontSize: 11,
+    fontFamily: "Poppins-Regular",
+    color: "#6B7280",
+  },
+
+  // Empty State
   empty: {
     flex: 1,
     padding: 40,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#F3F4F6",
+  },
+  emptyIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
     fontFamily: "Poppins-SemiBold",
-    color: "#0F172A",
-    marginTop: 16,
+    color: "#6B7280",
     marginBottom: 8,
+    textAlign: "center",
   },
   emptyDescription: {
     fontSize: 14,
     fontFamily: "Poppins-Regular",
-    color: "#64748B",
+    color: "#9CA3AF",
     textAlign: "center",
     lineHeight: 20,
     maxWidth: 300,
@@ -454,11 +529,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins-Regular",
     marginTop: 8,
+    textAlign: "center",
   },
   retryButton: {
     marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     backgroundColor: "#1F54DD",
     borderRadius: 8,
   },
@@ -467,29 +543,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins-SemiBold",
   },
+
+  // Loading More
   loadingMore: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 16,
     marginBottom: 8,
   },
   loadingMoreText: {
     marginLeft: 8,
-    color: '#64748B',
+    color: '#6B7280',
     fontSize: 12,
     fontFamily: "Poppins-Regular",
   },
+
+  // Footer
   footer: {
     alignItems: 'center',
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    paddingVertical: 24,
     marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginHorizontal: 20,
   },
   footerText: {
     fontSize: 12,
     fontFamily: "Poppins-Regular",
-    color: '#94A3B8',
+    color: '#9CA3AF',
   },
 });
