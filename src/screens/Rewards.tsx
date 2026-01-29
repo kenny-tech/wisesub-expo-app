@@ -100,7 +100,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
   };
 
   const renderCommission = ({ item }: { item: CommissionItem }) => {
-    const isEarned = item.type === "earned";
+    const isEarned = item.type === "earned" || item.type === "referral_earned";
     const amountColor = isEarned ? "#10B981" : "#1F54DD";
     const amountPrefix = isEarned ? "+" : "";
     
