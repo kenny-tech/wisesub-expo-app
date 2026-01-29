@@ -91,7 +91,7 @@ export default function Referral({ navigation }: { navigation: any }) {
                     </View>
 
                     {/* Stats Cards */}
-                    <View style={styles.statsContainer}>
+                    {/* <View style={styles.statsContainer}>
                         <View style={styles.statCard}>
                             <View style={[styles.statIcon, { backgroundColor: '#ECFDF5' }]}>
                                 <Ionicons name="cash" size={20} color="#10B981" />
@@ -107,7 +107,7 @@ export default function Referral({ navigation }: { navigation: any }) {
                             <Text style={styles.statLabel}>People Referred</Text>
                             <Text style={styles.statCount}>{referralCount}</Text>
                         </View>
-                    </View>
+                    </View> */}
 
                     {/* Referral Code Section */}
                     <View style={styles.referralSection}>

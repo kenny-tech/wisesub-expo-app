@@ -102,6 +102,15 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const handleCopyReference = async (reference: string) => {
+    try {
+      await Clipboard.setStringAsync(reference);
+      showSuccess('Reference Copied', 'Reference has been copied to clipboard')
+    } catch (error) {
+      showError('Error', 'Failed to copy token. Please try again.')
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -172,10 +181,10 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.infoGrid}>
-            <View style={styles.infoItem}>
+            {/* <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Transaction Reference</Text>
               <Text style={styles.infoValue}>{transaction.reference}</Text>
-            </View>
+            </View> */}
 
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Date & Time</Text>
@@ -264,7 +273,13 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                   <Ionicons name="document-text" size={16} color="#64748B" />
                   <Text style={styles.detailLabel}>Reference</Text>
                 </View>
-                <Text style={styles.detailValue}>{transaction.reference}</Text>
+                <View style={styles.referenceContainer}>
+                  <Text style={styles.referenceValue}>{transaction.reference}</Text>
+                  <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyReference(transaction.reference)}>
+                    <Ionicons name="copy-outline" size={14} color="#1F54DD" />
+                  </TouchableOpacity>
+                </View>
+                {/* <Text style={styles.detailValue}>{transaction.reference}</Text> */}
               </View>
             )}
           </View>
@@ -279,7 +294,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.helpText}>
             If you have any questions about this transaction, please contact our support team.
           </Text>
-          <TouchableOpacity style={styles.supportButton}>
+          <TouchableOpacity style={styles.supportButton} onPress={() => navigation.navigate("Support")} >
             <Ionicons name="chatbubble-ellipses" size={18} color="#FFFFFF" />
             <Text style={styles.supportButtonText}>Contact Support</Text>
           </TouchableOpacity>
@@ -521,6 +536,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Poppins-SemiBold',
     color: '#1F54DD',
+    marginRight: 8,
+  },
+  referenceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  referenceValue: {
+    fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
     marginRight: 8,
   },
   copyButton: {

@@ -38,15 +38,15 @@ export default function Support({ navigation }: { navigation: any }) {
       backgroundColor: "#E6F4EA",
       onPress: () => Linking.openURL('tel:+2348021088554')
     },
-    {
-      id: 4,
-      title: "FAQ & Help Center",
-      description: "Find answers to common questions",
-      icon: "help-circle" as const,
-      color: "#1F54DD",
-      backgroundColor: "#E0E7FF",
-      onPress: () => console.log('Navigate to FAQ')
-    }
+    // {
+    //   id: 4,
+    //   title: "FAQ & Help Center",
+    //   description: "Find answers to common questions",
+    //   icon: "help-circle" as const,
+    //   color: "#1F54DD",
+    //   backgroundColor: "#E0E7FF",
+    //   onPress: () => console.log('Navigate to FAQ')
+    // }
   ];
 
   return (

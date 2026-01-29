@@ -38,8 +38,10 @@ const servicesData: Service[] = [
   { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity", color: "#1F54DD" },
   { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards", color: "#1F54DD" },
   { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral", color: "#1F54DD" },
-  { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#1F54DD", comingSoon: true },
-  { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#1F54DD", comingSoon: true },
+  { id: 7, name: "Help", icon: <Ionicons name="help-circle" size={20} />, screen: "Support", color: "#1F54DD" },
+  { id: 7, name: "History", icon: <Ionicons name="receipt" size={20} />, screen: "History", color: "#1F54DD" },
+  // { id: 7, name: "Insurance", icon: <Ionicons name="shield-checkmark" size={20} />, screen: "Insurance", color: "#1F54DD", comingSoon: true },
+  // { id: 8, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education", color: "#1F54DD", comingSoon: true },
 ];
 
 // Fund Wallet Modal Component
@@ -371,9 +373,9 @@ export default function Home({ navigation }: { navigation: any }) {
               </View>
 
               <View style={styles.headerIcons}>
-                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("Support")}>
+                {/* <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("Support")}>
                   <MaterialIcons name="chat-bubble-outline" size={18} color="#374151" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("Notification")}>
                   <Ionicons name="notifications-outline" size={18} color="#374151" />
