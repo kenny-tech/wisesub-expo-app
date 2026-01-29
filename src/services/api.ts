@@ -30,6 +30,8 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD: 'auth/forgot_password',
   RESET_PASSWORD: 'auth/reset_password',
   RESEND_OTP: 'auth/resend_otp',
+  VERIFY_SIGNUP_OTP: 'auth/verify_user_otp',
+  VERIFY_FORGOT_PASSWORD_OTP: 'auth/verify_otp',
 
   // Pay bill endpoints
   VTPASS_VARIATION_CODES: 'vtpass/get-variation-codes',
