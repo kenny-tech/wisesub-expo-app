@@ -84,7 +84,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
   };
 
   const getTransactionIcon = (type: string) => {
-    if (type === "earned") {
+    if (type === "earned" || type === "referral_earned") {
       return (
         <View style={styles.iconContainerEarned}>
           <Ionicons name="gift" size={20} color="#10B981" />
