@@ -165,7 +165,7 @@ export default function Home({ navigation }: { navigation: any }) {
       setTransactionsLoading(true);
       setTransactionsError(null);
 
-      const response = await walletService.getTransactions({ limit: 5 });
+      const response = await walletService.getTransactions({ limit: 4 });
 
       if (response.success) {
         setTransactions(response.data);
