@@ -130,7 +130,6 @@ export const updateUserProfile = createAsyncThunk(
   'auth/updateProfile',
   async (data: UpdateProfileData, { rejectWithValue, getState }) => {
     try {
-
       const response = await profileService.updateProfile(data);
 
       if (!response.success) {
