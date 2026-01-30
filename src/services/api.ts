@@ -1,12 +1,21 @@
 import axios from 'axios';
-import { getHeaders } from '../utils/headers';
 
 // Base API URL
-export const BASE_API = 'https://1b235d65ab19.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL = 'https://1b235d65ab19.ngrok-free.app/images';
+export const BASE_API = 'https://1796a118983a.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL = 'https://1796a118983a.ngrok-free.app/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
-// Create axios instance
+// Create UNAUTHENTICATED axios instance for auth endpoints (login, register, etc.)
+export const authApi = axios.create({
+  baseURL: BASE_API,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+});
+
+// Create AUTHENTICATED axios instance for protected endpoints
 export const api = axios.create({
   baseURL: BASE_API,
   timeout: 30000,
@@ -18,11 +27,11 @@ export const api = axios.create({
 
 // API endpoints
 export const API_ENDPOINTS = {
-  // Security endpoints
+  // Security endpoints (require token)
   API_KEY: 'security/api-key',
   SIGNATURE: 'security/signature',
 
-  // Auth endpoints
+  // Auth endpoints (NO token required)
   REGISTER: 'auth/register',
   LOGIN: 'auth/login',
   VERIFY_OTP: 'auth/verify_otp',
@@ -54,26 +63,38 @@ export const API_ENDPOINTS = {
   GET_PROFILE: 'profile',
   UPDATE_PROFILE: 'user/update_profile',
   CHANGE_PASSWORD: 'auth/change-password',
+  LOGOUT: 'user/logout',
 };
 
-// Request interceptor for adding signature headers
+// Generic API response interface
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+// Request interceptor for AUTHENTICATED requests only
 api.interceptors.request.use(
   async (config) => {
     try {
-      // Skip signature for security endpoints
-      const isSecurityEndpoint = config.url?.includes('security/');
+      // Import getHeaders here using require to avoid circular dependency
+      const { getHeaders } = require('../utils/headers');
+      
+      const options = {
+        method: (config.method?.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'),
+        body: config.data,
+      };
 
-      if (!isSecurityEndpoint) {
-        const options = {
-          method: (config.method?.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'),
-          body: config.data,
-        };
-
-        const headers = await getHeaders(options);
-        config.headers = { ...config.headers, ...headers };
-      }
-    } catch (error) {
+      const headers = await getHeaders(options);
+      config.headers = { ...config.headers, ...headers };
+    } catch (error: any) {
       console.error('Failed to set headers:', error);
+      
+      // Check if it's an auth error
+      if (error.message?.includes('Unauthorized') || error.message?.includes('Session expired')) {
+        throw new Error('Session expired. Please login again.');
+      }
+      
       throw error;
     }
 
@@ -85,22 +106,16 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Response interceptor for authenticated requests
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      console.log('Unauthorized - session may have expired');
+      console.log('Unauthorized - session expired');
+      // Optionally, you could dispatch a logout action here
     }
     return Promise.reject(error);
   }
 );
-
-// Generic API response interface
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data: T;
-  message?: string;
-}

@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { BASE_API } from '../services/api';
 import { APP_CONSTANTS } from './constants';
 
 export interface GetHeadersOptions {
@@ -17,21 +16,24 @@ export interface SecureHeaders {
   'X-Timestamp'?: string;
 }
 
+export const BASE_API = 'https://1796a118983a.ngrok-free.app/api/v1/';
+
 export const getHeaders = async (options?: GetHeadersOptions): Promise<SecureHeaders> => {
   try {
+    // This function is ONLY called for authenticated requests
     const token = await AsyncStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
     
     if (!token) {
-      throw new Error('Unauthorized: No token found.');
+      throw new Error('Unauthorized: No token found. Please login again.');
     }
 
-    const baseHeaders: Omit<SecureHeaders, 'API_KEY' | 'X-Signature' | 'X-Timestamp'> = {
+    const baseHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
     };
 
-    // Get API key for every request
+    // Get API key using the token
     const apiKeyResponse = await axios.get<{ api_key: string }>(
       `${BASE_API}security/api-key`,
       { headers: baseHeaders }
@@ -67,7 +69,9 @@ export const getHeaders = async (options?: GetHeadersOptions): Promise<SecureHea
     console.error('Failed to generate headers:', error);
     
     if (error.response?.status === 401) {
+      // Clear invalid token
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
+      await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
       throw new Error('Session expired. Please login again.');
     }
     

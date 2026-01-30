@@ -13,6 +13,11 @@ export interface UpdateProfileResponse {
   errors?: Record<string, string[]>;
 }
 
+export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
@@ -25,6 +30,20 @@ class ProfileService {
       return response.data;
     } catch (error: any) {
       return this.handleApiError(error);
+    }
+  }
+
+  async logout(): Promise<LogoutResponse> {
+    try {
+      const response = await api.get<LogoutResponse>(API_ENDPOINTS.LOGOUT);
+      return response.data;
+    } catch (error: any) {
+      console.error('Logout API error:', error);
+      // Even if API call fails, we should still clear local storage
+      return {
+        success: true,
+        message: 'Logged out locally'
+      };
     }
   }
 

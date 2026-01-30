@@ -1,4 +1,4 @@
-import { api, API_ENDPOINTS } from './api';
+import { API_ENDPOINTS, authApi } from './api';
 
 export interface RegisterData {
   name: string;
@@ -49,79 +49,80 @@ export interface ApiError {
 }
 
 class AuthService {
-  // Register new user
+  // Register new user - uses authApi (no token needed)
   async register(data: RegisterData) {
     try {
-      const response = await api.post(API_ENDPOINTS.REGISTER, data);
+      const response = await authApi.post(API_ENDPOINTS.REGISTER, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
-  // Login user
+  // Login user - uses authApi (no token needed)
   async login(data: LoginData): Promise<LoginResponse> {
     try {
-      const response = await api.post<LoginResponse>(API_ENDPOINTS.LOGIN, data);
+      const response = await authApi.post<LoginResponse>(API_ENDPOINTS.LOGIN, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
-  // Verify Signup OTP
+  // Verify Signup OTP - uses authApi (no token needed)
   async verifySignupOtp(data: VerifyOtpData) {
     try {
-      const response = await api.post(API_ENDPOINTS.VERIFY_SIGNUP_OTP, data);
+      const response = await authApi.post(API_ENDPOINTS.VERIFY_SIGNUP_OTP, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
-  // Verify Forgot Password OTP
+  // Verify Forgot Password OTP - uses authApi (no token needed)
   async verifyForgotPasswordOtp(data: VerifyOtpData) {
     try {
-      const response = await api.post(API_ENDPOINTS.VERIFY_FORGOT_PASSWORD_OTP, data);
+      const response = await authApi.post(API_ENDPOINTS.VERIFY_FORGOT_PASSWORD_OTP, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
+  // Verify OTP - uses authApi (no token needed)
   async verifyOtp(data: VerifyOtpData) {
     try {
-      const response = await api.post(API_ENDPOINTS.VERIFY_OTP, data);
+      const response = await authApi.post(API_ENDPOINTS.VERIFY_OTP, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
-  // Forgot password
+  // Forgot password - uses authApi (no token needed)
   async forgotPassword(email: string) {
     try {
-      const response = await api.post(API_ENDPOINTS.FORGOT_PASSWORD, { email });
+      const response = await authApi.post(API_ENDPOINTS.FORGOT_PASSWORD, { email });
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
-  // Reset password
+  // Reset password - uses authApi (no token needed)
   async resetPassword(data: ResetPasswordData) {
     try {
-      const response = await api.post(API_ENDPOINTS.RESET_PASSWORD, data);
+      const response = await authApi.post(API_ENDPOINTS.RESET_PASSWORD, data);
       return response.data;
     } catch (error) {
       this.handleApiError(error);
     }
   }
 
-  // Resend OTP
+  // Resend OTP - uses authApi (no token needed)
   async resendOtp(email: string, otpType: string) {
     try {
-      const response = await api.post(API_ENDPOINTS.RESEND_OTP, {
+      const response = await authApi.post(API_ENDPOINTS.RESEND_OTP, {
         email,
         otp_type: otpType
       });
@@ -131,10 +132,10 @@ class AuthService {
     }
   }
 
-  // Activate account
+  // Activate account - uses authApi (no token needed)
   async activateAccount(email: string, otp: string) {
     try {
-      const response = await api.post(API_ENDPOINTS.ACTIVATE_ACCOUNT, {
+      const response = await authApi.post(API_ENDPOINTS.ACTIVATE_ACCOUNT, {
         email,
         otp
       });
