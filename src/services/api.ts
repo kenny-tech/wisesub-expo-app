@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
   GET_PROFILE: 'profile',
   UPDATE_PROFILE: 'user/update_profile',
   CHANGE_PASSWORD: 'auth/change-password',
+  LOGOUT: 'user/logout',
 };
 
 // Generic API response interface

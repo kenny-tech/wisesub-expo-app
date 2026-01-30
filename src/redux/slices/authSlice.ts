@@ -97,11 +97,19 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
+      // First call the logout API endpoint
+      await profileService.logout();
+      
+      // Then clear local storage
+      await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
+      await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
+      
+      return true;
+    } catch (error: any) {
+      // Even if API fails, still clear local storage
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
       return true;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Logout failed');
     }
   }
 );

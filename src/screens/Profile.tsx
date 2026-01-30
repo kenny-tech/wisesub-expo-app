@@ -11,12 +11,15 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { useAppDispatch } from "../redux/hooks";
 import { useProfile } from "../redux/hooks/useProfile";
+import { logoutUser } from "../redux/slices/authSlice";
 
 export default function Profile({ navigation }: { navigation: any }) {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
-
+  
+  const dispatch = useAppDispatch();
   const { user } = useProfile();
 
   const handleLogoutModal = () => setIsLogoutModalVisible(() => !isLogoutModalVisible);
@@ -24,14 +27,21 @@ export default function Profile({ navigation }: { navigation: any }) {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Call Redux logout thunk which clears AsyncStorage
+      await dispatch(logoutUser()).unwrap();
+      
       setLoading(false);
       handleLogoutModal();
+      
       // Navigate to login screen
-      navigation.navigate('Signin');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Signin' }],
+      });
     } catch (error: any) {
       setLoading(false);
+      console.error('Logout error:', error);
       Alert.alert('Error', error.message || 'Something went wrong');
     }
   };
