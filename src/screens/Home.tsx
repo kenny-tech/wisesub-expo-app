@@ -1,6 +1,6 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
+import { useNotifications } from "../redux/hooks/useNotifications";
 import { useProfile } from "../redux/hooks/useProfile";
 import { Transaction, walletService } from "../services/walletService";
 
@@ -126,10 +127,15 @@ export default function Home({ navigation }: { navigation: any }) {
   const [transactionsLoading, setTransactionsLoading] = useState<boolean>(false);
   const [transactionsError, setTransactionsError] = useState<string | null>(null);
   const [showBalance, setShowBalance] = useState<boolean>(true);
-  const [unreadCount] = useState<number>(2);
   const [showFundModal, setShowFundModal] = useState<boolean>(false);
 
+  const { stats, fetchNotifications, markAllAsRead } = useNotifications();
+
   const { user } = useProfile();
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const fetchWalletBalance = async () => {
     try {
@@ -373,15 +379,27 @@ export default function Home({ navigation }: { navigation: any }) {
               </View>
 
               <View style={styles.headerIcons}>
-                {/* <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("Support")}>
-                  <MaterialIcons name="chat-bubble-outline" size={18} color="#374151" />
-                </TouchableOpacity> */}
-
-                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("Notification")}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={async () => {
+                    // Only mark as read if there are unread notifications (readAt === null)
+                    if (stats.unread > 0) {
+                      try {
+                        await markAllAsRead();
+                        await fetchNotifications(); // Refresh to update badge immediately
+                      } catch (error) {
+                        console.error('Failed to mark notifications as read:', error);
+                      }
+                    }
+                    navigation.navigate("Notification");
+                  }}
+                >
                   <Ionicons name="notifications-outline" size={18} color="#374151" />
-                  {unreadCount > 0 && (
+                  {stats.unread > 0 && (
                     <View style={styles.notificationBadge}>
-                      <Text style={styles.badgeText}>{unreadCount}</Text>
+                      <Text style={styles.badgeText}>
+                        {stats.unread > 9 ? '9+' : stats.unread}
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>

@@ -59,5 +59,6 @@ export type RootStackParamList = {
             name?: string;
         };
     };
+    Notification: undefined;
     Tabs: undefined;
 };
