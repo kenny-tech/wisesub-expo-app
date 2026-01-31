@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { BASE_API } from '../services/api';
 import { APP_CONSTANTS } from './constants';
 
 export interface GetHeadersOptions {
@@ -15,8 +16,6 @@ export interface SecureHeaders {
   'X-Signature'?: string;
   'X-Timestamp'?: string;
 }
-
-export const BASE_API = 'https://1796a118983a.ngrok-free.app/api/v1/';
 
 export const getHeaders = async (options?: GetHeadersOptions): Promise<SecureHeaders> => {
   try {
