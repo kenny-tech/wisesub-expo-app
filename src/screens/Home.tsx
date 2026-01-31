@@ -385,7 +385,7 @@ export default function Home({ navigation }: { navigation: any }) {
                     // Only mark as read if there are unread notifications (readAt === null)
                     if (stats.unread > 0) {
                       try {
-                        await markAllAsRead();
+                        // await markAllAsRead();
                         await fetchNotifications(); // Refresh to update badge immediately
                       } catch (error) {
                         console.error('Failed to mark notifications as read:', error);
@@ -395,13 +395,13 @@ export default function Home({ navigation }: { navigation: any }) {
                   }}
                 >
                   <Ionicons name="notifications-outline" size={18} color="#374151" />
-                  {stats.unread > 0 && (
+                  {/* {stats.unread > 0 && (
                     <View style={styles.notificationBadge}>
                       <Text style={styles.badgeText}>
                         {stats.unread > 9 ? '9+' : stats.unread}
                       </Text>
                     </View>
-                  )}
+                  )} */}
                 </TouchableOpacity>
               </View>
             </View>
