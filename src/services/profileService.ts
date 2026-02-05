@@ -4,6 +4,17 @@ export interface UpdateProfileData {
   phone: string;
 }
 
+export interface ChangePasswordData {
+  current_password: string;
+  password: string;
+  confirm_password: string;
+}
+
+export interface DeleteAccountData {
+  email: string;
+  password: string;
+}
+
 export interface UpdateProfileResponse {
   success: boolean;
   message: string;
@@ -11,6 +22,17 @@ export interface UpdateProfileResponse {
     phone: string;
   };
   errors?: Record<string, string[]>;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
+export interface DeleteAccountResponse {
+  success: boolean;
+  message: string;
 }
 
 export interface LogoutResponse {
@@ -27,6 +49,24 @@ class ProfileService {
   async updateProfile(data: UpdateProfileData): Promise<UpdateProfileResponse> {
     try {
       const response = await api.post<UpdateProfileResponse>(API_ENDPOINTS.UPDATE_PROFILE, data);
+      return response.data;
+    } catch (error: any) {
+      return this.handleApiError(error);
+    }
+  }
+
+  async changePassword(data: ChangePasswordData): Promise<ChangePasswordResponse> {
+    try {
+      const response = await api.post<ChangePasswordResponse>(API_ENDPOINTS.CHANGE_PASSWORD, data);
+      return response.data;
+    } catch (error: any) {
+      return this.handleApiError(error);
+    }
+  }
+
+  async deleteAccount(data: DeleteAccountData): Promise<DeleteAccountResponse> {
+    try {
+      const response = await api.post<DeleteAccountResponse>(API_ENDPOINTS.DELETE_ACCOUNT, data);
       return response.data;
     } catch (error: any) {
       return this.handleApiError(error);
