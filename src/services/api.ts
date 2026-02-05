@@ -62,7 +62,8 @@ export const API_ENDPOINTS = {
   // Profile endpoints
   GET_PROFILE: 'profile',
   UPDATE_PROFILE: 'user/update_profile',
-  CHANGE_PASSWORD: 'auth/change-password',
+  CHANGE_PASSWORD: 'user/change_password',
+  DELETE_ACCOUNT: 'user/delete-account',
   LOGOUT: 'user/logout',
 };
 

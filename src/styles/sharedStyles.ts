@@ -2,9 +2,9 @@ import { StyleSheet } from "react-native";
 
 export const sharedStyles = StyleSheet.create({
   // Layout
-  screen: { 
-    flex: 1, 
-    backgroundColor: "#FFFFFF" 
+  screen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF"
   },
   centerContainer: {
     flex: 1,
@@ -12,7 +12,7 @@ export const sharedStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFFFFF",
   },
-  
+
   // Header
   header: {
     flexDirection: "row",
@@ -34,7 +34,20 @@ export const sharedStyles = StyleSheet.create({
   placeholder: {
     width: 32,
   },
-  
+  hintText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    marginTop: 4,
+    marginLeft: 4,
+    fontStyle: 'italic',
+    lineHeight: 16,
+  },
+  eyeButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+
   // Content
   content: {
     flex: 1,
@@ -48,7 +61,7 @@ export const sharedStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-  
+
   // Typography
   sectionTitle: {
     fontSize: 16,
@@ -62,7 +75,7 @@ export const sharedStyles = StyleSheet.create({
     color: "#64748B",
     lineHeight: 20,
   },
-  
+
   // Forms
   inputGroup: {
     marginBottom: 16,
@@ -97,7 +110,7 @@ export const sharedStyles = StyleSheet.create({
     color: "#0F172A",
     marginLeft: 12,
   },
-  
+
   // Buttons
   primaryButton: {
     backgroundColor: "#1F54DD",
@@ -115,7 +128,7 @@ export const sharedStyles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Poppins-SemiBold",
   },
-  
+
   // Menu Items
   menuItem: {
     flexDirection: "row",
@@ -141,7 +154,7 @@ export const sharedStyles = StyleSheet.create({
     fontFamily: "Poppins-Medium",
     color: "#0F172A",
   },
-  
+
   // Footer
   footer: {
     height: 20,

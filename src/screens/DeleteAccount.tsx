@@ -1,4 +1,6 @@
+// DeleteAccount.tsx
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,48 +14,121 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
+import { useProfile } from '../redux/hooks/useProfile';
+import { profileService } from '../services/profileService';
 import { sharedStyles as styles } from '../styles/sharedStyles';
+import { showError, showSuccess } from '../utils/toast';
 
-// Mock user data - replace with your actual user data from Redux
-const mockUser = {
-    email: "john.doe@example.com",
-};
+interface DeleteFormData {
+    email: string;
+    password: string;
+}
+
+interface DeleteFormErrors {
+    email?: string;
+    password?: string;
+}
 
 export default function DeleteAccount({ navigation }: { navigation: any }) {
-    const [password, setPassword] = useState('');
-    const [passwordError, setPasswordError] = useState('');
+    const { user } = useProfile();
+    const userEmail = user?.email || '';
+
+    const [formData, setFormData] = useState<DeleteFormData>({
+        email: '',
+        password: ''
+    });
+    const [errors, setErrors] = useState<DeleteFormErrors>({});
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const validateForm = (): boolean => {
+        const newErrors: DeleteFormErrors = {};
+        let isValid = true;
+
+        if (!formData.password.trim()) {
+            newErrors.password = "Password is required";
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
 
     const handleDeleteAccount = async () => {
-        if (!password.trim()) {
-            setPasswordError('Password is required');
-            return;
-        } else {
-            setPasswordError('');
-        }
+        if (!validateForm()) return;
+        
+        formData.email = userEmail;
 
-        try {
-            setLoading(true);
+        // Show confirmation alert
+        Alert.alert(
+            "Permanently Delete Account",
+            "This action cannot be undone. All your data including wallet balance and transaction history will be permanently deleted. Are you sure you want to proceed?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
 
-            // Simulate API call - replace with your actual DELETE_ACCOUNT API
-            await new Promise(resolve => setTimeout(resolve, 2000));
+                            const response = await profileService.deleteAccount(formData);
 
-            setLoading(false);
+                            if (response.success) {
+                                showSuccess('Account Deleted', response.message || 'Your account has been successfully deleted.');
 
-            Toast.show({
-                type: 'success',
-                text1: 'Account Deleted',
-                text2: 'Your account has been successfully deleted.',
-            });
+                                // Clear local storage
+                                await AsyncStorage.clear();
 
-            // Navigate to login screen after successful deletion
-            navigation.navigate('Signin');
+                                // Navigate to login screen after successful deletion
+                                setTimeout(() => {
+                                    navigation.reset({
+                                        index: 0,
+                                        routes: [{ name: 'Signin' }],
+                                    });
+                                }, 1500);
+                            } else {
+                                showError('Error', response.message || 'Failed to delete account');
+                            }
+                        } catch (error: any) {
+                            console.error('Delete account error:', error);
 
-        } catch (error: any) {
-            setLoading(false);
-            Alert.alert('Error', error.message || 'Failed to delete account. Please try again.');
-        }
+                            if (error.errors) {
+                                const apiErrors: DeleteFormErrors = {};
+                                Object.keys(error.errors).forEach(key => {
+                                    apiErrors[key as keyof DeleteFormErrors] = error.errors[key][0];
+                                });
+                                setErrors(apiErrors);
+
+                                // Show first error as toast
+                                const firstError = Object.values(apiErrors)[0];
+                                if (firstError) {
+                                    showError('Error', firstError);
+                                }
+                            } else {
+                                showError('Error', error.message || 'Failed to delete account. Please try again.');
+                            }
+                        } finally {
+                            setLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const clearFieldError = (field: keyof DeleteFormErrors) => {
+        setErrors(prev => ({
+            ...prev,
+            [field]: undefined
+        }));
+    };
+
+    const toggleShowPassword = () => {
+        setShowPassword(prev => !prev);
     };
 
     return (
@@ -69,6 +144,7 @@ export default function DeleteAccount({ navigation }: { navigation: any }) {
             <KeyboardAvoidingView
                 style={deleteStyles.keyboardAvoidingView}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <ScrollView
                     style={deleteStyles.scrollView}
@@ -103,6 +179,10 @@ export default function DeleteAccount({ navigation }: { navigation: any }) {
                                 <Ionicons name="close-circle" size={16} color="#DC2626" />
                                 <Text style={deleteStyles.consequenceText}>Wallet balance and rewards</Text>
                             </View>
+                            <View style={deleteStyles.consequenceItem}>
+                                <Ionicons name="close-circle" size={16} color="#DC2626" />
+                                <Text style={deleteStyles.consequenceText}>All purchased services</Text>
+                            </View>
                         </View>
                     </View>
 
@@ -110,25 +190,44 @@ export default function DeleteAccount({ navigation }: { navigation: any }) {
                     <View style={styles.card}>
                         <Text style={styles.sectionTitle}>Confirm Deletion</Text>
                         <Text style={deleteStyles.confirmationText}>
-                            To confirm account deletion, please enter your password below.
+                            To confirm account deletion, please enter your account email and password below.
                         </Text>
+
 
                         {/* Password Input */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Password</Text>
-                            <TextInput
-                                style={[styles.inputContainer, passwordError && deleteStyles.inputError]}
-                                placeholder="Enter your password"
-                                value={password}
-                                placeholderTextColor="#94A3B8"
-                                onChangeText={(text) => {
-                                    setPassword(text);
-                                    setPasswordError('');
-                                }}
-                                secureTextEntry
-                                autoCapitalize="none"
-                            />
-                            {passwordError && <Text style={deleteStyles.errorText}>{passwordError}</Text>}
+                            <View style={[styles.inputContainer, errors.password && deleteStyles.inputError]}>
+                                <Ionicons name="lock-closed" size={20} color="#64748B" />
+                                <TextInput
+                                    style={styles.textInput}
+                                    placeholder="Enter your password"
+                                    value={formData.password}
+                                    placeholderTextColor="#94A3B8"
+                                    onChangeText={(text) => {
+                                        setFormData({ ...formData, password: text });
+                                        clearFieldError('password');
+                                    }}
+                                    secureTextEntry={!showPassword}
+                                    autoCapitalize="none"
+                                />
+                                <TouchableOpacity
+                                    onPress={toggleShowPassword}
+                                    style={styles.eyeButton}
+                                >
+                                    <Ionicons
+                                        name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                        size={20}
+                                        color="#64748B"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            {errors.password && (
+                                <Text style={deleteStyles.errorText}>{errors.password}</Text>
+                            )}
+                            <Text style={deleteStyles.helperText}>
+                                Enter your password to confirm account deletion
+                            </Text>
                         </View>
 
                         {/* Delete Button */}
@@ -140,7 +239,7 @@ export default function DeleteAccount({ navigation }: { navigation: any }) {
                             {loading ? (
                                 <ActivityIndicator size="small" color="#FFFFFF" />
                             ) : (
-                                <Text style={deleteStyles.deleteButtonText}>Permanently Delete Account</Text>
+                                <Text style={deleteStyles.deleteButtonText}>Delete Account</Text>
                             )}
                         </TouchableOpacity>
 
@@ -173,7 +272,7 @@ const deleteStyles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingBottom: 40,
     },
     bottomPadding: {
         height: 40,
@@ -182,6 +281,7 @@ const deleteStyles = StyleSheet.create({
         borderColor: '#FECACA',
         backgroundColor: '#FEF2F2',
         marginTop: 10,
+        marginBottom: 20,
     },
     warningHeader: {
         alignItems: 'center',
@@ -239,7 +339,34 @@ const deleteStyles = StyleSheet.create({
         fontFamily: 'Poppins-Regular',
         color: '#64748B',
         lineHeight: 20,
+        marginBottom: 16,
+    },
+    currentEmailContainer: {
+        backgroundColor: '#F1F5F9',
+        borderRadius: 8,
+        padding: 12,
         marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    currentEmailLabel: {
+        fontSize: 12,
+        fontFamily: 'Poppins-Medium',
+        color: '#64748B',
+        marginBottom: 4,
+    },
+    currentEmailValue: {
+        fontSize: 14,
+        fontFamily: 'Poppins-SemiBold',
+        color: '#0F172A',
+    },
+    helperText: {
+        fontSize: 12,
+        fontFamily: 'Poppins-Regular',
+        color: '#64748B',
+        marginTop: 4,
+        marginLeft: 4,
+        fontStyle: 'italic',
     },
     inputError: {
         borderColor: '#DC2626',
@@ -249,6 +376,7 @@ const deleteStyles = StyleSheet.create({
         fontSize: 12,
         fontFamily: 'Poppins-Regular',
         marginTop: 4,
+        marginLeft: 4,
     },
     deleteButton: {
         backgroundColor: '#DC2626',
