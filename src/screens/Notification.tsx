@@ -77,7 +77,6 @@ export default function Notification({ navigation }: { navigation: any }) {
               <Text style={styles.notificationTitle} numberOfLines={1}>
                 {item.title}
               </Text>
-              {isUnread && <View style={styles.unreadDot} />}
             </View>
             <Text style={styles.notificationMessage} numberOfLines={3}>
               {item.body}

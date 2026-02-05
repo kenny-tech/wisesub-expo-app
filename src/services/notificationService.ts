@@ -51,7 +51,9 @@ class NotificationService {
     // Mark all notifications as read (using your READ_NOTIFICATION route)
     async markAllAsRead(): Promise<MarkAsReadResponse> {
         try {
-            const response = await api.put<MarkAsReadResponse>('user/read-notification', {});
+            const response = await api.put<MarkAsReadResponse>('user/read-notification', {
+            read: true
+        });
             return response.data;
         } catch (error: any) {
             return this.handleApiError(error);

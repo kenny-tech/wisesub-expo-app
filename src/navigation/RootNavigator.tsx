@@ -16,7 +16,7 @@ import DeleteAccount from '../screens/DeleteAccount';
 import BankTransferDetails from '../screens/fund/BankTransferDetails';
 import WebViewPayment from '../screens/fund/WebViewPayment';
 import FundAmount from '../screens/FundAmount';
-import Notification from '../screens/NotificationScreen';
+import Notification from '../screens/Notification';
 import ProfileInfo from '../screens/ProfileInfo';
 import Referral from '../screens/Referral';
 import Support from '../screens/Support';
