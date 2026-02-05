@@ -16,6 +16,7 @@ import DeleteAccount from '../screens/DeleteAccount';
 import BankTransferDetails from '../screens/fund/BankTransferDetails';
 import WebViewPayment from '../screens/fund/WebViewPayment';
 import FundAmount from '../screens/FundAmount';
+import Notification from '../screens/Notification';
 import ProfileInfo from '../screens/ProfileInfo';
 import Referral from '../screens/Referral';
 import Support from '../screens/Support';
@@ -47,6 +48,7 @@ export default function RootNavigator() {
       <Stack.Screen name="TransactionDetail" component={TransactionDetail} />
       <Stack.Screen name="BankTransferDetails" component={BankTransferDetails} />
       <Stack.Screen name="WebViewPayment" component={WebViewPayment} />
+      <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );
