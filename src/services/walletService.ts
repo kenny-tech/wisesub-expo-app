@@ -90,6 +90,22 @@ export interface CommissionTotalsParams {
   type?: 'COMMISSION' | 'REFERRAL_COMMISSION' | string;
 }
 
+export interface RecentCustomer {
+  customer: string;
+  id: number;
+}
+
+export interface RecentCustomersResponse {
+  success: boolean;
+  data: RecentCustomer[];
+  message: string;
+}
+
+export interface RecentCustomersParams {
+  type: string;
+  limit?: number;
+}
+
 class WalletService {
   async getWalletBalance(): Promise<WalletBalanceResponse> {
     try {
@@ -146,6 +162,22 @@ class WalletService {
     }
   }
 
+  async getRecentCustomers(params: RecentCustomersParams): Promise<RecentCustomersResponse> {
+  try {
+    const response = await api.get<RecentCustomersResponse>(
+      `${API_ENDPOINTS.RECENT_CUSTOMERS}`,
+      {
+        params: {
+          limit: params.limit || 15,
+          type: params.type,
+        }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    this.handleApiError(error);
+  }
+}
 
   async generateBankTransfer(data: BankTransferRequest): Promise<BankTransferResponse> {
     try {
