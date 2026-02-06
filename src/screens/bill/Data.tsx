@@ -4,6 +4,7 @@ import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService, DataPlan } from '@/src/services/billService';
 import { CommissionConfig, commissionService } from '@/src/services/commissionService';
+import { RecentCustomer, walletService } from '@/src/services/walletService'; // Import the service
 import { showError, showSuccess } from '@/src/utils/toast';
 import { DataValidators } from '@/src/utils/validators/dataValidators';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,7 +12,9 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
+  FlatList,
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -61,6 +64,90 @@ const NETWORK_OPTIONS = NETWORKS.map(network => ({
   logoLocal: network.logoLocal,
 }));
 
+// Recent Customers Modal Component
+function RecentCustomersModal({
+  visible,
+  onClose,
+  customers,
+  loading,
+  onSelectCustomer
+}: {
+  visible: boolean;
+  onClose: () => void;
+  customers: RecentCustomer[];
+  loading: boolean;
+  onSelectCustomer: (customer: string) => void;
+}) {
+  const renderCustomer = ({ item }: { item: RecentCustomer }) => (
+    <TouchableOpacity
+      style={modalStyles.customerItem}
+      onPress={() => onSelectCustomer(item.customer)}
+    >
+      <View style={modalStyles.customerIcon}>
+        <Ionicons name="person-circle-outline" size={24} color="#1F54DD" />
+      </View>
+      <View style={modalStyles.customerInfo}>
+        <Text style={modalStyles.customerPhone}>{item.customer}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+    </TouchableOpacity>
+  );
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={modalStyles.overlay}
+        activeOpacity={1}
+        onPressOut={onClose}
+      >
+        <View style={modalStyles.container}>
+          {/* Header */}
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Recent Customers</Text>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
+              <Ionicons name="close" size={24} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Subtitle */}
+          <Text style={modalStyles.subtitle}>
+            Select a phone number from your recent purchases
+          </Text>
+
+          {/* Loading State */}
+          {loading ? (
+            <View style={modalStyles.loadingContainer}>
+              <ActivityIndicator size="large" color="#1F54DD" />
+              <Text style={modalStyles.loadingText}>Loading recent customers...</Text>
+            </View>
+          ) : customers.length === 0 ? (
+            <View style={modalStyles.emptyContainer}>
+              <Ionicons name="people-outline" size={48} color="#94A3B8" />
+              <Text style={modalStyles.emptyTitle}>No Recent Customers</Text>
+              <Text style={modalStyles.emptyDescription}>
+                Your recent customers will appear here after you make purchases
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={customers}
+              renderItem={renderCustomer}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={modalStyles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 export default function Data({ navigation }: { navigation: any }) {
   // State
   const [phone, setPhone] = useState('');
@@ -77,6 +164,13 @@ export default function Data({ navigation }: { navigation: any }) {
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [commission, setCommission] = useState<number>(0);
   const [loadingCommission, setLoadingCommission] = useState<boolean>(false);
+
+  // Recent customers state
+  const [showRecentModal, setShowRecentModal] = useState(false);
+  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
+  const [loadingRecentCustomers, setLoadingRecentCustomers] = useState(false);
+
+  const type = 'Data';
 
   // Helper functions
   const clearFieldError = (field: string) => {
@@ -199,6 +293,35 @@ export default function Data({ navigation }: { navigation: any }) {
     }
   };
 
+  // Fetch recent customers
+  const fetchRecentCustomers = async () => {
+    setLoadingRecentCustomers(true);
+    try {
+      const response = await walletService.getRecentCustomers({
+        type: 'Data',
+        limit: 15
+      });
+      
+      if (response.success) {
+        setRecentCustomers(response.data);
+        setShowRecentModal(true);
+      } else {
+        showError('Error', response.message || 'Failed to fetch recent customers');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch recent customers:', error);
+      showError('Error', 'Failed to load recent customers');
+    } finally {
+      setLoadingRecentCustomers(false);
+    }
+  };
+
+  // Handle customer selection from recent
+  const handleSelectCustomer = (customerPhone: string) => {
+    setPhone(customerPhone);
+    setShowRecentModal(false);
+  };
+
   // Form validation
   const validateForm = () => {
     const validation = DataValidators.validateDataForm({
@@ -249,8 +372,8 @@ export default function Data({ navigation }: { navigation: any }) {
         serviceID: selectedNetwork.serviceID,
         variation_code: selectedPlan.variation_code,
         customer: phone,
-        type: 'Data',
-        service_type: 'Data',
+        type: type,
+        service_type: type,
         provider_logo: selectedNetwork.logo,
         name: selectedPlan.name,
         billersCode: phone,
@@ -314,27 +437,6 @@ export default function Data({ navigation }: { navigation: any }) {
   // Prepare details for confirmation modal
   const getConfirmationDetails = (): PurchaseDetail[] => {
     const details: PurchaseDetail[] = [];
-    
-    // if (selectedNetwork) {
-    //   details.push({
-    //     label: 'Network',
-    //     value: selectedNetwork.name,
-    //     icon: 'cellular-outline',
-    //     iconColor: '#64748B',
-    //     customComponent: (
-    //       <View style={styles.networkValueContainer}>
-    //         {selectedNetwork.logoLocal && (
-    //           <Image 
-    //             source={selectedNetwork.logoLocal} 
-    //             style={styles.networkLogoSmall}
-    //             resizeMode="contain"
-    //           />
-    //         )}
-    //         <Text style={styles.networkValueText}>{selectedNetwork.name}</Text>
-    //       </View>
-    //     ),
-    //   });
-    // }
     
     if (selectedPlan) {
       details.push({
@@ -503,8 +605,13 @@ export default function Data({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Phone Number</Text>
-            <TouchableOpacity onPress={() => { }}>
-              <Text style={styles.beneficiaryLink}>Choose from saved</Text>
+            <TouchableOpacity 
+              onPress={fetchRecentCustomers}
+              disabled={loadingRecentCustomers}
+            >
+              <Text style={styles.beneficiaryLink}>
+                {loadingRecentCustomers ? 'Loading...' : 'Choose from recent'}
+              </Text>
             </TouchableOpacity>
           </View>
           <View style={[
@@ -520,8 +627,16 @@ export default function Data({ navigation }: { navigation: any }) {
               maxLength={11}
               placeholderTextColor="#94A3B8"
             />
-            <TouchableOpacity style={styles.contactButton} onPress={() => { }}>
-              <Ionicons name="person-outline" size={20} color="#64748B" />
+            <TouchableOpacity 
+              style={styles.contactButton} 
+              onPress={fetchRecentCustomers}
+              disabled={loadingRecentCustomers}
+            >
+              {loadingRecentCustomers ? (
+                <ActivityIndicator size="small" color="#64748B" />
+              ) : (
+                <Ionicons name="people-outline" size={20} color="#64748B" />
+              )}
             </TouchableOpacity>
           </View>
           {errors.phone && (
@@ -560,6 +675,15 @@ export default function Data({ navigation }: { navigation: any }) {
         loading={loading}
       />
 
+      {/* Recent Customers Modal */}
+      <RecentCustomersModal
+        visible={showRecentModal}
+        onClose={() => setShowRecentModal(false)}
+        customers={recentCustomers}
+        loading={loadingRecentCustomers}
+        onSelectCustomer={handleSelectCustomer}
+      />
+
       {/* Confirmation Modal */}
       <ConfirmPurchaseModal
         visible={showConfirmModal}
@@ -578,6 +702,101 @@ export default function Data({ navigation }: { navigation: any }) {
     </View>
   );
 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  container: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    minHeight: 400,
+    maxHeight: '80%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    marginBottom: 24,
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  customerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  customerIcon: {
+    marginRight: 12,
+  },
+  customerInfo: {
+    flex: 1,
+  },
+  customerPhone: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    color: '#0F172A',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    marginTop: 12,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#64748B',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
+    textAlign: 'center',
+    maxWidth: 300,
+    lineHeight: 20,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -818,31 +1037,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  infoSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F1F6FF',
-    borderRadius: 12,
-    marginHorizontal: 20,
-    marginTop: 16,
-  },
-  // Add these new styles for the custom component
-  networkValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  networkLogoSmall: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-    borderRadius: 10,
-  },
-  networkValueText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
   },
 });
