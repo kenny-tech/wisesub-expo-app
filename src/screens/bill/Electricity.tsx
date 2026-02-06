@@ -4,6 +4,7 @@ import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
 import { CommissionConfig, commissionService } from '@/src/services/commissionService';
+import { RecentCustomer, walletService } from '@/src/services/walletService'; // Import the service
 import { showError } from '@/src/utils/toast';
 import { ElectricityValidators } from '@/src/utils/validators/electricityValidators';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +13,9 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  FlatList,
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,44 +28,44 @@ const { width } = Dimensions.get('window');
 
 // Define electricity providers with both local image for UI and URL for backend
 const PROVIDERS = [
-  { 
-    id: 'ikedc', 
-    name: 'Ikeja Electric', 
+  {
+    id: 'ikedc',
+    name: 'Ikeja Electric',
     logoLocal: require('../../../assets/images/ikedc.jpg'),
     logoUrl: `${IMAGE_BASE_URL}/ikedc.jpg`,
     serviceID: 'ikeja-electric'
   },
-  { 
-    id: 'ekedc', 
-    name: 'Eko Electric', 
+  {
+    id: 'ekedc',
+    name: 'Eko Electric',
     logoLocal: require('../../../assets/images/ekedc.jpg'),
     logoUrl: `${IMAGE_BASE_URL}/ekedc.jpg`,
     serviceID: 'eko-electric'
   },
-  { 
-    id: 'kedco', 
-    name: 'Kano Electric', 
+  {
+    id: 'kedco',
+    name: 'Kano Electric',
     logoLocal: require('../../../assets/images/kedco.jpg'),
     logoUrl: `${IMAGE_BASE_URL}/kedco.jpg`,
     serviceID: 'kano-electric'
   },
-  { 
-    id: 'phedc', 
-    name: 'Port Harcourt Electric', 
+  {
+    id: 'phedc',
+    name: 'Port Harcourt Electric',
     logoLocal: require('../../../assets/images/phedc.jpg'),
     logoUrl: `${IMAGE_BASE_URL}/phedc.jpg`,
     serviceID: 'portharcourt-electric'
   },
-  { 
-    id: 'ibedc', 
-    name: 'Ibadan Electric', 
+  {
+    id: 'ibedc',
+    name: 'Ibadan Electric',
     logoLocal: require('../../../assets/images/ibedc.jpg'),
     logoUrl: `${IMAGE_BASE_URL}/ibedc.jpg`,
     serviceID: 'ibadan-electric'
   },
-  { 
-    id: 'aedc', 
-    name: 'Abuja Electric', 
+  {
+    id: 'aedc',
+    name: 'Abuja Electric',
     logoLocal: require('../../../assets/images/aedc.jpg'),
     logoUrl: `${IMAGE_BASE_URL}/aedc.jpg`,
     serviceID: 'abuja-electric'
@@ -88,6 +91,107 @@ interface TokenData {
   phoneNumber: string;
 }
 
+// Recent Customers Modal Component
+function RecentCustomersModal({
+  visible,
+  onClose,
+  customers,
+  loading,
+  onSelectCustomer,
+  type = 'meter'
+}: {
+  visible: boolean;
+  onClose: () => void;
+  customers: RecentCustomer[];
+  loading: boolean;
+  onSelectCustomer: (customer: string) => void;
+  type?: 'meter' | 'phone';
+}) {
+  const renderCustomer = ({ item }: { item: RecentCustomer }) => (
+    <TouchableOpacity
+      style={modalStyles.customerItem}
+      onPress={() => onSelectCustomer(item.customer)}
+    >
+      <View style={modalStyles.customerIcon}>
+        {type === 'meter' ? (
+          <Ionicons name="flash-outline" size={24} color="#1F54DD" />
+        ) : (
+          <Ionicons name="call-outline" size={24} color="#1F54DD" />
+        )}
+      </View>
+      <View style={modalStyles.customerInfo}>
+        <Text style={modalStyles.customerPhone}>{item.customer}</Text>
+        <Text style={modalStyles.customerType}>
+          {type === 'meter' ? 'Meter Number' : 'Phone Number'}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+    </TouchableOpacity>
+  );
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={modalStyles.overlay}
+        activeOpacity={1}
+        onPressOut={onClose}
+      >
+        <View style={modalStyles.container}>
+          {/* Header */}
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>
+              {type === 'meter' ? 'Recent Meter Numbers' : 'Recent Phone Numbers'}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
+              <Ionicons name="close" size={24} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Subtitle */}
+          <Text style={modalStyles.subtitle}>
+            {type === 'meter'
+              ? 'Select a meter number from your recent purchases'
+              : 'Select a phone number from your recent purchases'}
+          </Text>
+
+          {/* Loading State */}
+          {loading ? (
+            <View style={modalStyles.loadingContainer}>
+              <ActivityIndicator size="large" color="#1F54DD" />
+              <Text style={modalStyles.loadingText}>Loading...</Text>
+            </View>
+          ) : customers.length === 0 ? (
+            <View style={modalStyles.emptyContainer}>
+              {type === 'meter' ? (
+                <Ionicons name="flash-outline" size={48} color="#94A3B8" />
+              ) : (
+                <Ionicons name="people-outline" size={48} color="#94A3B8" />
+              )}
+              <Text style={modalStyles.emptyTitle}>No Recent {type === 'meter' ? 'Meter Numbers' : 'Phone Numbers'}</Text>
+              <Text style={modalStyles.emptyDescription}>
+                Your recent {type === 'meter' ? 'meter numbers' : 'phone numbers'} will appear here after you make purchases
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={customers}
+              renderItem={renderCustomer}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={modalStyles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 export default function Electricity({ navigation }: { navigation: any }) {
   // State
   const [meterNumber, setMeterNumber] = useState('');
@@ -111,6 +215,14 @@ export default function Electricity({ navigation }: { navigation: any }) {
   // Token display state
   const [showToken, setShowToken] = useState(false);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
+
+  // Recent customers state
+  const [showRecentMeterModal, setShowRecentMeterModal] = useState(false);
+  const [showRecentPhoneModal, setShowRecentPhoneModal] = useState(false);
+  const [recentMeters, setRecentMeters] = useState<RecentCustomer[]>([]);
+  const [recentPhones, setRecentPhones] = useState<RecentCustomer[]>([]);
+  const [loadingRecentMeters, setLoadingRecentMeters] = useState(false);
+  const [loadingRecentPhones, setLoadingRecentPhones] = useState(false);
 
   // Helper functions
   const clearFieldError = (field: string) => {
@@ -227,6 +339,64 @@ export default function Electricity({ navigation }: { navigation: any }) {
     }
   };
 
+  // Fetch recent meter numbers
+  const fetchRecentMeters = async () => {
+    setLoadingRecentMeters(true);
+    try {
+      const response = await walletService.getRecentCustomers({
+        type: 'Electricity',
+        limit: 15
+      });
+
+      if (response.success) {
+        setRecentMeters(response.data);
+        setShowRecentMeterModal(true);
+      } else {
+        showError('Error', response.message || 'Failed to fetch recent meter numbers');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch recent meters:', error);
+      showError('Error', 'Failed to load recent meter numbers');
+    } finally {
+      setLoadingRecentMeters(false);
+    }
+  };
+
+  // Fetch recent phone numbers
+  const fetchRecentPhones = async () => {
+    setLoadingRecentPhones(true);
+    try {
+      const response = await walletService.getRecentCustomers({
+        type: 'Electricity',
+        limit: 15
+      });
+
+      if (response.success) {
+        setRecentPhones(response.data);
+        setShowRecentPhoneModal(true);
+      } else {
+        showError('Error', response.message || 'Failed to fetch recent phone numbers');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch recent phones:', error);
+      showError('Error', 'Failed to load recent phone numbers');
+    } finally {
+      setLoadingRecentPhones(false);
+    }
+  };
+
+  // Handle meter selection from recent
+  const handleSelectMeter = (meter: string) => {
+    setMeterNumber(meter);
+    setShowRecentMeterModal(false);
+  };
+
+  // Handle phone selection from recent
+  const handleSelectPhone = (phone: string) => {
+    setPhoneNumber(phone);
+    setShowRecentPhoneModal(false);
+  };
+
   // Validate meter number
   const validateMeter = async () => {
     if (!selectedProvider) {
@@ -283,7 +453,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
                 text: 'Cancel',
                 style: 'cancel',
                 onPress: () => {
-                  setErrors(prev => ({
+                  setErrors((prev) => ({
                     ...prev,
                     meterNumber: response.data.content.error
                   }));
@@ -383,7 +553,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
     if (!validateForm()) {
       return;
     }
-    
+
     if (!selectedProvider) {
       showError('Error', 'Please select a provider');
       return;
@@ -436,7 +606,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
           setShowToken(true);
         } else {
           Alert.alert('Success', response.message || 'Electricity purchase successful!');
-          
+
           // Reset form
           setMeterNumber('');
           setPhoneNumber('');
@@ -445,7 +615,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
           setSelectedProvider(null);
           setCustomerName('');
           setCommission(0);
-          
+
           setShowConfirmModal(false);
           navigation.navigate('Tabs');
         }
@@ -489,35 +659,14 @@ export default function Electricity({ navigation }: { navigation: any }) {
   // Prepare details for confirmation modal
   const getConfirmationDetails = (): PurchaseDetail[] => {
     const details: PurchaseDetail[] = [];
-    
-    // if (selectedProvider) {
-    //   details.push({
-    //     label: 'Provider',
-    //     value: selectedProvider.name,
-    //     icon: 'flash-outline',
-    //     iconColor: '#64748B',
-    //     customComponent: (
-    //       <View style={styles.providerValueContainer}>
-    //         {selectedProvider.logoLocal && (
-    //           <Image 
-    //             source={selectedProvider.logoLocal} 
-    //             style={styles.providerLogoSmall}
-    //             resizeMode="contain"
-    //           />
-    //         )}
-    //         <Text style={styles.providerValueText}>{selectedProvider.name}</Text>
-    //       </View>
-    //     ),
-    //   });
-    // }
-    
+
     details.push({
       label: 'Meter Type',
       value: meterType === 'prepaid' ? 'Prepaid' : 'Postpaid',
       icon: meterType === 'prepaid' ? 'battery-charging-outline' : 'receipt-outline',
       iconColor: '#64748B',
     });
-    
+
     if (meterNumber) {
       details.push({
         label: 'Meter Number',
@@ -526,7 +675,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         iconColor: '#64748B',
       });
     }
-    
+
     if (customerName) {
       details.push({
         label: 'Customer Name',
@@ -536,7 +685,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         valueColor: customerName === 'Customer (Validation Warning)' ? '#F59E0B' : '#0F172A',
       });
     }
-    
+
     if (phoneNumber) {
       details.push({
         label: 'Phone Number',
@@ -545,7 +694,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         iconColor: '#64748B',
       });
     }
-    
+
     if (amount) {
       details.push({
         label: 'Amount',
@@ -555,7 +704,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         valueColor: '#10B981',
       });
     }
-    
+
     return details;
   };
 
@@ -661,8 +810,13 @@ export default function Electricity({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Meter Number</Text>
-            <TouchableOpacity onPress={() => { }}>
-              <Text style={styles.beneficiaryLink}>Choose from saved</Text>
+            <TouchableOpacity
+              onPress={fetchRecentMeters}
+              disabled={loadingRecentMeters}
+            >
+              <Text style={styles.beneficiaryLink}>
+                {loadingRecentMeters ? 'Loading...' : 'Choose from recent'}
+              </Text>
             </TouchableOpacity>
           </View>
           <View style={styles.meterInputRow}>
@@ -733,7 +887,19 @@ export default function Electricity({ navigation }: { navigation: any }) {
 
         {/* Phone Number Input */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Phone Number</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Phone Number</Text>
+            {/* 
+              <TouchableOpacity 
+                onPress={fetchRecentPhones}
+                disabled={loadingRecentPhones}
+              >
+                <Text style={styles.beneficiaryLink}>
+                  {loadingRecentPhones ? 'Loading...' : 'Choose from recent'}
+                </Text>
+              </TouchableOpacity>
+             */}
+          </View>
           <View style={[
             styles.inputContainer,
             errors.phoneNumber && styles.inputContainerError
@@ -746,6 +912,19 @@ export default function Electricity({ navigation }: { navigation: any }) {
               keyboardType="phone-pad"
               placeholderTextColor="#94A3B8"
             />
+            {/* 
+              <TouchableOpacity
+                style={styles.contactButton}
+                onPress={fetchRecentPhones}
+                disabled={loadingRecentPhones}
+              >
+                {loadingRecentPhones ? (
+                  <ActivityIndicator size="small" color="#64748B" />
+                ) : (
+                  <Ionicons name="people-outline" size={20} color="#64748B" />
+                )}
+              </TouchableOpacity>
+            */}
           </View>
           {errors.phoneNumber && (
             <Text style={styles.errorText}>{errors.phoneNumber}</Text>
@@ -881,10 +1060,30 @@ export default function Electricity({ navigation }: { navigation: any }) {
         loading={isSubmitting}
         confirmButtonText={meterType === 'prepaid' ? 'Buy Electricity Token' : 'Pay Electricity Bill'}
         infoNote={
-          meterType === 'prepaid' 
-            ? 'Electricity token will be generated instantly after successful payment' 
+          meterType === 'prepaid'
+            ? 'Electricity token will be generated instantly after successful payment'
             : 'Postpaid bill payment will be processed within 24 hours'
         }
+      />
+
+      {/* Recent Meter Numbers Modal */}
+      <RecentCustomersModal
+        visible={showRecentMeterModal}
+        onClose={() => setShowRecentMeterModal(false)}
+        customers={recentMeters}
+        loading={loadingRecentMeters}
+        onSelectCustomer={handleSelectMeter}
+        type="meter"
+      />
+
+      {/* Recent Phone Numbers Modal */}
+      <RecentCustomersModal
+        visible={showRecentPhoneModal}
+        onClose={() => setShowRecentPhoneModal(false)}
+        customers={recentPhones}
+        loading={loadingRecentPhones}
+        onSelectCustomer={handleSelectPhone}
+        type="phone"
       />
 
       {/* Token Display Modal */}
@@ -904,6 +1103,107 @@ export default function Electricity({ navigation }: { navigation: any }) {
     </View>
   );
 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  container: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    minHeight: 400,
+    maxHeight: '80%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#0F172A',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    marginBottom: 24,
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  customerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  customerIcon: {
+    marginRight: 12,
+  },
+  customerInfo: {
+    flex: 1,
+  },
+  customerPhone: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  customerType: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#64748B',
+    marginTop: 12,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#64748B',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
+    textAlign: 'center',
+    maxWidth: 300,
+    lineHeight: 20,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -1046,6 +1346,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
     color: '#0F172A',
+  },
+  contactButton: {
+    padding: 8,
   },
   meterInputRow: {
     flexDirection: 'row',
@@ -1241,7 +1544,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 16,
   },
-  // Add these new styles for the custom component
   providerValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
