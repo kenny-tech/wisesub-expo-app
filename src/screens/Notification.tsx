@@ -122,7 +122,7 @@ export default function Notification({ navigation }: { navigation: any }) {
         <Ionicons name="notifications-off-outline" size={64} color="#94A3B8" />
         <Text style={styles.emptyTitle}>No Notifications</Text>
         <Text style={styles.emptyDescription}>
-          You're all caught up! New notifications will appear here.
+          No notifications yet.
         </Text>
       </View>
     );
