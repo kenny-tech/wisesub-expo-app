@@ -100,7 +100,7 @@ const Verification: React.FC = () => {
         response = await authService.verifyOtp(payload);
       }
 
-      console.log('response: ',response.data.data)
+      // console.log('response: ',response.data.data)
 
       if (response?.success) {
         Toast.show({

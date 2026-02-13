@@ -82,7 +82,7 @@ const SignupScreen: React.FC = () => {
 
       const response = await authService.register(payload);
 
-      console.log('response: ', response);
+      // console.log('response: ', response);
 
       if (response?.success) {
         showSuccess(
