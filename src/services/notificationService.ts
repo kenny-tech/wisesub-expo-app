@@ -80,7 +80,7 @@ class NotificationService {
         // Count notifications where readAt is not null (read)
         const read = notifications.filter(n => n.readAt !== null).length;
 
-        console.log('Notification stats calculated:', { total, unread, read });
+        // console.log('Notification stats calculated:', { total, unread, read });
 
         return { total, unread, read };
     }
