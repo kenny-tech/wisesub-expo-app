@@ -6,6 +6,16 @@ export interface DataPlan {
   variation_amount: string | number;
   validity?: string;
   description?: string;
+
+  // AWUF data plan fields (AidaPay)
+  package_api_code?: string;
+  package_name?: string;
+  price?: string | number;
+  aidapay_price?: string | number;
+  provider_code?: string;
+
+  // Flag to identify plan type
+  isAwuf?: boolean;
 }
 
 export interface DataPlansResponse {
@@ -14,6 +24,24 @@ export interface DataPlansResponse {
     varations: DataPlan[];
   };
   message?: string;
+}
+
+// AidaPay specific interfaces
+export interface AidapayPackagesResponse {
+  success: boolean;
+  message?: string;
+  data?: DataPlan[];
+}
+
+export interface AidapayPricingConfig {
+  additional_amount: number;
+  id: number;
+}
+
+export interface AidapayPricingResponse {
+  success: boolean;
+  message?: string;
+  data?: AidapayPricingConfig;
 }
 
 export interface PurchaseDataPayload {
@@ -27,6 +55,11 @@ export interface PurchaseDataPayload {
   billersCode: string;
   phone: string;
   amount: number;
+
+  // AWUF specific fields (AidaPay)
+  provider_code?: string;
+  package_code?: string;
+  aidapay_amount?: number;
 }
 
 export interface PurchaseResponse {
@@ -97,6 +130,68 @@ class BillService {
     }
   }
 
+  /**
+   * Fetch AWUF data plans from AidaPay
+   */
+  async getAwufDataPlans(providerCode: string): Promise<AidapayPackagesResponse> {
+    try {
+      const response = await api.get(`${API_ENDPOINTS.AIDAPAY_PACKAGES}?provider_code=${providerCode}`);
+      console.log('AidaPay API response:', response.data);
+
+      // Transform AidaPay data to match our DataPlan interface
+      if (response.data.success && response.data.data) {
+        const plans = response.data.data.map((plan: any) => ({
+          package_api_code: plan.package_api_code,
+          package_name: plan.package_name,
+          price: plan.price,
+          aidapay_price: plan.aidapay_price,
+          provider_code: providerCode,
+          isAwuf: true
+        }));
+
+        return {
+          success: true,
+          data: plans,
+          message: 'AWUF plans fetched successfully'
+        };
+      }
+
+      return {
+        success: false,
+        message: response.data.message || 'Failed to fetch AWUF plans',
+        data: []
+      };
+    } catch (error: any) {
+      console.error('Failed to fetch AidaPay packages:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch AWUF plans',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Fetch AidaPay pricing configuration
+   */
+  async getAwufPricingConfig(): Promise<AidapayPricingResponse> {
+    try {
+      const response = await api.get(API_ENDPOINTS.AIDAPAY_PRICING_CONFIG);
+
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Failed to fetch AidaPay pricing config:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch pricing config'
+      };
+    }
+  }
+
   async purchaseData(payload: PurchaseDataPayload): Promise<PurchaseResponse> {
     try {
       const response = await api.post<PurchaseResponse>(API_ENDPOINTS.PAY_BILL, payload);
@@ -106,12 +201,12 @@ class BillService {
     }
   }
 
- async validateDecoder(payload: ValidateDecoderPayload): Promise<ValidateDecoderResponse> {
+  async validateDecoder(payload: ValidateDecoderPayload): Promise<ValidateDecoderResponse> {
     try {
       const response = await api.post(`${API_ENDPOINTS.VERIFY_DECODER_NUMBER}`, payload);
-      
+
       console.log('Decoder validation response:', response.data);
-      
+
       return {
         success: response.data.success,
         message: response.data.message,
@@ -129,9 +224,9 @@ class BillService {
   async validateMeter(payload: ValidateMeterPayload): Promise<ValidateMeterResponse> {
     try {
       const response = await api.post(`${API_ENDPOINTS.VERIFY_METER_NUMBER}`, payload);
-      
+
       console.log('Meter validation response:', response.data);
-      
+
       return {
         success: response.data.success,
         message: response.data.message,

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Base API URL
-export const BASE_API = 'https://d0b0-154-118-30-86.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL = 'https://d0b0-154-118-30-86.ngrok-free.app/images';
+export const BASE_API = 'https://302e-154-118-23-68.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL = 'https://302e-154-118-23-68.ngrok-free.app/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
 // Create UNAUTHENTICATED axios instance for auth endpoints (login, register, etc.)
@@ -43,11 +43,14 @@ export const API_ENDPOINTS = {
   VERIFY_FORGOT_PASSWORD_OTP: 'auth/verify_otp',
 
   // Pay bill endpoints
-  VTPASS_VARIATION_CODES: 'vtpass/get-variation-codes',
+  VTPASS_VARIATION_CODES: '/get-variation-codes',
   PAY_BILL: 'user/wallet/pay_bill',
-  VERIFY_DECODER_NUMBER: '/vtpass/verify-decoder-number',
-  VERIFY_METER_NUMBER: '/vtpass/verify-meter-number',
-  VTPASS_COMMISSION: '/vtpass/commission',
+  VERIFY_DECODER_NUMBER: '/verify-decoder-number',
+  VERIFY_METER_NUMBER: '/verify-meter-number',
+  VTPASS_COMMISSION: '/commission',
+
+  AIDAPAY_PACKAGES: 'aidapay/packages',
+  AIDAPAY_PRICING_CONFIG: 'aidapay/pricing-config',
 
   // Wallet endpoints
   WALLET_BALANCE: 'user/wallet/get_balance',
