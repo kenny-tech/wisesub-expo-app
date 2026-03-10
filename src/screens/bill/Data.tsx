@@ -493,7 +493,7 @@ export default function Data({ navigation }: { navigation: any }) {
 
       if (response.success) {
         const successMessage = isAwuf 
-          ? "AWUF data purchased successfully! Dial *323*4# or *323*1# to check your data balance"
+          ? "AWUF data purchased successfully! Dial *323*4# to check your data balance"
           : response.message || 'Data purchase successful!';
         
         showSuccess('Success', successMessage);
@@ -707,7 +707,11 @@ export default function Data({ navigation }: { navigation: any }) {
                         {isAwuf ? selectedPlan.package_name : selectedPlan.name}
                       </Text>
                       <Text style={styles.selectedPlanPrice}>
-                        ₦{formatAmount(isAwuf ? selectedPlan.price : selectedPlan.variation_amount)}
+                        ₦{formatAmount(
+                          isAwuf 
+                            ? (selectedPlan.price || 0) 
+                            : (selectedPlan.variation_amount || 0)
+                        )}
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#1F54DD" />
@@ -747,18 +751,22 @@ export default function Data({ navigation }: { navigation: any }) {
             <Text style={styles.sectionTitle}>Amount</Text>
             <View style={styles.amountContainer}>
               <Text style={styles.amountText}>
-                ₦{formatAmount(isAwuf ? selectedPlan.price : selectedPlan.variation_amount)}
+                ₦{formatAmount(
+                  isAwuf 
+                    ? (selectedPlan.price || 0) 
+                    : (selectedPlan.variation_amount || 0)
+                )}
               </Text>
             </View>
             
-            {/* {isAwuf && (
+            {isAwuf && (
               <View style={styles.awufInfoContainer}>
                 <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
                 <Text style={styles.awufInfoText}>
                   AWUF data includes special bonus
                 </Text>
               </View>
-            )} */}
+            )}
             
             {/* Show commission only for VTPass plans */}
             {!isAwuf && commission > 0 && (

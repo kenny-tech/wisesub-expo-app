@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions } from "react-native";
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   navigation: any;
@@ -25,7 +25,7 @@ const Welcome: React.FC<Props> = ({ navigation }) => {
 
         <Text style={styles.title}>Welcome to WiseSub</Text>
         <Text style={styles.subtitle}>
-          Get cheap data, airtime, cable TV subscriptions, and electricity tokens the wisest way, with rewards on WiseSub.
+          Buy cheap data, airtime, cable TV subscriptions, and electricity tokens the wisest way, with rewards on WiseSub.
         </Text>
 
       </View>
