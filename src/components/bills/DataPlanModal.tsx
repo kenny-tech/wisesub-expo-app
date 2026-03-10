@@ -20,6 +20,7 @@ interface DataPlanModalProps {
   selectedPlan: DataPlan | null;
   onSelectPlan: (plan: DataPlan) => void;
   loading?: boolean;
+  isAwuf?: boolean;
 }
 
 export const DataPlanModal: React.FC<DataPlanModalProps> = ({
@@ -28,50 +29,96 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
   dataPlans,
   selectedPlan,
   onSelectPlan,
-  loading = false
+  loading = false,
+  isAwuf = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  console.log('DataPlanModal - dataPlans:', dataPlans.length);
-  if (dataPlans.length > 0) {
-    console.log('First plan in modal:', dataPlans[0]);
-  }
+  // Filter plans based on search query
+  const filteredPlans = dataPlans.filter(plan => {
+    if (isAwuf) {
+      return plan.package_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    } else {
+      return plan.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+  });
 
-  const filteredPlans = dataPlans.filter(plan =>
-    plan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    plan.variation_code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Check if a plan is selected
+  const isPlanSelected = (item: DataPlan): boolean => {
+    if (!selectedPlan) return false;
+    
+    if (isAwuf) {
+      return selectedPlan.package_api_code === item.package_api_code;
+    } else {
+      return selectedPlan.variation_code === item.variation_code;
+    }
+  };
 
-  const renderDataPlanItem = ({ item }: { item: DataPlan }) => (
-    <TouchableOpacity
-      style={[
-        styles.planItem,
-        selectedPlan?.variation_code === item.variation_code && styles.planItemSelected
-      ]}
-      onPress={() => onSelectPlan(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.planInfo}>
-        <Text style={styles.planName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        {/* {item.description && (
-          <Text style={styles.planDescription} numberOfLines={1}>
-            {item.description}
+  // Get plan display name
+  const getPlanName = (item: DataPlan): string => {
+    if (isAwuf) {
+      return item.package_name || 'Unknown Plan';
+    }
+    return item.name || 'Unknown Plan';
+  };
+
+  // Get plan amount
+  const getPlanAmount = (item: DataPlan): number => {
+    if (isAwuf) {
+      return parseFloat(item.price?.toString() || '0');
+    }
+    return parseFloat(item.variation_amount?.toString() || '0');
+  };
+
+  const renderDataPlanItem = ({ item }: { item: DataPlan }) => {
+    const selected = isPlanSelected(item);
+    const planName = getPlanName(item);
+    const planAmount = getPlanAmount(item);
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.planItem,
+          selected && styles.planItemSelected
+        ]}
+        onPress={() => onSelectPlan(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.planInfo}>
+          <View style={styles.planNameContainer}>
+            <Text style={[styles.planName, selected && styles.planNameSelected]} numberOfLines={2}>
+              {planName}
+            </Text>
+            {isAwuf && (
+              <View style={styles.awufBadge}>
+                <Text style={styles.awufBadgeText}>AWUF</Text>
+              </View>
+            )}
+          </View>
+          
+          {!isAwuf && item.validity && (
+            <Text style={styles.planValidity}>Validity: {item.validity}</Text>
+          )}
+        </View>
+        
+        <View style={styles.planPriceContainer}>
+          <Text style={[styles.planPrice, selected && styles.planPriceSelected]}>
+            ₦{formatAmount(planAmount)}
           </Text>
-        )} */}
-        {item.validity && (
-          <Text style={styles.planValidity}>Validity: {item.validity}</Text>
+          
+          {isAwuf && item.aidapay_price && item.aidapay_price !== item.price && (
+            <Text style={styles.originalPrice}>
+              ₦{formatAmount(item.aidapay_price)}
+            </Text>
+          )}
+        </View>
+        
+        {selected && (
+          <Ionicons name="checkmark-circle" size={24} color="#1F54DD" style={styles.checkIcon} />
         )}
-      </View>
-      <View style={styles.planPriceContainer}>
-        <Text style={styles.planPrice}>₦{formatAmount(item.variation_amount)}</Text>
-      </View>
-      {selectedPlan?.variation_code === item.variation_code && (
-        <Ionicons name="checkmark-circle" size={24} color="#1F54DD" style={styles.checkIcon} />
-      )}
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Modal
@@ -88,7 +135,9 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
         <View style={styles.modalContainer}>
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Data Plan</Text>
+            <Text style={styles.modalTitle}>
+              {isAwuf ? 'Select AWUF Data Plan' : 'Select Data Plan'}
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#64748B" />
             </TouchableOpacity>
@@ -99,31 +148,52 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
             <Ionicons name="search" size={20} color="#94A3B8" />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search data plans..."
+              placeholder={isAwuf ? "Search AWUF plans..." : "Search data plans..."}
               value={searchQuery}
               onChangeText={setSearchQuery}
               clearButtonMode="while-editing"
             />
           </View>
 
+          {/* Info message for AWUF */}
+          {isAwuf && (
+            <View style={styles.infoContainer}>
+              <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
+              <Text style={styles.infoText}>
+                AWUF data includes special bonus. Dial *323*4# to check balance.
+              </Text>
+            </View>
+          )}
+
           {/* Data Plans List */}
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#1F54DD" />
-              <Text style={styles.loadingText}>Loading data plans...</Text>
+              <Text style={styles.loadingText}>
+                {isAwuf ? 'Loading AWUF plans...' : 'Loading data plans...'}
+              </Text>
             </View>
           ) : filteredPlans.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="wifi" size={48} color="#CBD5E1" />
               <Text style={styles.emptyText}>
-                {searchQuery ? 'No matching data plans found' : 'No data plans available'}
+                {searchQuery 
+                  ? 'No matching plans found' 
+                  : isAwuf 
+                    ? 'No AWUF plans available' 
+                    : 'No data plans available'}
               </Text>
             </View>
           ) : (
             <FlatList
               data={filteredPlans}
               renderItem={renderDataPlanItem}
-              keyExtractor={(item) => item.variation_code}
+              keyExtractor={(item, index) => {
+                if (isAwuf) {
+                  return item.package_api_code || `awuf-${index}`;
+                }
+                return item.variation_code || `regular-${index}`;
+              }}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.listContent}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -175,7 +245,7 @@ const styles = StyleSheet.create({
     height: 48,
     marginHorizontal: 20,
     marginTop: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
@@ -184,6 +254,23 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     marginLeft: 12,
     paddingVertical: 12,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#92400E',
+    marginLeft: 8,
   },
   loadingContainer: {
     padding: 40,
@@ -229,20 +316,36 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  planNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 4,
+  },
   planName: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Poppins-Medium',
     color: '#0F172A',
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8,
   },
-  planDescription: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginBottom: 4,
+  planNameSelected: {
+    color: '#1F54DD',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  awufBadge: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  awufBadgeText: {
+    fontSize: 10,
+    fontFamily: 'Poppins-Bold',
+    color: '#FFFFFF',
   },
   planValidity: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Poppins-Regular',
     color: '#94A3B8',
     fontStyle: 'italic',
@@ -251,12 +354,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   planPrice: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Poppins-SemiBold',
+    color: '#10B981',
+  },
+  planPriceSelected: {
     color: '#1F54DD',
   },
+  originalPrice: {
+    fontSize: 11,
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
+    textDecorationLine: 'line-through',
+    marginTop: 2,
+  },
   checkIcon: {
-    marginLeft: 12,
+    marginLeft: 8,
   },
   separator: {
     height: 12,

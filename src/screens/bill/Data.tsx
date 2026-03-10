@@ -1,10 +1,12 @@
+// src/screens/bills/Data.tsx
+
 import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { DataPlanModal } from '@/src/components/bills/DataPlanModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService, DataPlan } from '@/src/services/billService';
 import { CommissionConfig, commissionService } from '@/src/services/commissionService';
-import { RecentCustomer, walletService } from '@/src/services/walletService'; // Import the service
+import { RecentCustomer, walletService } from '@/src/services/walletService';
 import { showError, showSuccess } from '@/src/utils/toast';
 import { DataValidators } from '@/src/utils/validators/dataValidators';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,7 +27,7 @@ import {
 
 const { width } = Dimensions.get('window');
 
-// Define networks with URL paths
+// Define base networks with URL paths
 const NETWORKS = [
   { 
     id: 'mtn', 
@@ -53,8 +55,8 @@ const NETWORKS = [
   },
 ];
 
-// Map network array to match the service structure
-const NETWORK_OPTIONS = NETWORKS.map(network => ({
+// Regular network options (VTPass)
+const REGULAR_NETWORK_OPTIONS = NETWORKS.map(network => ({
   value: network.id,
   name: network.name,
   serviceID: network.id === 'mtn' ? 'mtn-data' :
@@ -62,7 +64,44 @@ const NETWORK_OPTIONS = NETWORKS.map(network => ({
       network.id === 'glo' ? 'glo-data' : 'etisalat-data',
   logo: network.logo,
   logoLocal: network.logoLocal,
+  isAwuf: false,
+  providerCode: null,
+  originalNetwork: network.id,
 }));
+
+// AWUF network options
+const AWUF_NETWORK_OPTIONS = [
+  { 
+    value: 'mtn-awuf', 
+    name: 'MTN AWUF', 
+    originalNetwork: 'mtn',
+    logo: `${IMAGE_BASE_URL}/mtn.png`,
+    logoLocal: require('../../../assets/images/mtn.png'),
+    providerCode: 'mtn-awuf-data',
+    serviceID: null,
+    isAwuf: true,
+  },
+  { 
+    value: 'airtel-awuf', 
+    name: 'Airtel AWUF', 
+    originalNetwork: 'airtel',
+    logo: `${IMAGE_BASE_URL}/airtel.png`,
+    logoLocal: require('../../../assets/images/airtel.png'),
+    providerCode: 'airtel-awuf-data',
+    serviceID: null,
+    isAwuf: true,
+  },
+  { 
+    value: 'glo-awuf', 
+    name: 'Glo AWUF', 
+    originalNetwork: 'glo',
+    logo: `${IMAGE_BASE_URL}/glo.png`,
+    logoLocal: require('../../../assets/images/glo.png'),
+    providerCode: 'gloawufdata',
+    serviceID: null,
+    isAwuf: true,
+  },
+];
 
 // Recent Customers Modal Component
 function RecentCustomersModal({
@@ -106,7 +145,6 @@ function RecentCustomersModal({
         onPressOut={onClose}
       >
         <View style={modalStyles.container}>
-          {/* Header */}
           <View style={modalStyles.header}>
             <Text style={modalStyles.title}>Recent Customers</Text>
             <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
@@ -114,12 +152,10 @@ function RecentCustomersModal({
             </TouchableOpacity>
           </View>
 
-          {/* Subtitle */}
           <Text style={modalStyles.subtitle}>
             Select a phone number from your recent purchases
           </Text>
 
-          {/* Loading State */}
           {loading ? (
             <View style={modalStyles.loadingContainer}>
               <ActivityIndicator size="large" color="#1F54DD" />
@@ -158,19 +194,21 @@ export default function Data({ navigation }: { navigation: any }) {
   const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedPlan, setSelectedPlan] = useState<DataPlan | null>(null);
-  const [selectedNetwork, setSelectedNetwork] = useState<(typeof NETWORK_OPTIONS)[0] | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<any | null>(null);
   
-  // Commission state
+  // Commission state - only for VTPass
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [commission, setCommission] = useState<number>(0);
   const [loadingCommission, setLoadingCommission] = useState<boolean>(false);
+
+  // AWUF specific state
+  const [isAwuf, setIsAwuf] = useState<boolean>(false);
+  const [additionalAmount, setAdditionalAmount] = useState<number>(30);
 
   // Recent customers state
   const [showRecentModal, setShowRecentModal] = useState(false);
   const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
   const [loadingRecentCustomers, setLoadingRecentCustomers] = useState(false);
-
-  const type = 'Data';
 
   // Helper functions
   const clearFieldError = (field: string) => {
@@ -181,16 +219,21 @@ export default function Data({ navigation }: { navigation: any }) {
     });
   };
 
-  // Fetch commission configuration on component mount
+  // Fetch commission configuration for VTPass
   useEffect(() => {
-    fetchCommissionConfig();
+    fetchCommissionConfig('Data');
+  }, []);
+
+  // Fetch AidaPay pricing config
+  useEffect(() => {
+    fetchAwufPricingConfig();
   }, []);
 
   // Fetch commission configuration
-  const fetchCommissionConfig = async () => {
+  const fetchCommissionConfig = async (type: string) => {
     setLoadingCommission(true);
     try {
-      const response = await commissionService.getCommissionConfig('Data');
+      const response = await commissionService.getCommissionConfig(type);
       if (response.success && response.data) {
         setCommissionConfig(response.data);
       }
@@ -201,9 +244,21 @@ export default function Data({ navigation }: { navigation: any }) {
     }
   };
 
-  // Calculate commission when plan changes
+  // Fetch AidaPay pricing config
+  const fetchAwufPricingConfig = async () => {
+    try {
+      const response = await billService.getAwufPricingConfig();
+      if (response.success && response.data) {
+        setAdditionalAmount(response.data.additional_amount);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch AidaPay config:', error);
+    }
+  };
+
+  // Calculate commission only for VTPass plans
   const calculateCommissionForPlan = (planAmount: number) => {
-    if (!commissionConfig || planAmount <= 0) {
+    if (!commissionConfig || planAmount <= 0 || isAwuf) {
       setCommission(0);
       return;
     }
@@ -216,18 +271,25 @@ export default function Data({ navigation }: { navigation: any }) {
   };
 
   // Network selection handler
-  const handleNetworkSelect = async (network: typeof NETWORK_OPTIONS[0]) => {
+  const handleNetworkSelect = async (network: any) => {
     setSelectedNetwork(network);
     setSelectedPlan(null);
     setDataPlans([]);
     clearFieldError('network');
     setCommission(0);
+    
+    // Set AWUF flag
+    setIsAwuf(network.isAwuf || false);
 
-    // Fetch data plans for the selected network
-    await fetchDataPlans(network.serviceID);
+    // Fetch data plans based on network type
+    if (network.isAwuf) {
+      await fetchAwufDataPlans(network.providerCode);
+    } else {
+      await fetchDataPlans(network.serviceID);
+    }
   };
 
-  // Fetch data plans
+  // Fetch regular data plans
   const fetchDataPlans = async (serviceID: string) => {
     if (!serviceID) {
       setDataPlans([]);
@@ -251,18 +313,10 @@ export default function Data({ navigation }: { navigation: any }) {
             name: plan.name || '',
             variation_amount: plan.variation_amount || 0,
             validity: validity,
-            description: plan.fixedPrice === "Yes" ? "Fixed Price" : ""
+            description: plan.fixedPrice === "Yes" ? "Fixed Price" : "",
+            isAwuf: false
           };
         });
-        setDataPlans(plans);
-      } else if (response.success && response.content?.varations) {
-        const plans = response.content.varations.map((plan: any) => ({
-          variation_code: plan.variation_code || '',
-          name: plan.name || '',
-          variation_amount: plan.variation_amount || 0,
-          validity: '',
-          description: plan.fixedPrice === "Yes" ? "Fixed Price" : ""
-        }));
         setDataPlans(plans);
       } else {
         setDataPlans([]);
@@ -276,13 +330,44 @@ export default function Data({ navigation }: { navigation: any }) {
     }
   };
 
+  // Fetch AWUF data plans
+  const fetchAwufDataPlans = async (providerCode: string) => {
+    if (!providerCode) {
+      setDataPlans([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await billService.getAwufDataPlans(providerCode);
+
+      if (response.success && response.data) {
+        setDataPlans(response.data);
+      } else {
+        setDataPlans([]);
+        showError('Info', 'No AWUF plans available for this network');
+      }
+    } catch (error: any) {
+      setDataPlans([]);
+      showError('Error', error.message || 'Failed to fetch AWUF plans');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Data plan selection handler
   const handlePlanSelect = (plan: DataPlan) => {
     setSelectedPlan(plan);
     clearFieldError('plan');
     setShowPlanModal(false);
     
-    calculateCommissionForPlan(Number(plan.variation_amount));
+    // Calculate commission only for VTPass plans
+    if (!plan.isAwuf) {
+      const planAmount = parseFloat(plan.variation_amount?.toString() || '0');
+      calculateCommissionForPlan(planAmount);
+    } else {
+      setCommission(0);
+    }
   };
 
   // Phone number change handler
@@ -298,7 +383,7 @@ export default function Data({ navigation }: { navigation: any }) {
     setLoadingRecentCustomers(true);
     try {
       const response = await walletService.getRecentCustomers({
-        type: 'Data',
+        type: isAwuf ? 'AwufData' : 'Data',
         limit: 15
       });
       
@@ -327,7 +412,7 @@ export default function Data({ navigation }: { navigation: any }) {
     const validation = DataValidators.validateDataForm({
       phone,
       network: selectedNetwork?.value || null,
-      plan: selectedPlan?.variation_code || null
+      plan: selectedPlan?.isAwuf ? selectedPlan?.package_api_code || null : selectedPlan?.variation_code || null
     });
 
     if (!validation.isValid) {
@@ -358,7 +443,7 @@ export default function Data({ navigation }: { navigation: any }) {
     setShowConfirmModal(true);
   };
 
-  // Purchase data (called from confirmation modal)
+  // Purchase data
   const purchaseData = async () => {
     if (!selectedNetwork || !selectedPlan) {
       showError('Error', 'Please select both network and data plan');
@@ -368,25 +453,50 @@ export default function Data({ navigation }: { navigation: any }) {
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        serviceID: selectedNetwork.serviceID,
-        variation_code: selectedPlan.variation_code,
-        customer: phone,
-        type: type,
-        service_type: type,
-        provider_logo: selectedNetwork.logo,
-        name: selectedPlan.name,
-        billersCode: phone,
-        phone: phone,
-        amount: parseFloat(selectedPlan.variation_amount.toString()),
-        network: selectedNetwork.value,
-        network_name: selectedNetwork.name,
-      };
+      let payload: any = {};
+      
+      if (isAwuf) {
+        // AWUF Data payload
+        payload = {
+          type: "AwufData",
+          service_type: "AwufData",
+          name: selectedPlan.package_name || "AwufData Plan",
+          provider_logo: selectedNetwork.logo,
+          customer: phone,
+          phone: phone,
+          amount: parseFloat(selectedPlan.price?.toString() || '0'),
+          provider_code: selectedNetwork.providerCode,
+          package_code: selectedPlan.package_api_code,
+          aidapay_amount: selectedPlan.aidapay_price || 0,
+          network: selectedNetwork.originalNetwork,
+          network_name: selectedNetwork.name,
+        };
+      } else {
+        // Regular Data payload
+        payload = {
+          serviceID: selectedNetwork.serviceID,
+          variation_code: selectedPlan.variation_code,
+          customer: phone,
+          type: "Data",
+          service_type: "Data",
+          provider_logo: selectedNetwork.logo,
+          name: selectedPlan.name,
+          billersCode: phone,
+          phone: phone,
+          amount: parseFloat(selectedPlan.variation_amount?.toString() || '0'),
+          network: selectedNetwork.value,
+          network_name: selectedNetwork.name,
+        };
+      }
 
       const response = await billService.purchaseData(payload);
 
       if (response.success) {
-        showSuccess('Success', response.message || 'Data purchase successful!');
+        const successMessage = isAwuf 
+          ? "AWUF data purchased successfully! Dial *323*4# to check your data balance"
+          : response.message || 'Data purchase successful!';
+        
+        showSuccess('Success', successMessage);
         
         // Reset form
         setPhone('');
@@ -394,6 +504,7 @@ export default function Data({ navigation }: { navigation: any }) {
         setSelectedNetwork(null);
         setDataPlans([]);
         setCommission(0);
+        setIsAwuf(false);
         
         setShowConfirmModal(false);
         navigation.navigate('Tabs');
@@ -439,9 +550,10 @@ export default function Data({ navigation }: { navigation: any }) {
     const details: PurchaseDetail[] = [];
     
     if (selectedPlan) {
+      const planName = isAwuf ? selectedPlan.package_name : selectedPlan.name;
       details.push({
         label: 'Data Plan',
-        value: selectedPlan.name,
+        value: planName || '',
         icon: 'layers-outline',
         iconColor: '#64748B',
         valueColor: '#0F172A',
@@ -457,7 +569,7 @@ export default function Data({ navigation }: { navigation: any }) {
       });
     }
     
-    if (selectedPlan?.validity) {
+    if (selectedPlan?.validity && !isAwuf) {
       details.push({
         label: 'Validity',
         value: selectedPlan.validity,
@@ -466,12 +578,25 @@ export default function Data({ navigation }: { navigation: any }) {
       });
     }
     
+    if (isAwuf) {
+      details.push({
+        label: 'Plan Type',
+        value: 'AWUF Data',
+        icon: 'flash-outline',
+        iconColor: '#F59E0B',
+      });
+    }
+    
     return details;
   };
 
-  // Handle opening the data plan modal
-  const handleOpenPlanModal = () => {
-    setShowPlanModal(true);
+  // Get amount for confirmation modal
+  const getAmount = (): number => {
+    if (!selectedPlan) return 0;
+    if (isAwuf) {
+      return parseFloat(selectedPlan.price?.toString() || '0');
+    }
+    return parseFloat(selectedPlan.variation_amount?.toString() || '0');
   };
 
   return (
@@ -493,8 +618,44 @@ export default function Data({ navigation }: { navigation: any }) {
         {/* Network Selection Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Network</Text>
-          <View style={styles.networksContainer}>
-            {NETWORK_OPTIONS.map((network) => (
+          
+          {/* AWUF Networks Row */}
+          <Text style={styles.subSectionTitle}>AWUF Plans</Text>
+          <View style={styles.networksRow}>
+            {AWUF_NETWORK_OPTIONS.map((network) => (
+              <TouchableOpacity
+                key={network.value}
+                style={[
+                  styles.networkCard,
+                  selectedNetwork?.value === network.value && styles.networkCardSelected
+                ]}
+                onPress={() => handleNetworkSelect(network)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.networkLogoContainer}>
+                  <Image
+                    source={network.logoLocal}
+                    style={styles.networkLogo}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={[
+                  styles.networkName,
+                  selectedNetwork?.value === network.value && styles.networkNameSelected
+                ]} numberOfLines={1}>
+                  {network.name}
+                </Text>
+                <View style={styles.awufBadge}>
+                  <Text style={styles.awufBadgeText}>AWUF</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Regular Networks Row */}
+          <Text style={[styles.subSectionTitle, styles.regularTitle]}>Regular Plans</Text>
+          <View style={styles.networksRow}>
+            {REGULAR_NETWORK_OPTIONS.map((network) => (
               <TouchableOpacity
                 key={network.value}
                 style={[
@@ -520,6 +681,7 @@ export default function Data({ navigation }: { navigation: any }) {
               </TouchableOpacity>
             ))}
           </View>
+
           {errors.network && (
             <Text style={styles.errorText}>{errors.network}</Text>
           )}
@@ -534,7 +696,7 @@ export default function Data({ navigation }: { navigation: any }) {
                 styles.dataPlanButton,
                 errors.plan && styles.dataPlanButtonError
               ]}
-              onPress={handleOpenPlanModal}
+              onPress={() => setShowPlanModal(true)}
               disabled={dataPlans.length === 0 || loading}
             >
               <View style={styles.dataPlanButtonContent}>
@@ -542,10 +704,14 @@ export default function Data({ navigation }: { navigation: any }) {
                   <>
                     <View style={styles.selectedPlanInfo}>
                       <Text style={styles.selectedPlanName} numberOfLines={1}>
-                        {selectedPlan.name}
+                        {isAwuf ? selectedPlan.package_name : selectedPlan.name}
                       </Text>
                       <Text style={styles.selectedPlanPrice}>
-                        ₦{formatAmount(selectedPlan.variation_amount)}
+                        ₦{formatAmount(
+                          isAwuf 
+                            ? (selectedPlan.price || 0) 
+                            : (selectedPlan.variation_amount || 0)
+                        )}
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#1F54DD" />
@@ -573,22 +739,37 @@ export default function Data({ navigation }: { navigation: any }) {
             )}
             {selectedNetwork && dataPlans.length === 0 && !loading && (
               <Text style={styles.infoText}>
-                No data plans available for {selectedNetwork.name}
+                No plans available for {selectedNetwork.name}
               </Text>
             )}
           </View>
         )}
 
-        {/* Amount Display with Commission */}
+        {/* Amount Display with Commission - Only show commission for VTPass */}
         {selectedPlan && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Amount</Text>
             <View style={styles.amountContainer}>
               <Text style={styles.amountText}>
-                ₦{formatAmount(selectedPlan.variation_amount)}
+                ₦{formatAmount(
+                  isAwuf 
+                    ? (selectedPlan.price || 0) 
+                    : (selectedPlan.variation_amount || 0)
+                )}
               </Text>
             </View>
-            {commission > 0 && (
+            
+            {isAwuf && (
+              <View style={styles.awufInfoContainer}>
+                <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
+                <Text style={styles.awufInfoText}>
+                  AWUF data includes special bonus
+                </Text>
+              </View>
+            )}
+            
+            {/* Show commission only for VTPass plans */}
+            {!isAwuf && commission > 0 && (
               <View style={styles.commissionContainer}>
                 <Text style={styles.commissionText}>
                   You will earn: ₦{formatAmount(commission)}
@@ -673,6 +854,7 @@ export default function Data({ navigation }: { navigation: any }) {
         selectedPlan={selectedPlan}
         onSelectPlan={handlePlanSelect}
         loading={loading}
+        isAwuf={isAwuf}
       />
 
       {/* Recent Customers Modal */}
@@ -689,15 +871,17 @@ export default function Data({ navigation }: { navigation: any }) {
         visible={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={purchaseData}
-        title="Confirm Data Purchase"
+        title={isAwuf ? "Confirm AWUF Data Purchase" : "Confirm Data Purchase"}
         providerLogo={selectedNetwork?.logoLocal}
         providerName={selectedNetwork?.name}
         details={getConfirmationDetails()}
-        amount={selectedPlan ? parseFloat(selectedPlan.variation_amount.toString()) : 0}
-        commission={commission}
+        amount={getAmount()}
+        commission={!isAwuf ? commission : 0}
         loading={isSubmitting}
         confirmButtonText="Buy Data"
-        infoNote="Data will be delivered within 1-3 minutes after successful payment"
+        infoNote={isAwuf 
+          ? "Dial *323*4# or *323*1# to check your data balance after purchase" 
+          : "Data will be delivered within 1-3 minutes after successful payment"}
       />
     </View>
   );
@@ -845,27 +1029,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
     color: '#0F172A',
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  subSectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    color: '#64748B',
+    marginBottom: 8,
+  },
+  regularTitle: {
+    marginTop: 16,
+  },
+  networksRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   beneficiaryLink: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
     color: '#1F54DD',
   },
-  networksContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   networkCard: {
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 12,
-    width: 80,
-    height: 90,
+    width: width / 4 - 20,
+    height: 100,
     borderWidth: 2,
     borderColor: 'transparent',
+    position: 'relative',
   },
   networkCardSelected: {
     borderColor: '#1F54DD',
@@ -891,7 +1085,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   networkName: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Poppins-Medium',
     color: '#64748B',
     textAlign: 'center',
@@ -899,6 +1093,20 @@ const styles = StyleSheet.create({
   networkNameSelected: {
     color: '#1F54DD',
     fontFamily: 'Poppins-SemiBold',
+  },
+  awufBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#F59E0B',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  awufBadgeText: {
+    fontSize: 8,
+    fontFamily: 'Poppins-Bold',
+    color: '#FFFFFF',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -946,14 +1154,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   selectedPlanName: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Poppins-Medium',
     color: '#0F172A',
     flex: 1,
     marginRight: 12,
   },
   selectedPlanPrice: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Poppins-SemiBold',
     color: '#1F54DD',
   },
@@ -991,11 +1199,19 @@ const styles = StyleSheet.create({
   commissionLoader: {
     marginLeft: 8,
   },
-  validityText: {
-    fontSize: 14,
+  awufInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: '#FEF3C7',
+    padding: 8,
+    borderRadius: 8,
+  },
+  awufInfoText: {
+    fontSize: 12,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginTop: 4,
+    color: '#92400E',
+    marginLeft: 4,
   },
   proceedButton: {
     backgroundColor: '#1F54DD',
