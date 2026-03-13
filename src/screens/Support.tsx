@@ -29,15 +29,15 @@ export default function Support({ navigation }: { navigation: any }) {
       backgroundColor: "#FCE8E6",
       onPress: () => Linking.openURL('mailto:support@wisesub.com.ng?subject=Support%20Request')
     },
-    {
-      id: 3,
-      title: "Phone Support",
-      description: "Call us during business hours (9AM - 5PM)",
-      icon: "call" as const,
-      color: "#34A853",
-      backgroundColor: "#E6F4EA",
-      onPress: () => Linking.openURL('tel:+2348021088554')
-    },
+    // {
+    //   id: 3,
+    //   title: "Phone Support",
+    //   description: "Call us during business hours (9AM - 5PM)",
+    //   icon: "call" as const,
+    //   color: "#34A853",
+    //   backgroundColor: "#E6F4EA",
+    //   onPress: () => Linking.openURL('tel:+2348021088554')
+    // },
     // {
     //   id: 4,
     //   title: "FAQ & Help Center",
