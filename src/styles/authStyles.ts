@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-SemiBold',
   },
   linkContainer: {
-    marginTop: 20,
+    marginTop: 15,
   },
   linkText: {
     fontSize: 14,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
     fontFamily: 'Poppins-Regular',
-    marginTop: 20,
+    marginTop: 2,
     lineHeight: 18,
   },
   forgotPasswordContainer: {
