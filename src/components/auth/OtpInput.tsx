@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    NativeSyntheticEvent,
-    StyleSheet,
-    TextInput,
-    TextInputKeyPressEventData,
-    View,
+  NativeSyntheticEvent,
+  StyleSheet,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from 'react-native';
 
 interface OtpInputProps {
@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Poppins-SemiBold',
     backgroundColor: '#FFFFFF',
+    color: '#000000'
   },
   otpInputFilled: {
     borderColor: '#1F54DD',

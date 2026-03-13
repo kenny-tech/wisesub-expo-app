@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TextInputProps,
-    View,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
 } from 'react-native';
 
 export interface FormInputProps extends TextInputProps {
@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
     backgroundColor: '#FFFFFF',
+    color: '#000000'
   },
   inputError: {
     borderColor: '#DC2626',

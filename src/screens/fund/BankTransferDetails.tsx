@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-    Clipboard,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Clipboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -90,11 +90,7 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
   };
 
   const handleSupport = () => {
-    Toast.show({
-      type: 'info',
-      text1: 'Support',
-      text2: 'Contact support at support@wisesub.com.ng',
-    });
+    navigation.navigate("Support")
   };
 
   return (

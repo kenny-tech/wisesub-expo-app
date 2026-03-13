@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Base API URL
-export const BASE_API = 'https://6256-154-118-23-68.ngrok-free.app/api/v1/';
-export const IMAGE_BASE_URL = 'https://6256-154-118-23-68.ngrok-free.app/images';
+export const BASE_API = 'https://dae2-154-118-7-189.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL = 'https://dae2-154-118-7-189.ngrok-free.app/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
 // Create UNAUTHENTICATED axios instance for auth endpoints (login, register, etc.)
