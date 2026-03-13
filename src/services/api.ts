@@ -70,6 +70,11 @@ export const API_ENDPOINTS = {
   CHANGE_PASSWORD: 'user/change_password',
   DELETE_ACCOUNT: 'user/delete-account',
   LOGOUT: 'user/logout',
+
+  // Expo push notification endpoints
+  CREATE_EXPO_TOKEN: 'user/create-expo-token',
+  GET_EXPO_TOKEN: 'user/get-expo-token',
+  DELETE_EXPO_TOKEN: 'user/delete-expo-token',
 };
 
 // Generic API response interface
