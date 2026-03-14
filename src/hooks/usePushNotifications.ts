@@ -128,7 +128,7 @@ export const usePushNotifications = (): UsePushNotificationsReturn => {
    * Delete token on logout
    */
   const deleteTokenOnLogout = useCallback(async (): Promise<void> => {
-    await pushNotificationService.deleteTokenFromBackend();
+    // await pushNotificationService.deleteTokenFromBackend();
     setExpoPushToken(null);
     initialized.current = false;
   }, []);
