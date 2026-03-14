@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { api } from './api';
+import { api, API_ENDPOINTS } from './api';
 
 // Types
 export interface PushNotificationData {
@@ -115,7 +115,7 @@ class PushNotificationService {
    */
   async sendTokenToBackend(token: string, platform: string | null = null): Promise<boolean> {
     try {
-      const response = await api.post<ExpoTokenResponse>('create-expo-token', {
+      const response = await api.post<ExpoTokenResponse>(API_ENDPOINTS.CREATE_EXPO_TOKEN, {
         token: token,
         platform: platform || this.getPlatform()
       });
@@ -143,7 +143,7 @@ class PushNotificationService {
    */
   async getTokenFromBackend(): Promise<string | null> {
     try {
-      const response = await api.get<PushNotificationResponse>('get-expo-token');
+      const response = await api.get<PushNotificationResponse>(API_ENDPOINTS.GET_EXPO_TOKEN);
       
       if (response.data.success && response.data.data) {
         return response.data.data.token;
@@ -161,7 +161,7 @@ class PushNotificationService {
    */
   async deleteTokenFromBackend(): Promise<boolean> {
     try {
-      const response = await api.delete<{ success: boolean; message: string }>('delete-expo-token');
+      const response = await api.delete<{ success: boolean; message: string }>(API_ENDPOINTS.DELETE_EXPO_TOKEN);
       
       if (response.data.success) {
         console.log('Push token deleted from backend');
