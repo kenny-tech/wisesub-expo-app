@@ -25,7 +25,7 @@ import {
 // This controls how notifications behave when app is in FOREGROUND
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,      // Show alert/banner when app is in foreground
+    shouldShowBanner: true,      // Show alert/banner when app is in foreground
     shouldPlaySound: true,      // Play sound when app is in foreground
     shouldSetBadge: false,      // Don't set badge count
     priority: Notifications.AndroidNotificationPriority.HIGH,
