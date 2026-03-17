@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "189717477004",
+    "project_id": "wisesub-d5374",
+    "storage_bucket": "wisesub-d5374.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189717477004:android:a20c224eda27ef98f0ada9",
+        "android_client_info": {
+          "package_name": "com.wisesubsorganization.wisesub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0Yht0YryubANlAePEQ6osGX4-pGTNS6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

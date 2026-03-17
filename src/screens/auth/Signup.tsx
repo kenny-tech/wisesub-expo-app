@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   Text,
@@ -103,6 +104,12 @@ const SignupScreen: React.FC = () => {
     }
   };
 
+  const openLink = (url: string) => {
+    Linking.openURL(url).catch(err =>
+      showError('Error', 'Unable to open link')
+    );
+  };
+
   const handleApiError = (error: any) => {
     let errorMessage = 'Registration failed. Please try again.';
 
@@ -199,14 +206,14 @@ const SignupScreen: React.FC = () => {
             By creating an account, you agree to our{' '}
             <Text
               style={styles.link}
-              onPress={() => navigation.navigate('Terms')}
+              onPress={() => openLink('https://www.wisesub.com.ng/terms-and-conditions')}
             >
               Terms of Service
             </Text>{' '}
             and{' '}
             <Text
               style={styles.link}
-              onPress={() => navigation.navigate('Privacy')}
+              onPress={() => openLink('https://www.wisesub.com.ng/privacy-policy')}
             >
               Privacy Policy
             </Text>

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -18,7 +19,7 @@ import { logoutUser } from "../redux/slices/authSlice";
 export default function Profile({ navigation }: { navigation: any }) {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
-  
+
   const dispatch = useAppDispatch();
   const { user } = useProfile();
 
@@ -27,13 +28,13 @@ export default function Profile({ navigation }: { navigation: any }) {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      
+
       // Call Redux logout thunk which clears AsyncStorage
       await dispatch(logoutUser()).unwrap();
-      
+
       setLoading(false);
       handleLogoutModal();
-      
+
       // Navigate to login screen
       navigation.reset({
         index: 0,
@@ -44,6 +45,12 @@ export default function Profile({ navigation }: { navigation: any }) {
       console.error('Logout error:', error);
       Alert.alert('Error', error.message || 'Something went wrong');
     }
+  };
+
+  const openLink = (url: string) => {
+    Linking.openURL(url).catch(err =>
+      Alert.alert('Error', 'Unable to open link')
+    );
   };
 
   const getFirstCharacter = (name: string) => {
@@ -191,12 +198,12 @@ export default function Profile({ navigation }: { navigation: any }) {
             <ProfileItem
               icon={<Ionicons name="document-text-outline" size={20} color="#1F54DD" />}
               title="Terms & Conditions"
-              onPress={() => navigation.navigate("Terms")}
+              onPress={() => openLink('https://www.wisesub.com.ng/terms-and-conditions')}
             />
             <ProfileItem
               icon={<Ionicons name="shield-checkmark-outline" size={20} color="#1F54DD" />}
               title="Privacy Policy"
-              onPress={() => navigation.navigate("Privacy")}
+              onPress={() => openLink('https://www.wisesub.com.ng/privacy-policy')}
             />
           </View>
         </View>

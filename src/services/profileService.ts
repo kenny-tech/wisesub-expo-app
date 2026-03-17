@@ -75,11 +75,15 @@ class ProfileService {
 
   async logout(): Promise<LogoutResponse> {
     try {
+      // First delete push token from backend
+      // await pushNotificationService.deleteTokenFromBackend();
       const response = await api.get<LogoutResponse>(API_ENDPOINTS.LOGOUT);
       return response.data;
     } catch (error: any) {
       console.error('Logout API error:', error);
       // Even if API call fails, we should still clear local storage
+      // and delete push token locally
+      // await pushNotificationService.deleteTokenFromBackend();
       return {
         success: true,
         message: 'Logged out locally'
