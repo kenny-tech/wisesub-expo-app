@@ -43,11 +43,11 @@ export const API_ENDPOINTS = {
   VERIFY_FORGOT_PASSWORD_OTP: 'auth/verify_otp',
 
   // Pay bill endpoints
-  VTPASS_VARIATION_CODES: '/get-variation-codes',
+  VTPASS_VARIATION_CODES: 'get-variation-codes',
   PAY_BILL: 'user/wallet/pay_bill',
-  VERIFY_DECODER_NUMBER: '/verify-decoder-number',
-  VERIFY_METER_NUMBER: '/verify-meter-number',
-  VTPASS_COMMISSION: '/commission',
+  VERIFY_DECODER_NUMBER: 'verify-decoder-number',
+  VERIFY_METER_NUMBER: 'verify-meter-number',
+  VTPASS_COMMISSION: 'commission',
 
   AIDAPAY_PACKAGES: 'aidapay/packages',
   AIDAPAY_PRICING_CONFIG: 'aidapay/pricing-config',
