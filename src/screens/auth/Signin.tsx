@@ -16,7 +16,6 @@ import FormInput from '../../components/auth/FormInput';
 import PasswordInput from '../../components/auth/PasswordInput';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { clearError, loginUser } from '../../redux/slices/authSlice';
-import { pushNotificationService } from '../../services/pushNotificationService';
 import styles from '../../styles/authStyles';
 import { APP_CONSTANTS } from '../../utils/constants';
 import { AuthValidators } from '../../utils/validators/authValidators';
@@ -36,8 +35,6 @@ const SigninScreen: React.FC = () => {
 
   useEffect(() => {
     getDeviceId();
-    // Pre-register for push notifications to get token ready
-    preRegisterPushNotifications();
   }, []);
 
   useEffect(() => {
@@ -55,19 +52,6 @@ const SigninScreen: React.FC = () => {
       setDeviceId(deviceId);
     } catch (error) {
       console.log('Error getting device ID:', error);
-    }
-  };
-
-  const preRegisterPushNotifications = async (): Promise<void> => {
-    try {
-      // This will request permissions and get the token ready
-      await pushNotificationService.setAndroidNotificationChannel();
-      const token = await pushNotificationService.registerForPushNotifications();
-      if (token) {
-        console.log('Pre-registered push token:', token);
-      }
-    } catch (error) {
-      console.log('Error pre-registering push notifications:', error);
     }
   };
 
@@ -98,12 +82,6 @@ const SigninScreen: React.FC = () => {
       };
 
       await dispatch(loginUser(payload)).unwrap();
-
-      // After successful login, send push token to backend
-      const currentToken = pushNotificationService.getCurrentToken();
-      if (currentToken) {
-        await pushNotificationService.sendTokenToBackend(currentToken);
-      }
 
       navigation.navigate('Tabs');
     } catch (error: any) {
