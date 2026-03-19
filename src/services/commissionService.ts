@@ -26,7 +26,7 @@ class CommissionService {
       const response = await api.get(
         `${API_ENDPOINTS.VTPASS_COMMISSION}?type=${serviceType}`
       );
-      
+
       return {
         success: response.data.success,
         data: response.data.data,
