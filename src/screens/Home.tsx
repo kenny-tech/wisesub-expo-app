@@ -1,5 +1,6 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Device from 'expo-device';
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +18,7 @@ import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
 import { useNotifications } from "../redux/hooks/useNotifications";
 import { useProfile } from "../redux/hooks/useProfile";
+import { pushNotificationService } from '../services/pushNotificationService';
 import { Transaction, walletService } from "../services/walletService";
 
 const { width } = Dimensions.get("window");
@@ -128,10 +130,47 @@ export default function Home({ navigation }: { navigation: any }) {
   const [transactionsError, setTransactionsError] = useState<string | null>(null);
   const [showBalance, setShowBalance] = useState<boolean>(true);
   const [showFundModal, setShowFundModal] = useState<boolean>(false);
+  const [deviceId, setDeviceId] = useState<string>('');
+  const [pushToken, setPushToken] = useState<string | null>(null);
 
   const { stats, fetchNotifications, markAllAsRead } = useNotifications();
 
   const { user } = useProfile();
+
+  // Get device ID and register for push notifications
+  useEffect(() => {
+    getDeviceId();
+    setupPushNotifications();
+  }, []);
+
+  const getDeviceId = async () => {
+    try {
+      const deviceId = Device.osBuildId || Device.modelId || 'mobile-device';
+      setDeviceId(deviceId);
+    } catch (error) {
+      console.log('Error getting device ID:', error);
+    }
+  };
+
+  const setupPushNotifications = async (): Promise<void> => {
+    try {
+      // Set up notification channel for Android
+      await pushNotificationService.setAndroidNotificationChannel();
+
+      // Register for push notifications and get token
+      const token = await pushNotificationService.registerForPushNotifications();
+
+      if (token) {
+        console.log('Push notification token:', token);
+        setPushToken(token);
+
+        // Send token to backend
+        await pushNotificationService.sendTokenToBackend(token);
+      }
+    } catch (error) {
+      console.log('Error setting up push notifications:', error);
+    }
+  };
 
   useEffect(() => {
     fetchNotifications();

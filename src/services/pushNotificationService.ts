@@ -128,7 +128,7 @@ class PushNotificationService {
         return false;
       }
     } catch (error: any) {
-      console.error('Error sending push token to backend:', error);
+      console.error('Error sending push token to backend:', error.response.data.message);
       if (error.response?.data?.message) {
         showError('Error', error.response.data.message);
       } else {
