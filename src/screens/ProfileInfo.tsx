@@ -176,6 +176,7 @@ export default function ProfileInfo({ navigation }: { navigation: any }) {
         </View>
 
         <View style={styles.footer} />
+        <View style={{ height: 150 }} />
       </ScrollView>
     </View>
   );
