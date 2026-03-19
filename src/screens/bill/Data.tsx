@@ -1,5 +1,3 @@
-// src/screens/bills/Data.tsx
-
 import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { DataPlanModal } from '@/src/components/bills/DataPlanModal';
 import { formatAmount } from '@/src/helper/util';

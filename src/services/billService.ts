@@ -119,7 +119,6 @@ class BillService {
   async getDataPlans(serviceID: string): Promise<DataPlansResponse> {
     try {
       const response = await api.get(`${API_ENDPOINTS.VTPASS_VARIATION_CODES}?serviceID=${serviceID}`);
-      console.log('Raw API response:', response.data);
       return {
         success: response.data.response_description === "000",
         content: response.data.content,
@@ -136,7 +135,6 @@ class BillService {
   async getAwufDataPlans(providerCode: string): Promise<AidapayPackagesResponse> {
     try {
       const response = await api.get(`${API_ENDPOINTS.AIDAPAY_PACKAGES}?provider_code=${providerCode}`);
-      console.log('AidaPay API response:', response.data);
 
       // Transform AidaPay data to match our DataPlan interface
       if (response.data.success && response.data.data) {
