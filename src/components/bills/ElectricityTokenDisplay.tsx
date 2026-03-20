@@ -67,8 +67,8 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
       if (!uri) throw new Error('Failed to capture receipt');
 
       await Share.share({
-        url: uri,       // iOS: shares the actual image
-        message: `Electricity Token: ${token}\nMeter: ${meterNumber}\nUnits: ${units} kWh\nAmount: ₦${formatAmount(amount)}`,  // Android: text fallback
+        url: uri,
+        message: `Electricity Token: ${token}\nMeter: ${meterNumber}\nUnits: ${units} kWh\nAmount: ₦${formatAmount(amount)}`,
         title: 'Electricity Token Receipt',
       });
     } catch (error: any) {
@@ -100,7 +100,12 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        {/* ViewShot wraps the entire modal card */}
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: 'png', quality: 1 }}
+          style={styles.modalContainer}
+        >
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Electricity Token</Text>
@@ -112,89 +117,76 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
           <ScrollView
             style={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            scrollEnabled={!isSharing}
           >
-            {/* ViewShot wraps only the receipt — this is what gets captured */}
-            <ViewShot
-              ref={viewShotRef}
-              options={{ format: 'png', quality: 1 }}
-              style={styles.receiptCapture}
-            >
-              {/* Logo */}
-              <View style={styles.logoContainer}>
-                <Image
-                  source={require('../../../assets/images/logo.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../../assets/images/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={styles.receiptTitle}>Electricity Token Receipt</Text>
+
+            {/* Token Display */}
+            <View style={styles.tokenSection}>
+              <Text style={styles.sectionTitle}>Token Number</Text>
+              <View style={styles.tokenContainer}>
+                <Text style={styles.tokenText}>{token}</Text>
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={handleCopyToken}
+                >
+                  <Ionicons name="copy-outline" size={20} color="#1F54DD" />
+                  <Text style={styles.copyButtonText}>Copy</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Transaction Details */}
+            <View style={styles.detailsSection}>
+              <Text style={styles.sectionTitle}>Transaction Details</Text>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Meter Number:</Text>
+                <Text style={styles.detailValue}>{meterNumber}</Text>
               </View>
 
-              <Text style={styles.receiptTitle}>Electricity Token Receipt</Text>
-
-              {/* Token Display */}
-              <View style={styles.tokenSection}>
-                <Text style={styles.sectionTitle}>Token Number</Text>
-                <View style={styles.tokenContainer}>
-                  <Text style={styles.tokenText}>{token}</Text>
-                </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Customer Name:</Text>
+                <Text style={styles.detailValue}>{customerName}</Text>
               </View>
 
-              {/* Transaction Details */}
-              <View style={styles.detailsSection}>
-                <Text style={styles.sectionTitle}>Transaction Details</Text>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Meter Number:</Text>
-                  <Text style={styles.detailValue}>{meterNumber}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Customer Name:</Text>
-                  <Text style={styles.detailValue}>{customerName}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Provider:</Text>
-                  <Text style={styles.detailValue}>{formatProviderName(provider)}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Units:</Text>
-                  <Text style={styles.detailValue}>{units} kWh</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Amount Paid:</Text>
-                  <Text style={styles.amountValue}>₦{formatAmount(amount)}</Text>
-                </View>
-
-                {/* <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Phone Number:</Text>
-                  <Text style={styles.detailValue}>{phoneNumber}</Text>
-                </View> */}
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Date & Time:</Text>
-                  <Text style={styles.detailValue}>
-                    {new Date().toLocaleDateString()}{' '}
-                    {new Date().toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
-                </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Provider:</Text>
+                <Text style={styles.detailValue}>{formatProviderName(provider)}</Text>
               </View>
 
-              <Text style={styles.receiptFooter}>Thank you for using WiseSub</Text>
-            </ViewShot>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Units:</Text>
+                <Text style={styles.detailValue}>{units} kWh</Text>
+              </View>
 
-            {/* Copy button — outside ViewShot so it won't appear in the captured image */}
-            <TouchableOpacity
-              style={styles.copyButton}
-              onPress={handleCopyToken}
-            >
-              <Ionicons name="copy-outline" size={20} color="#1F54DD" />
-              <Text style={styles.copyButtonText}>Copy Token</Text>
-            </TouchableOpacity>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Amount Paid:</Text>
+                <Text style={styles.amountValue}>₦{formatAmount(amount)}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Date & Time:</Text>
+                <Text style={styles.detailValue}>
+                  {new Date().toLocaleDateString()}{' '}
+                  {new Date().toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.receiptFooter}>Thank you for using WiseSub</Text>
           </ScrollView>
 
           {/* Action Buttons */}
@@ -217,7 +209,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ViewShot>
       </View>
     </Modal>
   );
@@ -259,13 +251,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
   },
-  receiptCapture: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 24,
-    paddingHorizontal: 4,
-  },
   logoContainer: {
     alignItems: 'center',
+    marginTop: 20,
     marginBottom: 16,
   },
   logo: {
@@ -284,7 +272,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     color: '#94A3B8',
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    marginBottom: 16,
   },
   tokenSection: {
     marginBottom: 20,
@@ -301,24 +290,26 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   tokenText: {
     fontSize: 18,
     fontFamily: 'Poppins-Bold',
     color: '#1F54DD',
     letterSpacing: 1,
-    textAlign: 'center',
+    flex: 1,
+    marginRight: 12,
   },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#F1F6FF',
-    borderRadius: 10,
-    paddingVertical: 12,
-    marginTop: 12,
-    marginBottom: 8,
-    gap: 6,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
   },
   copyButtonText: {
     fontSize: 14,
