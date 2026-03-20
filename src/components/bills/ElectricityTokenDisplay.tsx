@@ -167,10 +167,10 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
                   <Text style={styles.amountValue}>₦{formatAmount(amount)}</Text>
                 </View>
 
-                <View style={styles.detailRow}>
+                {/* <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Phone Number:</Text>
                   <Text style={styles.detailValue}>{phoneNumber}</Text>
-                </View>
+                </View> */}
 
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Date & Time:</Text>
