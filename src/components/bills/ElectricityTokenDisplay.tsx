@@ -1,16 +1,19 @@
 import { formatAmount } from '@/src/helper/util';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   Modal,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import ViewShot from 'react-native-view-shot';
 
 interface ElectricityTokenDisplayProps {
   visible: boolean;
@@ -35,10 +38,12 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
   customerName,
   phoneNumber,
 }) => {
+  const [isSharing, setIsSharing] = useState(false);
+  const viewShotRef = useRef<ViewShot>(null);
+
   const handleCopyToken = async () => {
     try {
       await Clipboard.setStringAsync(token);
-
       Alert.alert(
         'Token Copied',
         'Electricity token has been copied to clipboard',
@@ -50,6 +55,28 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
         'Failed to copy token. Please try again.',
         [{ text: 'OK', style: 'default' }]
       );
+    }
+  };
+
+  const handleShareAsImage = async () => {
+    if (!viewShotRef.current) return;
+
+    setIsSharing(true);
+    try {
+      const uri = await viewShotRef.current.capture?.();
+      if (!uri) throw new Error('Failed to capture receipt');
+
+      await Share.share({
+        url: uri,
+        message: `Electricity Token: ${token}\nMeter: ${meterNumber}\nUnits: ${units} kWh\nAmount: ₦${formatAmount(amount)}`,
+        title: 'Electricity Token Receipt',
+      });
+    } catch (error: any) {
+      if (error?.message !== 'User did not share') {
+        Alert.alert('Error', 'Failed to share receipt. Please try again.');
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -73,7 +100,12 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        {/* ViewShot wraps the entire modal card */}
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: 'png', quality: 1 }}
+          style={styles.modalContainer}
+        >
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Electricity Token</Text>
@@ -85,17 +117,18 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
           <ScrollView
             style={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            scrollEnabled={!isSharing}
           >
-            {/* Success Icon */}
-            <View style={styles.successIconContainer}>
-              <View style={styles.successIcon}>
-                <Ionicons name="flash" size={48} color="#10B981" />
-              </View>
-              <Text style={styles.successTitle}>Token Generated Successfully!</Text>
-              <Text style={styles.successSubtitle}>
-                Your electricity token has been generated
-              </Text>
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../../assets/images/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
             </View>
+
+            <Text style={styles.receiptTitle}>Electricity Token Receipt</Text>
 
             {/* Token Display */}
             <View style={styles.tokenSection}>
@@ -112,7 +145,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
               </View>
             </View>
 
-            {/* Token Details */}
+            {/* Transaction Details */}
             <View style={styles.detailsSection}>
               <Text style={styles.sectionTitle}>Transaction Details</Text>
 
@@ -142,71 +175,33 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Phone Number:</Text>
-                <Text style={styles.detailValue}>{phoneNumber}</Text>
+                <Text style={styles.detailLabel}>Date & Time:</Text>
+                <Text style={styles.detailValue}>
+                  {new Date().toLocaleDateString()}{' '}
+                  {new Date().toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
               </View>
             </View>
 
-            {/* Usage Instructions */}
-            {/* <View style={styles.instructionsSection}>
-              <Text style={styles.sectionTitle}>How to Use Your Token</Text>
-              <View style={styles.instructionItem}>
-                <View style={styles.instructionNumber}>
-                  <Text style={styles.instructionNumberText}>1</Text>
-                </View>
-                <Text style={styles.instructionText}>
-                  Enter your meter number on your prepaid meter
-                </Text>
-              </View>
-              <View style={styles.instructionItem}>
-                <View style={styles.instructionNumber}>
-                  <Text style={styles.instructionNumberText}>2</Text>
-                </View>
-                <Text style={styles.instructionText}>
-                  Select "Enter Token" from the menu options
-                </Text>
-              </View>
-              <View style={styles.instructionItem}>
-                <View style={styles.instructionNumber}>
-                  <Text style={styles.instructionNumberText}>3</Text>
-                </View>
-                <Text style={styles.instructionText}>
-                  Enter the 20-digit token number provided above
-                </Text>
-              </View>
-              <View style={styles.instructionItem}>
-                <View style={styles.instructionNumber}>
-                  <Text style={styles.instructionNumberText}>4</Text>
-                </View>
-                <Text style={styles.instructionText}>
-                  Press "Enter" or "OK" to load the units
-                </Text>
-              </View>
-            </View> */}
-
-            {/* Important Notes */}
-            {/* <View style={styles.notesSection}>
-              <Text style={styles.notesTitle}>
-                <Ionicons name="information-circle" size={16} color="#64748B" />
-                <Text> Important Notes</Text>
-              </Text>
-              <Text style={styles.noteText}>
-                • Token is valid for immediate use
-              </Text>
-              <Text style={styles.noteText}>
-                • Keep this token safe for your records
-              </Text>
-              <Text style={styles.noteText}>
-                • Token will expire if not used within 30 days
-              </Text>
-              <Text style={styles.noteText}>
-                • Contact your electricity provider for assistance
-              </Text>
-            </View> */}
+            <Text style={styles.receiptFooter}>Thank you for using WiseSub</Text>
           </ScrollView>
 
-          {/* Action Button */}
+          {/* Action Buttons */}
           <View style={styles.actionSection}>
+            <TouchableOpacity
+              style={[styles.shareButton, isSharing && styles.buttonDisabled]}
+              onPress={handleShareAsImage}
+              disabled={isSharing}
+            >
+              <Ionicons name="share-outline" size={20} color="#1F54DD" />
+              <Text style={styles.shareButtonText}>
+                {isSharing ? 'Generating...' : 'Share Receipt'}
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.doneButton}
               onPress={onClose}
@@ -214,7 +209,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ViewShot>
       </View>
     </Modal>
   );
@@ -255,36 +250,33 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 16,
   },
-  successIconContainer: {
+  logoContainer: {
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F0FDF4',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: 20,
     marginBottom: 16,
   },
-  successTitle: {
-    fontSize: 20,
-    fontFamily: 'Poppins-Bold',
-    color: '#10B981',
-    textAlign: 'center',
-    marginBottom: 8,
+  logo: {
+    width: 120,
+    height: 40,
   },
-  successSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
+  receiptTitle: {
+    fontSize: 18,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#1F54DD',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  receiptFooter: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 16,
   },
   tokenSection: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 16,
@@ -296,19 +288,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   tokenText: {
     fontSize: 18,
     fontFamily: 'Poppins-Bold',
     color: '#1F54DD',
+    letterSpacing: 1,
     flex: 1,
     marginRight: 12,
-    letterSpacing: 1,
   },
   copyButton: {
     flexDirection: 'row',
@@ -317,18 +309,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    gap: 4,
   },
   copyButtonText: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
     color: '#1F54DD',
-    marginLeft: 4,
   },
   detailsSection: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 8,
   },
   detailRow: {
     flexDirection: 'row',
@@ -351,63 +343,32 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
     color: '#10B981',
   },
-  instructionsSection: {
-    marginBottom: 24,
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  instructionNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#1F54DD',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  instructionNumberText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
-  },
-  instructionText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#475569',
-    lineHeight: 20,
-  },
-  notesSection: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  notesTitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#92400E',
-    marginBottom: 12,
-  },
-  noteText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    color: '#92400E',
-    marginBottom: 6,
-    lineHeight: 16,
-  },
   actionSection: {
     paddingHorizontal: 20,
     paddingBottom: 24,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
+    gap: 10,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F6FF',
+    borderRadius: 12,
+    height: 52,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#1F54DD',
+  },
+  shareButtonText: {
+    color: '#1F54DD',
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   doneButton: {
     backgroundColor: '#1F54DD',

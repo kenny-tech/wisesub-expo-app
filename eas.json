@@ -22,7 +22,9 @@
       }
     },
     "production": {
+      "distribution": "internal",
       "autoIncrement": true,
+      "developmentClient": false,
       "android": {
         "buildType": "apk"
       }
