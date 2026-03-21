@@ -1,17 +1,17 @@
 import { formatAmount } from '@/src/helper/util';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import * as Sharing from 'expo-sharing';
 import React, { useRef, useState } from 'react';
 import {
   Alert,
   Image,
   Modal,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 
@@ -38,196 +38,214 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
   customerName,
   phoneNumber,
 }) => {
-  const [isSharing, setIsSharing] = useState(false);
-  const viewShotRef = useRef<ViewShot>(null);
+  const [isSharing, setIsSharing] = useState<boolean>(false);
+  const receiptRef = useRef<React.ElementRef<typeof ViewShot>>(null);
 
-  const handleCopyToken = async () => {
+  const handleCopyToken = async (): Promise<void> => {
     try {
       await Clipboard.setStringAsync(token);
-      Alert.alert(
-        'Token Copied',
-        'Electricity token has been copied to clipboard',
-        [{ text: 'OK', style: 'default' }]
-      );
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        'Failed to copy token. Please try again.',
-        [{ text: 'OK', style: 'default' }]
-      );
+      Alert.alert('Token Copied', 'Electricity token has been copied to clipboard', [
+        { text: 'OK', style: 'default' },
+      ]);
+    } catch {
+      Alert.alert('Error', 'Failed to copy token. Please try again.');
     }
   };
 
-  const handleShareAsImage = async () => {
-    if (!viewShotRef.current) return;
+  const handleShareAsImage = async (): Promise<void> => {
+    if (!receiptRef.current?.capture) return;
 
     setIsSharing(true);
     try {
-      const uri = await viewShotRef.current.capture?.();
-      if (!uri) throw new Error('Failed to capture receipt');
+      // Small delay to ensure off-screen view has fully rendered
+      await new Promise<void>((resolve) => setTimeout(resolve, 150));
 
-      await Share.share({
-        url: uri,
-        message: `Electricity Token: ${token}\nMeter: ${meterNumber}\nUnits: ${units} kWh\nAmount: ₦${formatAmount(amount)}`,
-        title: 'Electricity Token Receipt',
-      });
-    } catch (error: any) {
-      if (error?.message !== 'User did not share') {
-        Alert.alert('Error', 'Failed to share receipt. Please try again.');
+      const uri = await receiptRef.current.capture();
+      if (!uri) throw new Error('Capture returned empty URI');
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Not Supported', 'Sharing is not available on this device.');
+        return;
       }
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: 'Share Electricity Receipt',
+        UTI: 'public.png',
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Share error:', message);
+      Alert.alert('Error', 'Failed to share receipt. Please try again.');
     } finally {
       setIsSharing(false);
     }
   };
 
-  const formatProviderName = (providerCode: string) => {
+  const formatProviderName = (providerCode: string): string => {
     const providerMap: Record<string, string> = {
-      'ikedc': 'Ikeja Electric',
-      'ekedc': 'Eko Electric',
-      'kedco': 'Kano Electric',
-      'phedc': 'Port Harcourt Electric',
-      'ibedc': 'Ibadan Electric',
-      'aedc': 'Abuja Electric',
+      ikedc: 'Ikeja Electric',
+      ekedc: 'Eko Electric',
+      kedco: 'Kano Electric',
+      phedc: 'Port Harcourt Electric',
+      ibedc: 'Ibadan Electric',
+      aedc: 'Abuja Electric',
     };
-    return providerMap[providerCode] || providerCode;
+    return providerMap[providerCode] ?? providerCode;
   };
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        {/* ViewShot wraps the entire modal card */}
-        <ViewShot
-          ref={viewShotRef}
-          options={{ format: 'png', quality: 1 }}
-          style={styles.modalContainer}
-        >
-          {/* Modal Header */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Electricity Token</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#64748B" />
-            </TouchableOpacity>
-          </View>
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleDateString();
+  const formattedTime = currentDate.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-          <ScrollView
-            style={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={!isSharing}
-          >
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image
-                source={require('../../../assets/images/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
+  const detailRows: { label: string; value: string; highlight?: boolean }[] = [
+    { label: 'Meter Number', value: meterNumber },
+    { label: 'Customer Name', value: customerName },
+    { label: 'Provider', value: formatProviderName(provider) },
+    { label: 'Units', value: `${units} kWh` },
+    { label: 'Amount Paid', value: `₦${formatAmount(amount)}`, highlight: true },
+    // { label: 'Phone Number', value: phoneNumber },
+    { label: 'Date & Time', value: `${formattedDate} ${formattedTime}` },
+  ];
 
-            <Text style={styles.receiptTitle}>Electricity Token Receipt</Text>
-
-            {/* Token Display */}
-            <View style={styles.tokenSection}>
-              <Text style={styles.sectionTitle}>Token Number</Text>
-              <View style={styles.tokenContainer}>
-                <Text style={styles.tokenText}>{token}</Text>
-                <TouchableOpacity
-                  style={styles.copyButton}
-                  onPress={handleCopyToken}
-                >
-                  <Ionicons name="copy-outline" size={20} color="#1F54DD" />
-                  <Text style={styles.copyButtonText}>Copy</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Transaction Details */}
-            <View style={styles.detailsSection}>
-              <Text style={styles.sectionTitle}>Transaction Details</Text>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Meter Number:</Text>
-                <Text style={styles.detailValue}>{meterNumber}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Customer Name:</Text>
-                <Text style={styles.detailValue}>{customerName}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Provider:</Text>
-                <Text style={styles.detailValue}>{formatProviderName(provider)}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Units:</Text>
-                <Text style={styles.detailValue}>{units} kWh</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Amount Paid:</Text>
-                <Text style={styles.amountValue}>₦{formatAmount(amount)}</Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Date & Time:</Text>
-                <Text style={styles.detailValue}>
-                  {new Date().toLocaleDateString()}{' '}
-                  {new Date().toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.receiptFooter}>Thank you for using WiseSub</Text>
-          </ScrollView>
-
-          {/* Action Buttons */}
-          <View style={styles.actionSection}>
-            <TouchableOpacity
-              style={[styles.shareButton, isSharing && styles.buttonDisabled]}
-              onPress={handleShareAsImage}
-              disabled={isSharing}
-            >
-              <Ionicons name="share-outline" size={20} color="#1F54DD" />
-              <Text style={styles.shareButtonText}>
-                {isSharing ? 'Generating...' : 'Share Receipt'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.doneButton}
-              onPress={onClose}
-            >
-              <Text style={styles.doneButtonText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </ViewShot>
+  // Shared receipt content rendered both on-screen and off-screen
+  const ReceiptContent: React.FC = () => (
+    <>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../../../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </View>
-    </Modal>
+
+      <Text style={styles.receiptTitle}>Electricity Token Receipt</Text>
+
+      <View style={styles.tokenSection}>
+        <Text style={styles.sectionTitle}>Token Number</Text>
+        <View style={styles.tokenBox}>
+          <Text style={styles.tokenText} selectable={true}>{token}</Text>
+        </View>
+      </View>
+
+      <View style={styles.detailsSection}>
+        <Text style={styles.sectionTitle}>Transaction Details</Text>
+        {detailRows.map(({ label, value, highlight }) => (
+          <View key={label} style={styles.detailRow}>
+            <Text style={styles.detailLabel}>{label}:</Text>
+            <Text style={highlight ? styles.amountValue : styles.detailValue}>
+              {value}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      <Text style={styles.receiptFooter}>Thank you for using WiseSub</Text>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── OFF-SCREEN RECEIPT (what gets captured and shared) ──
+          Positioned at top: -9999 so it renders fully off screen
+          with no height clipping — ViewShot captures everything. */}
+      <ViewShot
+        ref={receiptRef}
+        options={{ format: 'png', quality: 1, result: 'tmpfile' }}
+        style={styles.offScreenReceipt}
+      >
+        <View style={styles.offScreenCard}>
+          <ReceiptContent />
+        </View>
+      </ViewShot>
+
+      {/* ── ON-SCREEN MODAL ── */}
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Electricity Token</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Scrollable receipt content */}
+            <ScrollView
+              style={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContentContainer}
+            >
+              <ReceiptContent />
+
+              {/* Copy button — on screen only, not in the captured image */}
+              <TouchableOpacity style={styles.copyButton} onPress={handleCopyToken}>
+                <Ionicons name="copy-outline" size={18} color="#1F54DD" />
+                <Text style={styles.copyButtonText}>Copy Token</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Action Buttons */}
+            <View style={styles.actionSection}>
+              <TouchableOpacity
+                style={[styles.shareButton, isSharing && styles.buttonDisabled]}
+                onPress={handleShareAsImage}
+                disabled={isSharing}
+              >
+                <Ionicons name="share-social-outline" size={20} color="#1F54DD" />
+                <Text style={styles.shareButtonText}>
+                  {isSharing ? 'Preparing...' : 'Share Receipt'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.doneButton} onPress={onClose}>
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  // Off-screen receipt
+  offScreenReceipt: {
+    position: 'absolute',
+    top: -9999,
+    left: 0,
+    width: 390,
+    backgroundColor: 'transparent',
+  },
+  offScreenCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    overflow: 'hidden',
+  },
+
+  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: 'flex-end',
   },
   modalContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    width: '100%',
-    maxHeight: '90%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '92%',
     overflow: 'hidden',
   },
   modalHeader: {
@@ -251,6 +269,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
   },
+  scrollContentContainer: {
+    paddingBottom: 8,
+  },
+
+  // Receipt content
   logoContainer: {
     alignItems: 'center',
     marginTop: 20,
@@ -284,32 +307,33 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     marginBottom: 12,
   },
-  tokenContainer: {
-    backgroundColor: '#F8FAFC',
+  tokenBox: {
+    backgroundColor: '#F0F5FF',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderColor: '#C7D7FA',
     alignItems: 'center',
   },
   tokenText: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Poppins-Bold',
     color: '#1F54DD',
-    letterSpacing: 1,
-    flex: 1,
-    marginRight: 12,
+    letterSpacing: 2,
+    textAlign: 'center',
   },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#F1F6FF',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 4,
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginTop: 4,
+    marginBottom: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#C7D7FA',
   },
   copyButtonText: {
     fontSize: 14,
@@ -337,15 +361,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
     color: '#0F172A',
+    flexShrink: 1,
+    textAlign: 'right',
+    marginLeft: 8,
   },
   amountValue: {
     fontSize: 16,
     fontFamily: 'Poppins-Bold',
     color: '#10B981',
   },
+
+  // Action buttons
   actionSection: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 32,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
@@ -376,6 +405,7 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
   },
   doneButtonText: {
     color: '#FFFFFF',
