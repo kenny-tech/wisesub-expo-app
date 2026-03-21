@@ -108,7 +108,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
     { label: 'Provider', value: formatProviderName(provider) },
     { label: 'Units', value: `${units} kWh` },
     { label: 'Amount Paid', value: `₦${formatAmount(amount)}`, highlight: true },
-    { label: 'Phone Number', value: phoneNumber },
+    // { label: 'Phone Number', value: phoneNumber },
     { label: 'Date & Time', value: `${formattedDate} ${formattedTime}` },
   ];
 
@@ -128,7 +128,7 @@ export const ElectricityTokenDisplay: React.FC<ElectricityTokenDisplayProps> = (
       <View style={styles.tokenSection}>
         <Text style={styles.sectionTitle}>Token Number</Text>
         <View style={styles.tokenBox}>
-          <Text style={styles.tokenText}>{token}</Text>
+          <Text style={styles.tokenText} selectable={true}>{token}</Text>
         </View>
       </View>
 
@@ -405,6 +405,7 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
   },
   doneButtonText: {
     color: '#FFFFFF',
