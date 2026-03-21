@@ -1,6 +1,7 @@
 import { CablePlanModal } from '@/src/components/bills/CablePlanModal';
 import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { formatAmount } from '@/src/helper/util';
+import { useProfile } from '@/src/redux/hooks/useProfile';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
 import { CommissionConfig, commissionService } from '@/src/services/commissionService';
@@ -127,7 +128,7 @@ function RecentCustomersModal({
 
           {/* Subtitle */}
           <Text style={modalStyles.subtitle}>
-            {type === 'decoder' 
+            {type === 'decoder'
               ? 'Select a decoder number from your recent purchases'
               : 'Select a phone number from your recent purchases'}
           </Text>
@@ -194,6 +195,16 @@ export default function CableTv({ navigation }: { navigation: any }) {
   const [recentPhones, setRecentPhones] = useState<RecentCustomer[]>([]);
   const [loadingRecentDecoders, setLoadingRecentDecoders] = useState(false);
   const [loadingRecentPhones, setLoadingRecentPhones] = useState(false);
+
+  // Get user profile
+  const { user } = useProfile();
+
+  // Set phone number from profile when component mounts
+  useEffect(() => {
+    if (user?.phone && !phoneNumber) {
+      setPhoneNumber(user.phone);
+    }
+  }, [user?.phone]);
 
   // Helper functions
   const clearFieldError = (field: string) => {
@@ -319,7 +330,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         type: 'Cabletv',
         limit: 15
       });
-      
+
       if (response.success) {
         setRecentDecoders(response.data);
         setShowRecentDecoderModal(true);
@@ -342,7 +353,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         type: 'Cabletv',
         limit: 15
       });
-      
+
       if (response.success) {
         setRecentPhones(response.data);
         setShowRecentPhoneModal(true);
@@ -501,7 +512,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
     if (!validateForm()) {
       return;
     }
-    
+
     if (!selectedProvider || !selectedPlan) {
       showError('Error', 'Please select both provider and cable plan');
       return;
@@ -543,7 +554,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
 
       if (response.success) {
         showSuccess('Success', response.message || 'Cable subscription successful!');
-        
+
         // Reset form
         setDecoderNumber('');
         setPhoneNumber('');
@@ -552,7 +563,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         setSelectedProvider(null);
         setCustomerName('');
         setCommission(0);
-        
+
         setShowConfirmModal(false);
         navigation.navigate('Tabs');
         return { success: true, data: response.data };
@@ -595,7 +606,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
   // Prepare details for confirmation modal
   const getConfirmationDetails = (): PurchaseDetail[] => {
     const details: PurchaseDetail[] = [];
-    
+
     if (selectedPlan) {
       details.push({
         label: 'Cable Plan',
@@ -605,14 +616,14 @@ export default function CableTv({ navigation }: { navigation: any }) {
         valueColor: '#0F172A',
       });
     }
-    
+
     details.push({
       label: 'Subscription Type',
       value: subscriptionType === 'renewal' ? 'Renewal' : 'Change Package',
       icon: 'repeat-outline',
       iconColor: '#64748B',
     });
-    
+
     if (decoderNumber) {
       details.push({
         label: 'Decoder Number',
@@ -621,7 +632,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         iconColor: '#64748B',
       });
     }
-    
+
     if (customerName) {
       details.push({
         label: 'Customer Name',
@@ -631,7 +642,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         valueColor: customerName === 'Customer (Unverified)' ? '#F59E0B' : '#0F172A',
       });
     }
-    
+
     if (phoneNumber) {
       details.push({
         label: 'Phone Number',
@@ -640,7 +651,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         iconColor: '#64748B',
       });
     }
-    
+
     return details;
   };
 
@@ -817,7 +828,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Decoder Number</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={fetchRecentDecoders}
               disabled={loadingRecentDecoders}
             >
