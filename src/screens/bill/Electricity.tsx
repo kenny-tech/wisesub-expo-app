@@ -1,6 +1,7 @@
 import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { ElectricityTokenDisplay } from '@/src/components/bills/ElectricityTokenDisplay';
 import { formatAmount } from '@/src/helper/util';
+import { useProfile } from '@/src/redux/hooks/useProfile';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
 import { CommissionConfig, commissionService } from '@/src/services/commissionService';
@@ -206,6 +207,16 @@ export default function Electricity({ navigation }: { navigation: any }) {
   const [meterType, setMeterType] = useState<string>('prepaid');
   const [customerName, setCustomerName] = useState<string>('');
   const [minPurchaseAmount, setMinPurchaseAmount] = useState<number>(0);
+
+  // Get user profile
+  const { user } = useProfile();
+
+  // Set phone number from profile when component mounts
+  useEffect(() => {
+    if (user?.phone && !phoneNumber) {
+      setPhoneNumber(user.phone);
+    }
+  }, [user?.phone]);
 
   // Commission state
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
