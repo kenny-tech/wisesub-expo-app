@@ -437,11 +437,11 @@ export default function Electricity({ navigation }: { navigation: any }) {
         type: meterType,
       };
 
-      console.log('Meter validation payload:', payload);
+      // console.log('Meter validation payload:', payload);
 
       const response = await billService.validateMeter(payload);
 
-      console.log('Full validation response:', JSON.stringify(response, null, 2));
+      // console.log('Full validation response:', JSON.stringify(response, null, 2));
 
       if (response.success && response.data?.code === "000") {
         if (response.data.content?.Customer_Name) {
@@ -599,7 +599,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         validation_status: customerName === 'Customer (Validation Warning)' ? 'warning' : 'validated',
       };
 
-      console.log('Electricity purchase payload:', payload);
+      // console.log('Electricity purchase payload:', payload);
 
       const response = await billService.purchaseData(payload);
 

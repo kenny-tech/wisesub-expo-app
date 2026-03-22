@@ -223,7 +223,7 @@ class BillService {
     try {
       const response = await api.post(`${API_ENDPOINTS.VERIFY_METER_NUMBER}`, payload);
 
-      console.log('Meter validation response:', response.data);
+      // console.log('Meter validation response:', response.data);
 
       return {
         success: response.data.success,
