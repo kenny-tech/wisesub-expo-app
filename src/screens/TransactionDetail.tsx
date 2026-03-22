@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as Clipboard from 'expo-clipboard';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { ElectricityTokenDisplay } from '../components/bills/ElectricityTokenDisplay';
 import { formatAmount, formatDate } from '../helper/util';
 import { showError, showSuccess } from '../utils/toast';
 
@@ -35,6 +36,7 @@ interface Props {
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   const { transaction } = route.params;
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   const isCredit = [
     'Fund Wallet',
@@ -89,6 +91,10 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
         return 'card';
     }
   };
+
+  // Only show receipt for electricity transactions with a token
+  const isElectricityWithToken =
+    transaction.type === 'Electricity' && !!transaction.electricity_token;
 
   const logoSource = getLogoSource();
   const serviceIcon = getServiceIcon();
@@ -282,6 +288,15 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                 {/* <Text style={styles.detailValue}>{transaction.reference}</Text> */}
               </View>
             )}
+            {isElectricityWithToken && (
+              <TouchableOpacity
+                style={styles.receiptButton}
+                onPress={() => setShowReceiptModal(true)}
+              >
+                <Ionicons name="receipt-outline" size={18} color="#1F54DD" />
+                <Text style={styles.receiptButtonText}>View Receipt</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -300,6 +315,19 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {isElectricityWithToken && (
+        <ElectricityTokenDisplay
+          visible={showReceiptModal}
+          onClose={() => setShowReceiptModal(false)}
+          token={transaction.electricity_token}
+          units={transaction.units ?? '0'}
+          amount={transaction.amount}
+          meterNumber={transaction.customer ?? ''}
+          provider={transaction.provider ?? ''}
+          customerName={transaction.customer ?? ''}
+          phoneNumber={transaction.phone ?? ''}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -590,6 +618,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
     marginLeft: 8,
+  },
+  receiptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F6FF',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#1F54DD',
+    gap: 8,
+  },
+  receiptButtonText: {
+    color: '#1F54DD',
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 
