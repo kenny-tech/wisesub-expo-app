@@ -22,11 +22,11 @@
       }
     },
     "production": {
-      "distribution": "internal",
+      "distribution": "store",
       "autoIncrement": true,
       "developmentClient": false,
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       }
     }
   },
