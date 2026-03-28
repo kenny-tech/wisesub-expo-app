@@ -1,13 +1,13 @@
 import axios from 'axios';
 
+export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
+export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
+export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
+
 // Base API URL
 // export const BASE_API = process.env.EXPO_PUBLIC_BASE_API ?? '';
 // export const IMAGE_BASE_URL = process.env.EXPO_PUBLIC_IMAGE_BASE_URL ?? '';
 // export const FLUTTERWAVE_PUBLIC_KEY = process.env.EXPO_PUBLIC_FLUTTERWAVE_PUBLIC_KEY ?? '';
-
-export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
-export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
-export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
 
 // Create UNAUTHENTICATED axios instance for auth endpoints (login, register, etc.)
 export const authApi = axios.create({
