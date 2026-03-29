@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
 export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
-export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK_TEST-dad71b8b91c86582c306fcc0f6bce4a0-X';
+export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
 
 // Base API URL
 // export const BASE_API = process.env.EXPO_PUBLIC_BASE_API ?? '';
