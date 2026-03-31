@@ -51,14 +51,6 @@ export type RootStackParamList = {
         };
         amount: string;
     };
-    WebViewPayment: {
-        amount: string;
-        user: {
-            email?: string;
-            phone?: string;
-            name?: string;
-        };
-    };
     Notification: undefined;
     Tabs: undefined;
 };
