@@ -2,13 +2,13 @@ import { formatAmount } from '@/src/helper/util';
 import { Ionicons } from '@expo/vector-icons';
 import React, { ReactNode } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export interface PurchaseDetail {
@@ -392,6 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
+    marginBottom: 30,
     gap: 8,
   },
   modalInfoText: {
