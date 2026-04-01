@@ -119,7 +119,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
                   {formatDate(item.created_at)}
                 </Text>
                 <View style={styles.tagsContainer}>
-                  <View style={[
+                  {/* <View style={[
                     styles.typeTag,
                     isEarned ? styles.earnedTag : styles.usedTag
                   ]}>
@@ -129,7 +129,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
                     ]}>
                       {isEarned ? 'Earned' : 'Used'}
                     </Text>
-                  </View>
+                  </View> */}
                   {item.transaction_name && (
                     <View style={styles.nameTag}>
                       <Text style={styles.nameText}>{item.transaction_name}</Text>
