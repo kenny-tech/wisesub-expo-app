@@ -72,7 +72,7 @@ function FundWalletModal({
         <View style={modalStyles.container}>
           {/* Header */}
           <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Fund Wallet</Text>
+            <Text style={modalStyles.title}>Add Funds</Text>
             <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
               <Ionicons name="close" size={24} color="#64748B" />
             </TouchableOpacity>
@@ -305,7 +305,7 @@ export default function Home({ navigation }: { navigation: any }) {
     if (transaction.name === "Commission") {
       return `Bonus from ${transaction.type} purchase`;
     } else if (transaction.name === "Fund Wallet") {
-      return "Wallet Funded";
+      return "Top Up";
     } else {
       let description = transaction.name;
       if (transaction.type) description += ` ${transaction.type}`;
@@ -451,7 +451,7 @@ export default function Home({ navigation }: { navigation: any }) {
                 <View style={styles.walletRow}>
                   <View>
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
-                      <Text style={styles.walletLabel}>Wallet balance </Text>
+                      <Text style={styles.walletLabel}>Available Balance</Text>
 
                       <TouchableOpacity
                         onPress={() => setShowBalance(!showBalance)}
@@ -489,7 +489,7 @@ export default function Home({ navigation }: { navigation: any }) {
                     onPress={handleFundWalletPress}
                     disabled={loading}
                   >
-                    <Text style={styles.fundBtnText}>+ Fund Wallet</Text>
+                    <Text style={styles.fundBtnText}>+ Add Funds</Text>
                   </TouchableOpacity>
                 </View>
 
