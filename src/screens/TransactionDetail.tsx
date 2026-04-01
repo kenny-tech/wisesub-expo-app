@@ -64,7 +64,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   // Get the appropriate logo
   const getLogoSource = () => {
     if (isWiseSubTransaction) {
-      return require('../../assets/images/logo.png'); // Your WiseSub logo
+      return require('../../assets/images/logo.png');
     } else if (transaction.provider_logo) {
       return { uri: transaction.provider_logo };
     }
@@ -117,6 +117,22 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const getDisplayName = (name: string) => {
+    switch (name) {
+      case 'Fund Wallet':
+      case 'Wallet Top-up':
+        return 'Top Up';
+      case 'Commission':
+        return 'Commission';
+      case 'Referral Commission':
+        return 'Referral Commission';
+      case 'Refund':
+        return 'Refund';
+      default:
+        return name;
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -159,7 +175,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.serviceInfo}>
-            <Text style={styles.serviceName}>{transaction.name}</Text>
+            <Text style={styles.serviceName}>{getDisplayName(transaction.name)}</Text>
             <Text style={styles.serviceType}>
               {transaction.type || (isWiseSubTransaction ? 'Wallet Transaction' : 'Service Purchase')}
             </Text>
@@ -227,7 +243,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons name="cube" size={16} color="#64748B" />
                 <Text style={styles.detailLabel}>Service Type</Text>
               </View>
-              <Text style={styles.detailValue}>{transaction.name}</Text>
+              <Text style={styles.detailValue}>{getDisplayName(transaction.name)}</Text>
             </View>
 
             <View style={styles.detailRow}>
@@ -235,7 +251,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons name="grid" size={16} color="#64748B" />
                 <Text style={styles.detailLabel}>Category</Text>
               </View>
-              <Text style={styles.detailValue}>{transaction.type || 'General'}</Text>
+              <Text style={styles.detailValue}>{getDisplayName(transaction.type) || 'General'}</Text>
             </View>
 
             {transaction.customer && (

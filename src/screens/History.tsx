@@ -81,7 +81,7 @@ export default function History({ navigation }: { navigation: any }) {
     if (transaction.name === "Commission") {
       return `Bonus from ${transaction.type} purchase`;
     } else if (transaction.name === "Fund Wallet") {
-      return "Wallet Funded";
+      return "Top Up";
     } else {
       let description = transaction.name;
       if (transaction.type) description += ` ${transaction.type}`;
