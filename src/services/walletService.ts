@@ -1,5 +1,7 @@
 import { api, API_ENDPOINTS } from './api';
 
+// ───  Flutterwave interfaces ──────────────────────────────
+
 export interface WalletBalanceResponse {
   success: boolean;
   data: any;
@@ -35,6 +37,7 @@ export interface BankTransferRequest {
   amount: number;
 }
 
+// Flutterwave DVA shape
 export interface BankTransferData {
   account_number: string;
   account_status: string;
@@ -106,7 +109,52 @@ export interface RecentCustomersParams {
   limit?: number;
 }
 
+// ─── Paystack-specific interfaces ────────────────────────────────────────────
+
+export interface PaystackBankTransferRequest {
+  email: string;
+  amount: number;
+}
+
+// Normalised Paystack DVA shape (returned by your BillerService)
+export interface PaystackDVAData {
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  amount: number;       // naira, echoed back from request
+  reference: string;    // Paystack DVA reference
+}
+
+export interface PaystackBankTransferResponse {
+  status: boolean;      // Paystack returns boolean true/false
+  message: string;
+  data: PaystackDVAData;
+}
+
+export interface PaystackCardPaymentRequest {
+  amount: number;
+  tx_ref: string;         // Paystack "reference"
+  status: string;
+  transaction_id: string; // Paystack "trans" (numeric, stringified)
+}
+
+export interface PaystackCardPaymentResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    transaction_id: string;
+    amount: number;
+    status: string;
+    reference: string;
+  };
+}
+
+// ─── Service class ────────────────────────────────────────────────────────────
+
 class WalletService {
+
+  // ── Flutterwave methods (unchanged) ────────────────────────────────────────
+
   async getWalletBalance(): Promise<WalletBalanceResponse> {
     try {
       const response = await api.get<WalletBalanceResponse>(API_ENDPOINTS.WALLET_BALANCE);
@@ -135,11 +183,7 @@ class WalletService {
     try {
       const response = await api.get<CommissionTotalsResponse>(
         API_ENDPOINTS.COMMISSION_TOTAL,
-        {
-          params: {
-            type: params?.type || 'COMMISSION',
-          }
-        }
+        { params: { type: params?.type || 'COMMISSION' } }
       );
       return response.data;
     } catch (error: any) {
@@ -163,22 +207,18 @@ class WalletService {
   }
 
   async getRecentCustomers(params: RecentCustomersParams): Promise<RecentCustomersResponse> {
-  try {
-    const response = await api.get<RecentCustomersResponse>(
-      `${API_ENDPOINTS.RECENT_CUSTOMERS}`,
-      {
-        params: {
-          limit: params.limit || 15,
-          type: params.type,
-        }
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    this.handleApiError(error);
+    try {
+      const response = await api.get<RecentCustomersResponse>(
+        `${API_ENDPOINTS.RECENT_CUSTOMERS}`,
+        { params: { limit: params.limit || 15, type: params.type } }
+      );
+      return response.data;
+    } catch (error: any) {
+      this.handleApiError(error);
+    }
   }
-}
 
+  // Flutterwave bank transfer
   async generateBankTransfer(data: BankTransferRequest): Promise<BankTransferResponse> {
     try {
       const response = await api.post<BankTransferResponse>(
@@ -191,6 +231,7 @@ class WalletService {
     }
   }
 
+  // Flutterwave card payment
   async createCardPayment(data: CardPaymentRequest): Promise<CardPaymentResponse> {
     try {
       const response = await api.post<CardPaymentResponse>(
@@ -199,51 +240,67 @@ class WalletService {
       );
       return response.data;
     } catch (error: any) {
-      console.error('Card payment error:', error);
       return this.handleCardPaymentError(error);
     }
   }
 
+  // ── Paystack methods ───────────────────────────────────────────────────────
+
+  // Paystack bank transfer (DVA)
+  async generatePaystackBankTransfer(
+    data: PaystackBankTransferRequest
+  ): Promise<PaystackBankTransferResponse> {
+    try {
+      const response = await api.post<PaystackBankTransferResponse>(
+        API_ENDPOINTS.GENERATE_BANK_TRANSFER_PAYSTACK,
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      return this.handleApiError(error);
+    }
+  }
+
+  // Paystack card payment
+  async createPaystackCardPayment(
+    data: PaystackCardPaymentRequest
+  ): Promise<PaystackCardPaymentResponse> {
+    try {
+      const response = await api.post<PaystackCardPaymentResponse>(
+        API_ENDPOINTS.CREATE_PAYSTACK_PAYMENT, // separate endpoint
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      return this.handlePaystackCardPaymentError(error);
+    }
+  }
+
+  // ── Error handlers ─────────────────────────────────────────────────────────
+
   private handleCardPaymentError(error: any): CardPaymentResponse {
     if (error.response) {
       const { status, data } = error.response;
-
-      if (status === 422) {
-        // Validation errors
-        let errorMessage = 'Validation failed';
-        if (data.errors) {
-          const errors = data.errors;
-          errorMessage = errorMessage;
-        }
-        return {
-          success: false,
-          message: errorMessage,
-        };
-      }
-
-      if (status === 401) {
-        return {
-          success: false,
-          message: 'Unauthenticated. Please login again.',
-        };
-      }
-
-      return {
-        success: false,
-        message: data?.message || 'Payment processing failed',
-      };
+      if (status === 422) return { success: false, message: 'Validation failed' };
+      if (status === 401) return { success: false, message: 'Unauthenticated. Please login again.' };
+      return { success: false, message: data?.message || 'Payment processing failed' };
     }
+    return { success: false, message: 'Network error. Please check your connection.' };
+  }
 
-    return {
-      success: false,
-      message: 'Network error. Please check your connection.',
-    };
+  private handlePaystackCardPaymentError(error: any): PaystackCardPaymentResponse {
+    if (error.response) {
+      const { status, data } = error.response;
+      if (status === 422) return { success: false, message: 'Validation failed' };
+      if (status === 401) return { success: false, message: 'Unauthenticated. Please login again.' };
+      return { success: false, message: data?.message || 'Payment processing failed' };
+    }
+    return { success: false, message: 'Network error. Please check your connection.' };
   }
 
   private handleApiError(error: any): never {
     if (error.response) {
-      const apiError = error.response.data;
-      throw apiError;
+      throw error.response.data;
     } else if (error.request) {
       throw { message: 'Network error. Please check your connection.' };
     } else {
