@@ -3,6 +3,7 @@ import axios from 'axios';
 export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
 export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
+export const PAYSTACK_PUBLIC_KEY = '';
 
 // Base API URL
 // export const BASE_API = process.env.EXPO_PUBLIC_BASE_API ?? '';
@@ -58,6 +59,8 @@ export const API_ENDPOINTS = {
 
   // Wallet endpoints
   WALLET_BALANCE: 'user/wallet/get_balance',
+  GENERATE_BANK_TRANSFER_PAYSTACK: 'user/virtual_account_number/create',
+  CREATE_PAYSTACK_PAYMENT: 'user/payment/create-paystack',
   GENERATE_BANK_TRANSFER: 'user/virtual_account_number',
   CREATE_PAYMENT: 'user/payment/create',
 
