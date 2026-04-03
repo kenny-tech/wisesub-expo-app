@@ -1,14 +1,18 @@
 import axios from 'axios';
 
-export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
-export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
-export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
-export const PAYSTACK_PUBLIC_KEY = '';
+// export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
+// export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
+// export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
 
 // Base API URL
 // export const BASE_API = process.env.EXPO_PUBLIC_BASE_API ?? '';
 // export const IMAGE_BASE_URL = process.env.EXPO_PUBLIC_IMAGE_BASE_URL ?? '';
 // export const FLUTTERWAVE_PUBLIC_KEY = process.env.EXPO_PUBLIC_FLUTTERWAVE_PUBLIC_KEY ?? '';
+export const BASE_API = 'https://a3cf-154-120-102-131.ngrok-free.app/api/v1/';
+export const IMAGE_BASE_URL = 'https://a3cf-154-120-102-131.ngrok-free.app/images';
+export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
+export const PAYSTACK_PUBLIC_KEY = 'pk_test_f56969fa0d145995993a18768ed17412732bcc82';
+
 
 // Create UNAUTHENTICATED axios instance for auth endpoints (login, register, etc.)
 export const authApi = axios.create({
