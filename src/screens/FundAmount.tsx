@@ -72,7 +72,7 @@ function generatePaystackHtml(
     <div class="spinner"></div>
     <p class="loader-text">Connecting to Paystack...</p>
   </div>
-  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="https://js.paystack.co/v2/inline.js"></script>
   <script>
     window.onload = function () {
       var handler = PaystackPop.setup({
