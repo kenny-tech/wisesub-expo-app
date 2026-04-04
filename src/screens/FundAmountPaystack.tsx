@@ -156,10 +156,10 @@ function CardPaymentModal({
           });
           if (paymentResponse.success) {
             showSuccess('Success', 'Payment successful!');
-            navigation.navigate('Tabs');
+            onPaymentSuccess();
           } else {
             showError('Error', paymentResponse.message || 'Payment verification failed');
-            resetAndClose();
+            onPaymentSuccess();
           }
         } catch (err: any) {
           showError('Error', err.message || 'Payment verification failed');
