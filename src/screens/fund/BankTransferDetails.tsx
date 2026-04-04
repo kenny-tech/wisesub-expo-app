@@ -244,6 +244,6 @@ const styles = StyleSheet.create({
   footer: { padding: 20, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
   doneButton: { backgroundColor: '#1F54DD', borderRadius: 12, padding: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   doneButtonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
-  supportLinkButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8 },
+  supportLinkButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, marginBottom: 10 },
   supportLinkText: { color: '#1F54DD', fontSize: 14, fontFamily: 'Poppins-Medium', marginLeft: 8 },
 });

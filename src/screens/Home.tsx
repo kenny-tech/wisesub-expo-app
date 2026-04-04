@@ -79,7 +79,8 @@ function FundWalletModal({
           </View>
 
           {/* Subtitle */}
-          <Text style={modalStyles.subtitle}>Choose your preferred payment method</Text>
+          {/* <Text style={modalStyles.subtitle}>Choose your preferred payment method</Text> */}
+          <Text style={modalStyles.subtitle}>Choose payment method</Text>
 
           {/* Options */}
           <TouchableOpacity
@@ -98,7 +99,7 @@ function FundWalletModal({
             <Ionicons name="chevron-forward" size={20} color="#64748B" />
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={modalStyles.option}
             onPress={() => onSelectMethod('card')}
           >
@@ -112,7 +113,7 @@ function FundWalletModal({
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#64748B" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </TouchableOpacity>
     </Modal>
