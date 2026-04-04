@@ -164,9 +164,8 @@ function CardPaymentModal({
             transaction_id: res.transaction_id.toString(),
           });
           if (paymentResponse.success) {
-            showSuccess('Success', 'Wallet funded successfully!');
-            resetAndClose();
-            onPaymentSuccess();
+            showSuccess('Success', 'Payment successful!');
+            navigation.navigate('Tabs');
           } else {
             showError('Error', paymentResponse.message || 'Payment verification failed');
             resetAndClose();
@@ -408,19 +407,19 @@ export default function FundAmount({ navigation }: { navigation: any }) {
   const getMethodDetails = () => {
     return method === 'bank'
       ? {
-          title: 'Bank Transfer',
-          icon: 'business',
-          color: '#1F54DD',
-          description: 'Transfer directly from your bank account',
-          instructions: 'You will be provided with bank details to complete the transfer',
-        }
+        title: 'Bank Transfer',
+        icon: 'business',
+        color: '#1F54DD',
+        description: 'Transfer directly from your bank account',
+        instructions: 'You will be provided with bank details to complete the transfer',
+      }
       : {
-          title: 'Card Payment',
-          icon: 'card',
-          color: '#16A34A',
-          description: 'Pay instantly with your debit/credit card',
-          instructions: 'Review your details, then confirm payment in the next step',
-        };
+        title: 'Card Payment',
+        icon: 'card',
+        color: '#16A34A',
+        description: 'Pay instantly with your debit/credit card',
+        instructions: 'Review your details, then confirm payment in the next step',
+      };
   };
 
   const methodDetails = getMethodDetails();

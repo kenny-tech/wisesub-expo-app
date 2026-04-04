@@ -155,9 +155,8 @@ function CardPaymentModal({
             transaction_id: res.trans?.toString() ?? '',
           });
           if (paymentResponse.success) {
-            showSuccess('Success', 'Wallet funded successfully!');
-            resetAndClose();
-            onPaymentSuccess();
+            showSuccess('Success', 'Payment successful!');
+            navigation.navigate('Tabs');
           } else {
             showError('Error', paymentResponse.message || 'Payment verification failed');
             resetAndClose();
