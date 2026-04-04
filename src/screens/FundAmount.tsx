@@ -431,7 +431,7 @@ export default function FundAmount({ navigation }: { navigation: any }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.title}>Fund Wallet</Text>
+        <Text style={styles.title}>Top Up</Text>
         <View style={styles.placeholder} />
       </View>
 

@@ -72,7 +72,7 @@ function FundWalletModal({
         <View style={modalStyles.container}>
           {/* Header */}
           <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Add Funds</Text>
+            <Text style={modalStyles.title}>Top Up</Text>
             <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
               <Ionicons name="close" size={24} color="#64748B" />
             </TouchableOpacity>
@@ -489,7 +489,7 @@ export default function Home({ navigation }: { navigation: any }) {
                     onPress={handleFundWalletPress}
                     disabled={loading}
                   >
-                    <Text style={styles.fundBtnText}>+ Add Funds</Text>
+                    <Text style={styles.fundBtnText}>+ Top Up</Text>
                   </TouchableOpacity>
                 </View>
 
