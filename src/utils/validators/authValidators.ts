@@ -41,8 +41,8 @@ export class AuthValidators {
   static validateName(name: string): string | null {
     if (!name.trim()) return 'Name is required';
     
-    if (name.trim().length < 2) {
-      return 'Name must be at least 2 characters';
+    if (name.trim().length < 3) {
+      return 'Name must be at least 3 characters';
     }
     return null;
   }
