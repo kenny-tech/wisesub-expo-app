@@ -17,7 +17,7 @@ type TransferDetails = {
   account_number: string;
   account_name: string;
   amount: string;
-  reference: string;
+  flw_ref: string;
 };
 
 type BankTransferDetailsRouteProps = {
@@ -144,16 +144,16 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
           )}
 
           {/* Reference — replaces flw_ref / order_ref */}
-          {!!transferDetails.reference && (
+          {!!transferDetails.flw_ref && (
             <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
               <View style={styles.detailLabelContainer}>
                 <Ionicons name="document-text-outline" size={18} color="#64748B" />
                 <Text style={styles.detailLabel}>Reference</Text>
               </View>
               <View style={styles.detailValueContainer}>
-                <Text style={styles.detailValueSmall}>{transferDetails.reference}</Text>
+                <Text style={styles.detailValueSmall}>{transferDetails.flw_ref}</Text>
                 <TouchableOpacity
-                  onPress={() => copyToClipboard(transferDetails.reference, 'Reference')}
+                  onPress={() => copyToClipboard(transferDetails.flw_ref, 'Reference')}
                   style={styles.copyButton}
                 >
                   <Ionicons name={getCopyIcon('Reference')} size={18} color={getCopyColor('Reference')} />
@@ -186,7 +186,7 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
           {[
             'Do not transfer a different amount or your payment will not be recognized.',
             'Contact support if your wallet is not credited within 15 minutes.',
-            `Keep your reference handy: ${transferDetails.reference}`,
+            `Keep your reference handy: ${transferDetails.flw_ref}`,
           ].map((note, i) => (
             <View key={i} style={styles.noteItem}>
               <Ionicons

@@ -84,8 +84,10 @@ export default function History({ navigation }: { navigation: any }) {
       return "Top Up";
     } else {
       let description = transaction.name;
-      if (transaction.type) description += ` ${transaction.type}`;
-      if (transaction.customer) description += ` — ${transaction.customer}`;
+
+      if (transaction.type) {
+        description += ` ${transaction.type}`;
+      }
 
       return description;
     }
