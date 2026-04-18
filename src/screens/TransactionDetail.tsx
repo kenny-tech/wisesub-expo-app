@@ -36,7 +36,6 @@ interface Props {
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   const { transaction } = route.params;
-  console.log(transaction);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   const isCredit = [
