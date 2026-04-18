@@ -36,6 +36,7 @@ interface Props {
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   const { transaction } = route.params;
+  console.log(transaction);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   const isCredit = [
@@ -331,6 +332,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       </View>
+
       {isElectricityWithToken && (
         <ElectricityTokenDisplay
           visible={showReceiptModal}
@@ -339,8 +341,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           units={transaction.units ?? '0'}
           amount={transaction.amount}
           meterNumber={transaction.customer ?? ''}
-          provider={transaction.provider ?? ''}
-          customerName={transaction.customer ?? ''}
+          provider={transaction.name ?? ''}
+          customerName={transaction.customer_name ?? ''}
           phoneNumber={transaction.phone ?? ''}
         />
       )}
