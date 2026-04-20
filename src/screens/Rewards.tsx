@@ -31,13 +31,11 @@ interface CommissionsResponse {
 }
 
 export default function Rewards({ navigation }: { navigation: any }) {
-  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [commissions, setCommissions] = useState<CommissionItem[]>([]);
   const [currentBalance, setCurrentBalance] = useState<string>("0.00");
   const [commissionsLoading, setCommissionsLoading] = useState<boolean>(false);
   const [commissionsError, setCommissionsError] = useState<string | null>(null);
-  const [totalsError, setTotalsError] = useState<string | null>(null);
 
   const fetchCommissions = async () => {
     try {
@@ -65,20 +63,23 @@ export default function Rewards({ navigation }: { navigation: any }) {
     }
   };
 
+  const fetchAllData = async () => {
+    await fetchCommissions();
+  };
+
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchCommissions().finally(() => setLoading(false));
+      fetchAllData();
     }, [])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchCommissions();
+    await fetchAllData();
     setRefreshing(false);
   };
 
-  // Helper function to format description by removing duplicates (same as web)
+  // Helper function to format description by removing duplicates
   const formatDescription = (description: string) => {
     return description.replace(/Commission from Commission from/g, 'Commission from');
   };
@@ -86,13 +87,13 @@ export default function Rewards({ navigation }: { navigation: any }) {
   const getTransactionIcon = (type: string) => {
     if (type === "earned" || type === "referral_earned") {
       return (
-        <View style={styles.iconContainerEarned}>
+        <View style={[styles.transactionIcon, styles.creditIcon]}>
           <Ionicons name="gift" size={20} color="#10B981" />
         </View>
       );
     } else {
       return (
-        <View style={styles.iconContainerUsed}>
+        <View style={[styles.transactionIcon, styles.debitIcon]}>
           <Ionicons name="card" size={20} color="#1F54DD" />
         </View>
       );
@@ -105,62 +106,62 @@ export default function Rewards({ navigation }: { navigation: any }) {
     const amountPrefix = isEarned ? "+" : "";
     
     return (
-      <View style={styles.commissionCard}>
-        <View style={styles.commissionContent}>
-          {/* Left Section */}
-          <View style={styles.commissionLeft}>
-            {getTransactionIcon(item.type)}
-            <View style={styles.commissionDetails}>
-              <Text style={styles.description} numberOfLines={2}>
-                {formatDescription(item.description)}
-              </Text>
-              <View style={styles.detailsRow}>
-                <Text style={styles.date}>
-                  {formatDate(item.created_at)}
+      <TouchableOpacity
+        style={styles.transactionItem}
+        onPress={() => {/* Optionally navigate to detail */}}
+      >
+        <View style={styles.transactionLeft}>
+          {getTransactionIcon(item.type)}
+          <View style={styles.transactionDetails}>
+            <Text style={styles.transactionTitle} numberOfLines={2}>
+              {formatDescription(item.description)}
+            </Text>
+            <Text style={styles.transactionDate}>
+              {formatDate(item.created_at)}
+            </Text>
+            <View style={styles.tagsContainer}>
+              <View style={[
+                styles.typeTag,
+                isEarned ? styles.earnedTag : styles.usedTag
+              ]}>
+                <Text style={[
+                  styles.typeText,
+                  isEarned ? styles.earnedText : styles.usedText
+                ]}>
+                  {isEarned ? 'Earned' : 'Used'}
                 </Text>
-                <View style={styles.tagsContainer}>
-                  <View style={[
-                    styles.typeTag,
-                    isEarned ? styles.earnedTag : styles.usedTag
-                  ]}>
-                    <Text style={[
-                      styles.typeText,
-                      isEarned ? styles.earnedText : styles.usedText
-                    ]}>
-                      {isEarned ? 'Earned' : 'Used'}
-                    </Text>
-                  </View>
-                  {item.transaction_name && (
-                    <View style={styles.nameTag}>
-                      <Text style={styles.nameText}>{item.transaction_name}</Text>
-                    </View>
-                  )}
-                </View>
               </View>
+              {item.transaction_name && (
+                <View style={styles.nameTag}>
+                  <Text style={styles.nameText}>{item.transaction_name}</Text>
+                </View>
+              )}
             </View>
           </View>
-
-          {/* Right Section */}
-          <View style={styles.commissionRight}>
-            <Text style={[styles.amount, { color: amountColor }]}>
-              {amountPrefix}₦{formatAmount(item.amount)}
-            </Text>
-            {/* <Text style={styles.amountLabel}>
-              {isEarned ? 'Bonus Earned' : 'Payment Applied'}
-            </Text> */}
-          </View>
         </View>
-      </View>
+        <Text style={[
+          styles.transactionAmount,
+          { color: amountColor }
+        ]}>
+          {amountPrefix}₦{formatAmount(item.amount)}
+        </Text>
+      </TouchableOpacity>
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1F54DD" />
-      </View>
-    );
-  }
+  const formatAmountValue = (amt: string) =>
+    parseFloat(amt || "0").toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+  const formatDateValue = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   // Determine what to render based on state
   const renderContent = () => {
@@ -193,9 +194,7 @@ export default function Rewards({ navigation }: { navigation: any }) {
     if (commissions.length === 0) {
       return (
         <View style={styles.empty}>
-          <View style={styles.emptyIconContainer}>
-            <Ionicons name="gift-outline" size={32} color="#94A3B8" />
-          </View>
+          <Ionicons name="gift-outline" size={64} color="#94A3B8" />
           <Text style={styles.emptyTitle}>No bonus transactions yet</Text>
           <Text style={styles.emptyDescription}>
             Your bonus and commission history will appear here when you start earning rewards.
@@ -216,54 +215,26 @@ export default function Rewards({ navigation }: { navigation: any }) {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={() => (
           <>
-            {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={20} color="#3B82F6" />
-                <Text style={styles.backText}>Back</Text>
-              </TouchableOpacity>
-              <Text style={styles.pageTitle}>Rewards History</Text>
-              <View style={styles.headerPlaceholder} />
-            </View>
-
-            {/* Balance Card */}
+            {/* Balance Card - Styled like History screen's header */}
             <View style={styles.balanceCard}>
               <View style={styles.balanceHeader}>
                 <View style={styles.balanceTitleContainer}>
-                  <Ionicons name="gift" size={24} color="#10B981" />
+                  <Ionicons name="gift" size={20} color="#10B981" />
                   <Text style={styles.balanceTitle}>Bonus Balance</Text>
                 </View>
               </View>
-              
-              <View style={styles.balanceContent}>
-                <Text style={styles.balanceAmount}>
-                  ₦{formatAmount(currentBalance)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Bonus Transactions Header */}
-            <View style={styles.transactionsHeader}>
-              <Text style={styles.transactionsTitle}>Bonus Transactions</Text>
+              <Text style={styles.balanceAmount}>
+                ₦{formatAmountValue(currentBalance)}
+              </Text>
             </View>
 
             {/* Loading indicator when refreshing with existing data */}
             {commissionsLoading && commissions.length > 0 && (
               <View style={styles.loadingMore}>
                 <ActivityIndicator size="small" color="#1F54DD" />
-                <Text style={styles.loadingMoreText}>Updating...</Text>
               </View>
             )}
           </>
-        )}
-        ListFooterComponent={() => (
-          commissions.length > 0 && (
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                Showing {commissions.length} most recent transactions
-              </Text>
-            </View>
-          )
         )}
       />
     );
@@ -271,6 +242,14 @@ export default function Rewards({ navigation }: { navigation: any }) {
 
   return (
     <View style={styles.screen}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Rewards History</Text>
+        <View style={styles.placeholder} />
+      </View>
+
       {renderContent()}
     </View>
   );
@@ -279,22 +258,8 @@ export default function Rewards({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F3F4F6"
+    backgroundColor: "#FFFFFF"
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  separator: {
-    height: 12,
-  },
-  
-  // Header Styles
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -305,159 +270,135 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   backButton: {
-    flexDirection: "row",
-    alignItems: "center",
     padding: 4,
   },
-  backText: {
-    fontSize: 14,
-    fontFamily: "Poppins-Regular",
-    color: "#3B82F6",
-    marginLeft: 4,
-  },
-  pageTitle: {
+  title: {
     fontSize: 18,
     fontFamily: "Poppins-SemiBold",
-    color: "#111827",
+    color: "#0F172A",
   },
-  headerPlaceholder: {
-    width: 60,
+  placeholder: {
+    width: 32,
   },
-
-  // Balance Card Styles
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  separator: {
+    height: 8,
+  },
+  
+  // Balance Card Styles - Matching History screen card style
   balanceCard: {
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#D1FAE5",
+    borderColor: '#D1FAE5',
     shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    elevation: 1,
   },
   balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   balanceTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
   },
   balanceTitle: {
-    fontSize: 20,
-    fontFamily: "Poppins-Bold",
-    color: "#111827",
-    marginLeft: 8,
-  },
-  balanceContent: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  balanceLabel: {
     fontSize: 14,
-    fontFamily: "Poppins-Regular",
+    fontFamily: "Poppins-Medium",
     color: "#6B7280",
-    marginBottom: 8,
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 28,
     fontFamily: "Poppins-Bold",
     color: "#10B981",
   },
 
-  // Transactions Header
-  transactionsHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  transactionsTitle: {
-    fontSize: 18,
-    fontFamily: "Poppins-Bold",
-    color: "#111827",
-  },
-
-  // Commission Card Styles
-  commissionCard: {
-    backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
-    borderRadius: 12,
+  // Transaction Card Styles - Matching History screen
+  transactionItem: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
     padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOpacity: 0.02,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-  commissionContent: {
+  transactionLeft: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
+    flex: 1
   },
-  commissionLeft: {
-    flex: 1,
-    flexDirection: "row",
-    marginRight: 12,
-  },
-  iconContainerEarned: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#D1FAE5",
+  transactionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 10
   },
-  iconContainerUsed: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#DBEAFE",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
+  creditIcon: {
+    backgroundColor: "#ECFDF5"
   },
-  commissionDetails: {
-    flex: 1,
+  debitIcon: {
+    backgroundColor: "#DBEAFE"
   },
-  description: {
+  transactionDetails: {
+    flex: 1
+  },
+  transactionTitle: {
     fontSize: 14,
     fontFamily: "Poppins-Medium",
-    color: "#111827",
-    marginBottom: 8,
+    color: "#0F172A",
+    marginBottom: 4,
     lineHeight: 20,
   },
-  detailsRow: {
-    flexDirection: "column",
-  },
-  date: {
+  transactionDate: {
     fontSize: 12,
+    color: "#94A3B8",
     fontFamily: "Poppins-Regular",
-    color: "#6B7280",
-    marginBottom: 8,
+    marginBottom: 6,
   },
+  transactionAmount: {
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold"
+  },
+  
+  // Tags Styles
   tagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 6,
   },
   typeTag: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   earnedTag: {
-    backgroundColor: "#D1FAE5",
+    backgroundColor: "#ECFDF5",
   },
   usedTag: {
     backgroundColor: "#DBEAFE",
   },
   typeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Poppins-Medium",
   },
   earnedText: {
@@ -469,25 +410,11 @@ const styles = StyleSheet.create({
   nameTag: {
     backgroundColor: "#F3F4F6",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   nameText: {
-    fontSize: 11,
-    fontFamily: "Poppins-Regular",
-    color: "#6B7280",
-  },
-  commissionRight: {
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  amount: {
-    fontSize: 16,
-    fontFamily: "Poppins-SemiBold",
-    marginBottom: 4,
-  },
-  amountLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Poppins-Regular",
     color: "#6B7280",
   },
@@ -498,43 +425,31 @@ const styles = StyleSheet.create({
     padding: 40,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F3F4F6",
-  },
-  emptyIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
     fontFamily: "Poppins-SemiBold",
-    color: "#6B7280",
+    color: "#0F172A",
+    marginTop: 16,
     marginBottom: 8,
-    textAlign: "center",
   },
   emptyDescription: {
     fontSize: 14,
     fontFamily: "Poppins-Regular",
-    color: "#9CA3AF",
+    color: "#64748B",
     textAlign: "center",
     lineHeight: 20,
-    maxWidth: 300,
   },
   emptyText: {
     color: "#94A3B8",
     fontSize: 14,
     fontFamily: "Poppins-Regular",
     marginTop: 8,
-    textAlign: "center",
   },
   retryButton: {
     marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     backgroundColor: "#1F54DD",
     borderRadius: 8,
   },
@@ -543,34 +458,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins-SemiBold",
   },
-
-  // Loading More
   loadingMore: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 10,
     marginBottom: 8,
-  },
-  loadingMoreText: {
-    marginLeft: 8,
-    color: '#6B7280',
-    fontSize: 12,
-    fontFamily: "Poppins-Regular",
-  },
-
-  // Footer
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    marginHorizontal: 20,
-  },
-  footerText: {
-    fontSize: 12,
-    fontFamily: "Poppins-Regular",
-    color: '#9CA3AF',
   },
 });

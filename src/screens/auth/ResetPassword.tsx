@@ -108,28 +108,22 @@ const ResetPasswordScreen: React.FC = () => {
         />
 
         <View style={styles.formContainer}>
-          {/* New Password */}
+          {/* New Password with hint */}
           <PasswordInput
-            label="New Password"
             placeholder="Enter new password"
             value={formData.password}
             onChangeText={(text) => handleInputChange('password', text)}
             error={errors.password}
+            showPasswordHint={true}
           />
 
           {/* Confirm Password */}
           <PasswordInput
-            label="Confirm New Password"
             placeholder="Confirm new password"
             value={formData.confirmPassword}
             onChangeText={(text) => handleInputChange('confirmPassword', text)}
             error={errors.confirmPassword}
           />
-
-          {/* Password Requirements */}
-          <Text style={styles.passwordHint}>
-            Password must be at least 8 characters with uppercase, lowercase, number, and special character.
-          </Text>
 
           {/* Reset Button */}
           <TouchableOpacity

@@ -182,6 +182,7 @@ const SignupScreen: React.FC = () => {
             onChangeText={(text) => handleInputChange('password', text)}
             error={errors.password}
             showLabel={false}
+            showPasswordHint={true}
           />
 
           {/* Confirm Password Input - No label */}

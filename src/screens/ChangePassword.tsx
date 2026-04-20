@@ -22,6 +22,7 @@ interface PasswordErrors {
 
 export default function ChangePassword({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formData, setFormData] = useState<ChangePasswordData>({
     current_password: "",
     password: "",
@@ -33,6 +34,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
     new: false,
     confirm: false
   });
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: PasswordErrors = {};
@@ -50,7 +52,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
       newErrors.password = "Password must be at least 8 characters";
       isValid = false;
     } else if (!/(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(formData.password)) {
-      newErrors.password = "Must include uppercase, lowercase, number, and special character";
+      newErrors.password = "Password must be at least 8 characters with uppercase, lowercase, number, and special character";
       isValid = false;
     }
 
@@ -67,7 +69,12 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
   };
 
   const handleChangePassword = async () => {
-    if (!validateForm()) return;
+    setIsSubmitting(true);
+    
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
 
     setLoading(true);
 
@@ -84,7 +91,6 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
           });
         }, 1500);
       } else {
-        // Handle API validation errors
         if (response.errors) {
           const apiErrors: PasswordErrors = {};
           Object.keys(response.errors).forEach(key => {
@@ -92,7 +98,6 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
           });
           setErrors(apiErrors);
 
-          // Show first error as toast
           const firstError = Object.values(apiErrors)[0];
           if (firstError) {
             showError('Error', firstError);
@@ -106,6 +111,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
       showError('Error', error.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -123,6 +129,20 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
     }));
   };
 
+  // Check if password meets requirements for hint
+  const isPasswordValid = (password: string) => {
+    return password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /\d/.test(password) &&
+      /[@$!%*?&]/.test(password);
+  };
+
+  const shouldShowPasswordHint = focusedField === 'password' && 
+    formData.password.length > 0 && 
+    !isPasswordValid(formData.password) && 
+    !errors.password;
+
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
@@ -139,37 +159,35 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
       >
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.card}>
-            <Text style={styles.description}>
-              Create a strong password with at least 8 characters including uppercase letters, numbers and special character.
-            </Text>
 
             {/* Current Password */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { paddingTop: 20 }]}>Current Password</Text>
-              <View style={[styles.inputContainer, errors.current_password && styles.inputError]}>
-                <Ionicons name="lock-closed" size={20} color="#64748B" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter current password"
-                  secureTextEntry={!showPasswords.current}
-                  value={formData.current_password}
-                  onChangeText={(text) => {
-                    setFormData({ ...formData, current_password: text });
-                    clearFieldError('current_password');
-                  }}
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => toggleShowPassword('current')}
-                  style={styles.eyeButton}
-                >
-                  <Ionicons
-                    name={showPasswords.current ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color="#64748B"
+              <View>
+                <View style={[styles.inputContainer, errors.current_password && styles.inputError]}>
+                  <Ionicons name="lock-closed" size={20} color="#64748B" />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter current password"
+                    secureTextEntry={!showPasswords.current}
+                    value={formData.current_password}
+                    onChangeText={(text) => {
+                      setFormData({ ...formData, current_password: text });
+                      clearFieldError('current_password');
+                    }}
+                    placeholderTextColor="#94A3B8"
                   />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => toggleShowPassword('current')}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showPasswords.current ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
               {errors.current_password && (
                 <Text style={styles.errorText}>{errors.current_password}</Text>
@@ -179,66 +197,72 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
             {/* New Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>New Password</Text>
-              <View style={[styles.inputContainer, errors.password && styles.inputError]}>
-                <Ionicons name="lock-closed" size={20} color="#64748B" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter new password"
-                  secureTextEntry={!showPasswords.new}
-                  value={formData.password}
-                  onChangeText={(text) => {
-                    setFormData({ ...formData, password: text });
-                    clearFieldError('password');
-                  }}
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => toggleShowPassword('new')}
-                  style={styles.eyeButton}
-                >
-                  <Ionicons
-                    name={showPasswords.new ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color="#64748B"
+              <View>
+                <View style={[styles.inputContainer, errors.password && styles.inputError]}>
+                  <Ionicons name="lock-closed" size={20} color="#64748B" />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter new password"
+                    secureTextEntry={!showPasswords.new}
+                    value={formData.password}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={(text) => {
+                      setFormData({ ...formData, password: text });
+                      clearFieldError('password');
+                    }}
+                    placeholderTextColor="#94A3B8"
                   />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => toggleShowPassword('new')}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showPasswords.new ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
               {errors.password && (
                 <Text style={styles.errorText}>{errors.password}</Text>
               )}
-              <Text style={styles.hintText}>
-                Must be at least 8 characters with uppercase, number, and special character
-              </Text>
+              {shouldShowPasswordHint && (
+                <Text style={styles.passwordHint}>
+                  Password must be at least 8 characters with at least 1 uppercase, 1 lowercase, 1 number and 1 special character (@$!%*?&)
+                </Text>
+              )}
             </View>
 
             {/* Confirm New Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm New Password</Text>
-              <View style={[styles.inputContainer, errors.confirm_password && styles.inputError]}>
-                <Ionicons name="lock-closed" size={20} color="#64748B" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Confirm new password"
-                  secureTextEntry={!showPasswords.confirm}
-                  value={formData.confirm_password}
-                  onChangeText={(text) => {
-                    setFormData({ ...formData, confirm_password: text });
-                    clearFieldError('confirm_password');
-                  }}
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => toggleShowPassword('confirm')}
-                  style={styles.eyeButton}
-                >
-                  <Ionicons
-                    name={showPasswords.confirm ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color="#64748B"
+              <View>
+                <View style={[styles.inputContainer, errors.confirm_password && styles.inputError]}>
+                  <Ionicons name="lock-closed" size={20} color="#64748B" />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Confirm new password"
+                    secureTextEntry={!showPasswords.confirm}
+                    value={formData.confirm_password}
+                    onChangeText={(text) => {
+                      setFormData({ ...formData, confirm_password: text });
+                      clearFieldError('confirm_password');
+                    }}
+                    placeholderTextColor="#94A3B8"
                   />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => toggleShowPassword('confirm')}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showPasswords.confirm ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
               {errors.confirm_password && (
                 <Text style={styles.errorText}>{errors.confirm_password}</Text>
@@ -248,8 +272,8 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
             {/* Submit Button */}
             <TouchableOpacity
               onPress={handleChangePassword}
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
-              disabled={loading}
+              style={[styles.primaryButton, (loading || isSubmitting) && styles.buttonDisabled]}
+              disabled={loading || isSubmitting}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />

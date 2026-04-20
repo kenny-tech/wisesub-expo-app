@@ -203,7 +203,7 @@ export default function History({ navigation }: { navigation: any }) {
           transactionsLoading && transactions.length > 0 ? (
             <View style={styles.loadingMore}>
               <ActivityIndicator size="small" color="#1F54DD" />
-              <Text style={styles.loadingMoreText}>Updating...</Text>
+              {/* <Text style={styles.loadingMoreText}>Updating...</Text> */}
             </View>
           ) : null
         )}
