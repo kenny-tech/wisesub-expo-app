@@ -503,15 +503,17 @@ export default function Home({ navigation }: { navigation: any }) {
                       </View>
                       <Text style={styles.commissionLabel}>You have bonus balance:</Text>
                       <Text style={styles.commissionAmount}>
-                        ₦{formatAmount(commissionBalance)}
+                        ₦{showBalance ? formatAmount(commissionBalance) : "••••••"}
                       </Text>
-                      {/* <TouchableOpacity 
-                        style={styles.viewRewardsBtn}
-                        onPress={handleViewRewards}
-                      >
-                        <Text style={styles.viewRewardsText}>View Rewards</Text>
-                        <Ionicons name="arrow-forward" size={12} color="#10B981" />
-                      </TouchableOpacity> */}
+                      {/* 
+                          <TouchableOpacity 
+                            style={styles.viewRewardsBtn}
+                            onPress={handleViewRewards}
+                          >
+                            <Text style={styles.viewRewardsText}>View Rewards</Text>
+                            <Ionicons name="arrow-forward" size={12} color="#10B981" />
+                          </TouchableOpacity> 
+                      */}
                     </View>
                   </View>
                 )}

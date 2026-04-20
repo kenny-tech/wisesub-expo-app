@@ -207,6 +207,13 @@ export const changePasswordStyles = StyleSheet.create({
     color: "#DC2626",
     marginTop: 4,
   },
+  passwordHint: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#1F54DD',
+    marginTop: 4,
+    marginLeft: 4,
+  }
 });
 
 export const supportStyles = StyleSheet.create({
