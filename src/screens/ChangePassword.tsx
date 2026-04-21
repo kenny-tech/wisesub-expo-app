@@ -198,7 +198,6 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
                 <Text style={styles.errorText}>{errors.current_password}</Text>
               )}
             </View>
-            <View style={{marginBottom: 20}} />
 
             {/* ── New Password — checklist hint ── */}
             <View style={styles.inputGroup}>
@@ -213,6 +212,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
                 error={errors.password}
                 showLabel={false}
                 showPasswordHint={true}
+                wrapperStyle={{ marginBottom: 0 }}
               />
             </View>
 
