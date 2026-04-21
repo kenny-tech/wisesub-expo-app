@@ -109,6 +109,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
+  referralContainer: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  referralToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#C3D4F8',
+    backgroundColor: '#EEF3FD',
+    marginBottom: 8,
+    gap: 6,
+  },
+  referralIcon: {
+    marginRight: 2,
+  },
+  referralToggleText: {
+    fontSize: 13,
+    fontFamily: 'Poppins-Medium',
+    color: '#1F54DD',
+  },
 });
 
 export default styles;

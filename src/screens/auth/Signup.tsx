@@ -1,4 +1,5 @@
 import { showError, showSuccess } from '@/src/utils/toast';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Device from 'expo-device';
 import React, { useEffect, useState } from 'react';
@@ -24,6 +25,7 @@ const SignupScreen: React.FC = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [deviceId, setDeviceId] = useState('');
+  const [showReferral, setShowReferral] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -196,14 +198,43 @@ const SignupScreen: React.FC = () => {
             passwordToMatch={formData.password}
           />
 
-          {/* Referral Code Input - No label */}
-          <FormInput
-            placeholder="Enter referral code if any (Optional)"
-            value={formData.referralCode}
-            onChangeText={(text) => handleInputChange('referralCode', text)}
-            error={errors.referralCode}
-            showLabel={false}
-          />
+          {/* Referral Code - collapsible */}
+          <View style={styles.referralContainer}>
+            <TouchableOpacity
+              style={styles.referralToggle}
+              onPress={() => {
+                setShowReferral(v => !v);
+                if (showReferral) handleInputChange('referralCode', ''); // clear on collapse
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="gift-outline"
+                size={16}
+                color="#1F54DD"
+                style={styles.referralIcon}
+              />
+              <Text style={styles.referralToggleText}>
+                {showReferral ? 'Remove referral code' : 'I have a referral code'}
+              </Text>
+              <Ionicons
+                name={showReferral ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color="#1F54DD"
+              />
+            </TouchableOpacity>
+
+            {showReferral && (
+              <FormInput
+                placeholder="Enter referral code (Optional)"
+                value={formData.referralCode}
+                onChangeText={(text) => handleInputChange('referralCode', text)}
+                error={errors.referralCode}
+                showLabel={false}
+                autoCapitalize="characters"
+              />
+            )}
+          </View>
 
           <Text style={styles.termsText}>
             By creating an account, you agree to our{' '}
@@ -244,7 +275,7 @@ const SignupScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={{ height: 50 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
