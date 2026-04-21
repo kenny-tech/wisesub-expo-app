@@ -155,14 +155,6 @@ export default function Rewards({ navigation }: { navigation: any }) {
       maximumFractionDigits: 2
     });
 
-  const formatDateValue = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   // Determine what to render based on state
   const renderContent = () => {
     if (commissionsLoading && commissions.length === 0) {
@@ -215,14 +207,12 @@ export default function Rewards({ navigation }: { navigation: any }) {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={() => (
           <>
-            {/* Balance Card - Styled like History screen's header */}
+            {/* Balance Card - Centered */}
             <View style={styles.balanceCard}>
-              <View style={styles.balanceHeader}>
-                <View style={styles.balanceTitleContainer}>
-                  <Ionicons name="gift" size={20} color="#10B981" />
-                  <Text style={styles.balanceTitle}>Bonus Balance</Text>
-                </View>
+              <View style={styles.balanceIconContainer}>
+                <Ionicons name="gift" size={24} color="#10B981" />
               </View>
+              <Text style={styles.balanceLabel}>Bonus Balance</Text>
               <Text style={styles.balanceAmount}>
                 ₦{formatAmountValue(currentBalance)}
               </Text>
@@ -288,11 +278,11 @@ const styles = StyleSheet.create({
     height: 8,
   },
   
-  // Balance Card Styles - Matching History screen card style
+  // Balance Card Styles - Centered
   balanceCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
-    padding: 16,
+    padding: 24,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#D1FAE5',
@@ -301,25 +291,25 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
-  },
-  balanceHeader: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+  },
+  balanceIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#ECFDF5",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 12,
   },
-  balanceTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  balanceTitle: {
+  balanceLabel: {
     fontSize: 14,
     fontFamily: "Poppins-Medium",
     color: "#6B7280",
+    marginBottom: 8,
   },
   balanceAmount: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "Poppins-Bold",
     color: "#10B981",
   },

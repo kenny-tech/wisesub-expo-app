@@ -114,7 +114,7 @@ const ResetPasswordScreen: React.FC = () => {
             value={formData.password}
             onChangeText={(text) => handleInputChange('password', text)}
             error={errors.password}
-            showPasswordHint={true}
+            showPasswordHint={true}   // ← shows checklist
           />
 
           {/* Confirm Password */}
@@ -123,6 +123,8 @@ const ResetPasswordScreen: React.FC = () => {
             value={formData.confirmPassword}
             onChangeText={(text) => handleInputChange('confirmPassword', text)}
             error={errors.confirmPassword}
+            isConfirmPassword={true}          // ← enables match badge
+            passwordToMatch={formData.password}
           />
 
           {/* Reset Button */}
