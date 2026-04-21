@@ -182,7 +182,7 @@ const SignupScreen: React.FC = () => {
             onChangeText={(text) => handleInputChange('password', text)}
             error={errors.password}
             showLabel={false}
-            showPasswordHint={true}
+            showPasswordHint={true}   // ← shows checklist
           />
 
           {/* Confirm Password Input - No label */}
@@ -192,6 +192,8 @@ const SignupScreen: React.FC = () => {
             onChangeText={(text) => handleInputChange('confirmPassword', text)}
             error={errors.confirmPassword}
             showLabel={false}
+            isConfirmPassword={true}          // ← enables match badge
+            passwordToMatch={formData.password}
           />
 
           {/* Referral Code Input - No label */}

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import PasswordInput from "../components/auth/PasswordInput";
 import { ChangePasswordData, profileService } from "../services/profileService";
 import { changePasswordStyles as styles } from '../styles/sharedStyles';
 import { showError, showSuccess } from "../utils/toast";
@@ -70,7 +71,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
 
   const handleChangePassword = async () => {
     setIsSubmitting(true);
-    
+
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
@@ -138,10 +139,14 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
       /[@$!%*?&]/.test(password);
   };
 
-  const shouldShowPasswordHint = focusedField === 'password' && 
-    formData.password.length > 0 && 
-    !isPasswordValid(formData.password) && 
+  const shouldShowPasswordHint = focusedField === 'password' &&
+    formData.password.length > 0 &&
+    !isPasswordValid(formData.password) &&
     !errors.password;
+
+  const clearError = (field: keyof PasswordErrors) =>
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+
 
   return (
     <View style={styles.screen}>
@@ -193,81 +198,41 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
                 <Text style={styles.errorText}>{errors.current_password}</Text>
               )}
             </View>
+            <View style={{marginBottom: 20}} />
 
-            {/* New Password */}
+            {/* ── New Password — checklist hint ── */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>New Password</Text>
-              <View>
-                <View style={[styles.inputContainer, errors.password && styles.inputError]}>
-                  <Ionicons name="lock-closed" size={20} color="#64748B" />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Enter new password"
-                    secureTextEntry={!showPasswords.new}
-                    value={formData.password}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => setFocusedField(null)}
-                    onChangeText={(text) => {
-                      setFormData({ ...formData, password: text });
-                      clearFieldError('password');
-                    }}
-                    placeholderTextColor="#94A3B8"
-                  />
-                  <TouchableOpacity
-                    onPress={() => toggleShowPassword('new')}
-                    style={styles.eyeButton}
-                  >
-                    <Ionicons
-                      name={showPasswords.new ? "eye-off-outline" : "eye-outline"}
-                      size={20}
-                      color="#64748B"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              )}
-              {shouldShowPasswordHint && (
-                <Text style={styles.passwordHint}>
-                  Password must be at least 8 characters with at least 1 uppercase, 1 lowercase, 1 number and 1 special character (@$!%*?&)
-                </Text>
-              )}
+              <PasswordInput
+                placeholder="Enter new password"
+                value={formData.password}
+                onChangeText={(text) => {
+                  setFormData({ ...formData, password: text });
+                  clearError("password");
+                }}
+                error={errors.password}
+                showLabel={false}
+                showPasswordHint={true}
+              />
             </View>
 
-            {/* Confirm New Password */}
+            {/* ── Confirm Password — match badge ── */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm New Password</Text>
-              <View>
-                <View style={[styles.inputContainer, errors.confirm_password && styles.inputError]}>
-                  <Ionicons name="lock-closed" size={20} color="#64748B" />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Confirm new password"
-                    secureTextEntry={!showPasswords.confirm}
-                    value={formData.confirm_password}
-                    onChangeText={(text) => {
-                      setFormData({ ...formData, confirm_password: text });
-                      clearFieldError('confirm_password');
-                    }}
-                    placeholderTextColor="#94A3B8"
-                  />
-                  <TouchableOpacity
-                    onPress={() => toggleShowPassword('confirm')}
-                    style={styles.eyeButton}
-                  >
-                    <Ionicons
-                      name={showPasswords.confirm ? "eye-off-outline" : "eye-outline"}
-                      size={20}
-                      color="#64748B"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              {errors.confirm_password && (
-                <Text style={styles.errorText}>{errors.confirm_password}</Text>
-              )}
+              <PasswordInput
+                placeholder="Confirm new password"
+                value={formData.confirm_password}
+                onChangeText={(text) => {
+                  setFormData({ ...formData, confirm_password: text });
+                  clearError("confirm_password");
+                }}
+                error={errors.confirm_password}
+                showLabel={false}
+                isConfirmPassword={true}
+                passwordToMatch={formData.password}
+              />
             </View>
+
 
             {/* Submit Button */}
             <TouchableOpacity
