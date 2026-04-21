@@ -16,6 +16,7 @@ interface PasswordInputProps extends Omit<FormInputProps, 'secureTextEntry'> {
   showPasswordHint?: boolean;
   isConfirmPassword?: boolean;
   passwordToMatch?: string;
+  wrapperStyle?: object;
 }
 
 interface PasswordRule {
@@ -65,6 +66,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   showPasswordHint = false,
   isConfirmPassword = false,
   passwordToMatch = '',
+  wrapperStyle,
   value = '',
   error,
   onFocus,
@@ -111,7 +113,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   const handleBlur = (e: any) => { setIsFocused(false); onBlur?.(e); };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, wrapperStyle]}>
       <View style={styles.inputRow}>
         <FormInput
           {...props}
