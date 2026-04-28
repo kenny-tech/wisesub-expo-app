@@ -30,7 +30,7 @@ export const PASSWORD_RULES: PasswordRule[] = [
   { id: 'uppercase', label: 'One uppercase letter (A–Z)', test: v => /[A-Z]/.test(v) },
   { id: 'lowercase', label: 'One lowercase letter (a–z)', test: v => /[a-z]/.test(v) },
   { id: 'number', label: 'One number (0–9)', test: v => /\d/.test(v) },
-  { id: 'special', label: 'One special character (@$!%*?&)', test: v => /[@$!%*?&]/.test(v) },
+  { id: 'special', label: "One special character (@$!%*?&#'\-:,)", test: v => /[@$!%*?&#'\-:,]/.test(v) },
 ];
 
 export const isPasswordValid = (v: string) => PASSWORD_RULES.every(r => r.test(v));

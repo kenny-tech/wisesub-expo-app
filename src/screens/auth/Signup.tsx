@@ -231,7 +231,7 @@ const SignupScreen: React.FC = () => {
                 onChangeText={(text) => handleInputChange('referralCode', text)}
                 error={errors.referralCode}
                 showLabel={false}
-                autoCapitalize="characters"
+                autoCapitalize="none"
               />
             )}
           </View>
@@ -275,7 +275,7 @@ const SignupScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={{ height: 100 }} />
+        <View style={{ height: 150 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -14,6 +14,7 @@ import PasswordInput from "../components/auth/PasswordInput";
 import { ChangePasswordData, profileService } from "../services/profileService";
 import { changePasswordStyles as styles } from '../styles/sharedStyles';
 import { showError, showSuccess } from "../utils/toast";
+import { AuthValidators } from "../utils/validators/authValidators"; // ← add this
 
 interface PasswordErrors {
   current_password?: string;
@@ -35,38 +36,25 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
     new: false,
     confirm: false
   });
-  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: PasswordErrors = {};
-    let isValid = true;
 
     if (!formData.current_password.trim()) {
       newErrors.current_password = "Current password is required";
-      isValid = false;
     }
 
-    if (!formData.password.trim()) {
-      newErrors.password = "New password is required";
-      isValid = false;
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-      isValid = false;
-    } else if (!/(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(formData.password)) {
-      newErrors.password = "Password must be at least 8 characters with uppercase, lowercase, number, and special character";
-      isValid = false;
-    }
+    const passwordError = AuthValidators.validatePassword(formData.password);
+    if (passwordError) newErrors.password = passwordError;
 
-    if (!formData.confirm_password.trim()) {
-      newErrors.confirm_password = "Please confirm your password";
-      isValid = false;
-    } else if (formData.password !== formData.confirm_password) {
-      newErrors.confirm_password = "Passwords do not match";
-      isValid = false;
-    }
+    const confirmError = AuthValidators.validateConfirmPassword(
+      formData.password,
+      formData.confirm_password
+    );
+    if (confirmError) newErrors.confirm_password = confirmError;
 
     setErrors(newErrors);
-    return isValid;
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleChangePassword = async () => {
@@ -100,9 +88,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
           setErrors(apiErrors);
 
           const firstError = Object.values(apiErrors)[0];
-          if (firstError) {
-            showError('Error', firstError);
-          }
+          if (firstError) showError('Error', firstError);
         } else {
           showError('Error', response.message || 'Failed to change password');
         }
@@ -116,37 +102,12 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
     }
   };
 
-  const clearFieldError = (field: keyof PasswordErrors) => {
-    setErrors(prev => ({
-      ...prev,
-      [field]: undefined
-    }));
-  };
-
   const toggleShowPassword = (field: keyof typeof showPasswords) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
   };
-
-  // Check if password meets requirements for hint
-  const isPasswordValid = (password: string) => {
-    return password.length >= 8 &&
-      /[A-Z]/.test(password) &&
-      /[a-z]/.test(password) &&
-      /\d/.test(password) &&
-      /[@$!%*?&]/.test(password);
-  };
-
-  const shouldShowPasswordHint = focusedField === 'password' &&
-    formData.password.length > 0 &&
-    !isPasswordValid(formData.password) &&
-    !errors.password;
 
   const clearError = (field: keyof PasswordErrors) =>
-    setErrors((prev) => ({ ...prev, [field]: undefined }));
-
+    setErrors(prev => ({ ...prev, [field]: undefined }));
 
   return (
     <View style={styles.screen}>
@@ -168,38 +129,36 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
             {/* Current Password */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { paddingTop: 20 }]}>Current Password</Text>
-              <View>
-                <View style={[styles.inputContainer, errors.current_password && styles.inputError]}>
-                  <Ionicons name="lock-closed" size={20} color="#64748B" />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Enter current password"
-                    secureTextEntry={!showPasswords.current}
-                    value={formData.current_password}
-                    onChangeText={(text) => {
-                      setFormData({ ...formData, current_password: text });
-                      clearFieldError('current_password');
-                    }}
-                    placeholderTextColor="#94A3B8"
+              <View style={[styles.inputContainer, errors.current_password && styles.inputError]}>
+                <Ionicons name="lock-closed" size={20} color="#64748B" />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter current password"
+                  secureTextEntry={!showPasswords.current}
+                  value={formData.current_password}
+                  onChangeText={(text) => {
+                    setFormData({ ...formData, current_password: text });
+                    clearError('current_password');
+                  }}
+                  placeholderTextColor="#94A3B8"
+                />
+                <TouchableOpacity
+                  onPress={() => toggleShowPassword('current')}
+                  style={styles.eyeButton}
+                >
+                  <Ionicons
+                    name={showPasswords.current ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#64748B"
                   />
-                  <TouchableOpacity
-                    onPress={() => toggleShowPassword('current')}
-                    style={styles.eyeButton}
-                  >
-                    <Ionicons
-                      name={showPasswords.current ? "eye-off-outline" : "eye-outline"}
-                      size={20}
-                      color="#64748B"
-                    />
-                  </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
               {errors.current_password && (
                 <Text style={styles.errorText}>{errors.current_password}</Text>
               )}
             </View>
 
-            {/* ── New Password — checklist hint ── */}
+            {/* New Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>New Password</Text>
               <PasswordInput
@@ -216,7 +175,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
               />
             </View>
 
-            {/* ── Confirm Password — match badge ── */}
+            {/* Confirm Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm New Password</Text>
               <PasswordInput
@@ -232,7 +191,6 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
                 passwordToMatch={formData.password}
               />
             </View>
-
 
             {/* Submit Button */}
             <TouchableOpacity

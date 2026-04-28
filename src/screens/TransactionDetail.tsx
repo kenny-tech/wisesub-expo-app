@@ -209,7 +209,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             </View> */}
 
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Date & Time</Text>
+              <Text style={styles.infoLabel}>Date</Text>
               <Text style={styles.infoValue}>{formatDate(transaction.created_at)}</Text>
             </View>
 
