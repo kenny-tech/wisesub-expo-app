@@ -490,15 +490,6 @@ export default function FundAmount({ navigation }: { navigation: any }) {
           </View>
         </View>
 
-        {/* User Info */}
-        {user && (
-          <View style={styles.userInfoCard}>
-            <Text style={styles.userInfoText}>
-              Payment will be processed for: {user.email || user.phone || user.name}
-            </Text>
-          </View>
-        )}
-
         {/* Instructions */}
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color="#1F54DD" />

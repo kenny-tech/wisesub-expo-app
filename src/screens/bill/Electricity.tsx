@@ -71,6 +71,50 @@ const PROVIDERS = [
     logoUrl: `${IMAGE_BASE_URL}/aedc.jpg`,
     serviceID: 'abuja-electric'
   },
+  // Newly added providers
+  {
+    id: 'jed',
+    name: 'Jos Electric',
+    logoLocal: require('../../../assets/images/jed.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/jed.jpg`,
+    serviceID: 'jos-electric'
+  },
+  {
+    id: 'kaedco',
+    name: 'Kaduna Electric',
+    logoLocal: require('../../../assets/images/kaedco.jpg'),
+    logoUrl: `${IMAGE_BASE_URL}/kaedco.jpg`,
+    serviceID: 'kaduna-electric'
+  },
+
+  // {
+  //   id: 'eedc',
+  //   name: 'Enugu Electric',
+  //   logoLocal: require('../../../assets/images/eedc.jpg'),
+  //   logoUrl: `${IMAGE_BASE_URL}/eedc.jpg`,
+  //   serviceID: 'enugu-electric'
+  // },
+  // {
+  //   id: 'bedc',
+  //   name: 'Benin Electricity',
+  //   logoLocal: require('../../../assets/images/bedc.jpg'),
+  //   logoUrl: `${IMAGE_BASE_URL}/bedc.jpg`,
+  //   serviceID: 'benin-electric'
+  // },
+  // {
+  //   id: 'abedc',
+  //   name: 'Aba Electric',
+  //   logoLocal: require('../../../assets/images/abedc.jpg'),
+  //   logoUrl: `${IMAGE_BASE_URL}/abedc.jpg`,
+  //   serviceID: 'aba-electric'
+  // },
+  // {
+  //   id: 'yedc',
+  //   name: 'Yola Electric',
+  //   logoLocal: require('../../../assets/images/yedc.jpg'),
+  //   logoUrl: `${IMAGE_BASE_URL}/yedc.jpg`,
+  //   serviceID: 'yola-electric'
+  // },
 ];
 
 // Predefined electricity amounts

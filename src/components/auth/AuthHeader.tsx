@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 interface AuthHeaderProps {
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 30,
+    paddingTop: 30,
+    paddingBottom: 10,
   },
   backButton: {
     position: 'absolute',
@@ -64,9 +64,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   logo: {
-    width: 100,
+    width: 120,
     height: 100,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,

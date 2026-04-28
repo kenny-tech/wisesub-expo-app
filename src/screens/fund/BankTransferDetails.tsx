@@ -74,7 +74,7 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
         <View style={styles.noteCard}>
           <Ionicons name="alert-circle" size={20} color="#F59E0B" />
           <Text style={styles.noteText}>
-            Transfer <Text style={{ fontFamily: 'Poppins-Bold' }}>exactly {formatAmount(transferDetails.amount)}</Text> to the account below. Any other amount will not be credited.
+            Transfer <Text style={{ fontFamily: 'Poppins-Bold' }}>exactly {formatAmount(transferDetails.amount)}</Text> to the account below. Any other amount will not be credited. The amount includes a processing fee charged by the payment provider.
           </Text>
         </View>
 
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   importantNotesTitle: { fontSize: 16, fontFamily: 'Poppins-SemiBold', color: '#DC2626', marginBottom: 12 },
   noteItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   noteItemText: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Regular', color: '#DC2626', marginLeft: 8, lineHeight: 16 },
-  footer: { padding: 20, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
+  footer: { padding: 20, marginBottom: 10, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
   doneButton: { backgroundColor: '#1F54DD', borderRadius: 12, padding: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   doneButtonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
   supportLinkButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, marginBottom: 10 },
