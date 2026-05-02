@@ -78,6 +78,8 @@ export const API_ENDPOINTS = {
   DELETE_ACCOUNT: 'user/delete-account',
   LOGOUT: 'user/logout',
 
+  USER_REFERRALS: 'referrals/user_referrals',
+
   // Expo push notification endpoints
   CREATE_EXPO_TOKEN: 'user/create-expo-token',
   GET_EXPO_TOKEN: 'user/get-expo-token',

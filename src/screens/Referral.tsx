@@ -4,51 +4,58 @@ import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useState } from "react";
 import {
     Alert,
+    FlatList,
+    Modal,
     Share,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useProfile } from "../redux/hooks/useProfile";
+import { referralService, ReferralUser } from "../services/referralService";
 import { showSuccess } from "../utils/toast";
-
-// Mock data - replace with your actual API calls and user context
-const mockReferralData = {
-    earnings: "450.00",
-    referralCount: 3,
-    referralCode: "FRIEND2024"
-};
 
 export default function Referral({ navigation }: { navigation: any }) {
     const [loading, setLoading] = useState<boolean>(false);
-    const [referralEarnings, setReferralEarnings] = useState<string>("0.00");
     const [referralCount, setReferralCount] = useState<number>(0);
-    const [referralCode, setReferralCode] = useState<string>("");
+    const [referralUsers, setReferralUsers] = useState<ReferralUser[]>([]);
+    const [modalVisible, setModalVisible] = useState<boolean>(false);
 
     const { user } = useProfile();
 
+    const fetchReferrals = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await referralService.getUserReferrals();
+            if (response.success) {
+                setReferralCount(response.data.count);
+                setReferralUsers(response.data.users);
+            } else {
+                console.warn(response.message);
+                setReferralCount(0);
+                setReferralUsers([]);
+            }
+        } catch (error: any) {
+            console.error("Failed to fetch referrals:", error);
+            Alert.alert("Error", error.message || "Could not load referral data");
+            setReferralCount(0);
+            setReferralUsers([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useFocusEffect(
         useCallback(() => {
-            setLoading(true);
-            // Simulate API fetch
-            const t = setTimeout(() => {
-                setReferralEarnings(mockReferralData.earnings);
-                setReferralCount(mockReferralData.referralCount);
-                setReferralCode(mockReferralData.referralCode);
-                setLoading(false);
-            }, 1000);
-            return () => clearTimeout(t);
-        }, [])
+            fetchReferrals();
+        }, [fetchReferrals])
     );
 
     const copyToClipboard = async () => {
-        await Clipboard.setStringAsync(user?.referral_code);
-        showSuccess(
-            'Copied',
-            'Referral code copied to clipboard.'
-        );
+        await Clipboard.setStringAsync(user?.referral_code || "");
+        showSuccess("Copied", "Referral code copied to clipboard.");
     };
 
     const onShare = async () => {
@@ -57,9 +64,28 @@ export default function Referral({ navigation }: { navigation: any }) {
                 message: `Join me using my referral code: ${user?.referral_code}`,
             });
         } catch (error: any) {
-            Alert.alert('Error', error.message);
+            Alert.alert("Error", error.message);
         }
     };
+
+    const openReferralModal = () => {
+        setModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setModalVisible(false);
+    };
+
+    const renderReferralUser = ({ item }: { item: ReferralUser }) => (
+        <View style={modalStyles.userItem}>
+            <View style={modalStyles.avatar}>
+                <Text style={modalStyles.avatarText}>
+                    {item.name.charAt(0).toUpperCase()}
+                </Text>
+            </View>
+            <Text style={modalStyles.userName}>{item.name}</Text>
+        </View>
+    );
 
     if (loading) {
         return (
@@ -90,24 +116,23 @@ export default function Referral({ navigation }: { navigation: any }) {
                         </Text>
                     </View>
 
-                    {/* Stats Cards */}
-                    {/* <View style={styles.statsContainer}>
-                        <View style={styles.statCard}>
-                            <View style={[styles.statIcon, { backgroundColor: '#ECFDF5' }]}>
-                                <Ionicons name="cash" size={20} color="#10B981" />
-                            </View>
-                            <Text style={styles.statLabel}>Referral Earnings</Text>
-                            <Text style={styles.statAmount}>₦{referralEarnings}</Text>
+                    {/* People Referred Card - Only show if user has at least one referral */}
+                    {referralCount > 0 && (
+                        <View style={styles.statsContainer}>
+                            <TouchableOpacity
+                                style={styles.statCard}
+                                onPress={openReferralModal}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[styles.statIcon, { backgroundColor: '#E0E7FF' }]}>
+                                    <Ionicons name="person-add" size={20} color="#1F54DD" />
+                                </View>
+                                <Text style={styles.statLabel}>People Referred</Text>
+                                <Text style={styles.statCount}>{referralCount}</Text>
+                                <Ionicons name="chevron-forward" size={16} color="#1F54DD" style={styles.chevron} />
+                            </TouchableOpacity>
                         </View>
-
-                        <View style={styles.statCard}>
-                            <View style={[styles.statIcon, { backgroundColor: '#E0E7FF' }]}>
-                                <Ionicons name="person-add" size={20} color="#1F54DD" />
-                            </View>
-                            <Text style={styles.statLabel}>People Referred</Text>
-                            <Text style={styles.statCount}>{referralCount}</Text>
-                        </View>
-                    </View> */}
+                    )}
 
                     {/* Referral Code Section */}
                     <View style={styles.referralSection}>
@@ -128,8 +153,8 @@ export default function Referral({ navigation }: { navigation: any }) {
                         </TouchableOpacity>
                     </View>
 
-                    {/* How it works */}
-                    <View style={styles.howItWorks}>
+                    {/* How it works - Now inside a card */}
+                    <View style={styles.howItWorksCard}>
                         <Text style={styles.sectionTitle}>How It Works</Text>
                         <View style={styles.stepsContainer}>
                             <View style={styles.step}>
@@ -154,6 +179,38 @@ export default function Referral({ navigation }: { navigation: any }) {
                     </View>
                 </View>
             </View>
+
+            {/* Scrollable Modal for Referred Users */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={closeModal}
+            >
+                <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPressOut={closeModal}>
+                    <View style={modalStyles.modalContainer}>
+                        <View style={modalStyles.modalHeader}>
+                            <Text style={modalStyles.modalTitle}>Referred Users</Text>
+                            <TouchableOpacity onPress={closeModal} style={modalStyles.closeButton}>
+                                <Ionicons name="close" size={24} color="#64748B" />
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={referralUsers}
+                            renderItem={renderReferralUser}
+                            keyExtractor={(item) => item.id.toString()}
+                            contentContainerStyle={modalStyles.listContent}
+                            showsVerticalScrollIndicator={true}
+                            ListEmptyComponent={
+                                <View style={modalStyles.emptyContainer}>
+                                    <Text style={modalStyles.emptyText}>No referred users found</Text>
+                                </View>
+                            }
+                        />
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+            <View style={{ height: 50 }} />
         </ScrollView>
     );
 }
@@ -215,19 +272,16 @@ const styles = StyleSheet.create({
         lineHeight: 24,
     },
     statsContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
         marginBottom: 32,
     },
     statCard: {
-        flex: 1,
         backgroundColor: "#F8FAFC",
         borderRadius: 16,
         padding: 16,
-        marginHorizontal: 4,
         alignItems: "center",
         borderWidth: 1,
         borderColor: "#E2E8F0",
+        position: "relative",
     },
     statIcon: {
         width: 40,
@@ -244,17 +298,26 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 4,
     },
-    statAmount: {
-        fontSize: 18,
-        fontFamily: "Poppins-Bold",
-        color: "#10B981",
-    },
     statCount: {
         fontSize: 18,
         fontFamily: "Poppins-Bold",
         color: "#1F54DD",
     },
+    chevron: {
+        position: "absolute",
+        right: 12,
+        top: "50%",
+        marginTop: -8,
+    },
     referralSection: {
+        backgroundColor: "#F8FAFC",
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 32,
+        borderWidth: 1,
+        borderColor: "#E2E8F0",
+    },
+    howItWorksCard: {
         backgroundColor: "#F8FAFC",
         borderRadius: 16,
         padding: 20,
@@ -312,20 +375,12 @@ const styles = StyleSheet.create({
         fontFamily: "Poppins-SemiBold",
         marginLeft: 8,
     },
-    howItWorks: {
-        marginBottom: 32,
-    },
     stepsContainer: {
-        backgroundColor: "#F8FAFC",
-        borderRadius: 16,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: "#E2E8F0",
+        gap: 16,
     },
     step: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 16,
     },
     stepNumber: {
         width: 24,
@@ -346,5 +401,75 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: "Poppins-Regular",
         color: "#64748B",
+    },
+});
+
+// Modal Styles
+const modalStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "flex-end",
+    },
+    modalContainer: {
+        backgroundColor: "#FFFFFF",
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 40,
+        maxHeight: "80%",
+    },
+    modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontFamily: "Poppins-SemiBold",
+        color: "#0F172A",
+    },
+    closeButton: {
+        padding: 4,
+    },
+    listContent: {
+        paddingBottom: 20,
+    },
+    userItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F1F5F9",
+    },
+    avatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "#E0E7FF",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+    },
+    avatarText: {
+        fontSize: 18,
+        fontFamily: "Poppins-SemiBold",
+        color: "#1F54DD",
+    },
+    userName: {
+        fontSize: 16,
+        fontFamily: "Poppins-Medium",
+        color: "#0F172A",
+    },
+    emptyContainer: {
+        paddingVertical: 30,
+        alignItems: "center",
+    },
+    emptyText: {
+        fontSize: 14,
+        fontFamily: "Poppins-Regular",
+        color: "#94A3B8",
     },
 });
