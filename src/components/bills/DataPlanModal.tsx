@@ -46,7 +46,7 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
   // Check if a plan is selected
   const isPlanSelected = (item: DataPlan): boolean => {
     if (!selectedPlan) return false;
-    
+
     if (isAwuf) {
       return selectedPlan.package_api_code === item.package_api_code;
     } else {
@@ -89,30 +89,30 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
             <Text style={[styles.planName, selected && styles.planNameSelected]} numberOfLines={2}>
               {planName}
             </Text>
-            {isAwuf && (
+            {/* {isAwuf && planName.toLowerCase().includes('awuf') && (
               <View style={styles.awufBadge}>
                 <Text style={styles.awufBadgeText}>AWUF</Text>
               </View>
-            )}
+            )} */}
           </View>
-          
+
           {!isAwuf && item.validity && (
             <Text style={styles.planValidity}>Validity: {item.validity}</Text>
           )}
         </View>
-        
+
         <View style={styles.planPriceContainer}>
           <Text style={[styles.planPrice, selected && styles.planPriceSelected]}>
             ₦{formatAmount(planAmount)}
           </Text>
-          
+
           {isAwuf && item.aidapay_price && item.aidapay_price !== item.price && (
             <Text style={styles.originalPrice}>
               ₦{formatAmount(item.aidapay_price)}
             </Text>
           )}
         </View>
-        
+
         {selected && (
           <Ionicons name="checkmark-circle" size={24} color="#1F54DD" style={styles.checkIcon} />
         )}
@@ -127,7 +127,7 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
         onPressOut={onClose}
@@ -160,7 +160,7 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
             <View style={styles.infoContainer}>
               <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
               <Text style={styles.infoText}>
-                AWUF data includes special bonus. Dial *323*4# to check balance.
+                AWUF data includes special bonus. Dial *323*4# or *323*1# to check balance.
               </Text>
             </View>
           )}
@@ -177,10 +177,10 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
             <View style={styles.emptyContainer}>
               <Ionicons name="wifi" size={48} color="#CBD5E1" />
               <Text style={styles.emptyText}>
-                {searchQuery 
-                  ? 'No matching plans found' 
-                  : isAwuf 
-                    ? 'No AWUF plans available' 
+                {searchQuery
+                  ? 'No matching plans found'
+                  : isAwuf
+                    ? 'No AWUF plans available'
                     : 'No data plans available'}
               </Text>
             </View>
