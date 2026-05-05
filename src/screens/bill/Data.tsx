@@ -763,14 +763,14 @@ export default function Data({ navigation }: { navigation: any }) {
               </Text>
             </View>
 
-            {isAwuf && (
+            {/* {isAwuf && (
               <View style={styles.awufInfoContainer}>
                 <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
                 <Text style={styles.awufInfoText}>
                   AWUF data includes special bonus
                 </Text>
               </View>
-            )}
+            )} */}
 
             {/* Show commission only for VTPass plans */}
             {!isAwuf && commission > 0 && (
