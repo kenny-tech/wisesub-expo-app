@@ -417,7 +417,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
             response.data.content.error,
             [
               {
-                text: 'Okay',
+                text: 'OK',
                 style: 'default',
                 onPress: () => {
                   setErrors(prev => ({ ...prev, decoderNumber: 'Decoder may be invalid' }));

@@ -505,7 +505,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
             response.data.content.error,
             [
               {
-                text: 'Okay',
+                text: 'OK',
                 style: 'default',
                 onPress: () => {
                   setErrors((prev) => ({
