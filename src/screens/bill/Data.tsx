@@ -471,7 +471,6 @@ export default function Data({ navigation }: { navigation: any }) {
           amount: parseFloat(selectedPlan.price?.toString() || '0'),
           provider_code: selectedNetwork.providerCode,
           package_code: selectedPlan.package_api_code,
-          aidapay_amount: selectedPlan.aidapay_price || 0,
           network: selectedNetwork.originalNetwork,
           network_name: selectedNetwork.name,
         };

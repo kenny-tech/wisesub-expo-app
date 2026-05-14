@@ -1,6 +1,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Device from 'expo-device';
+import { Image } from "expo-image";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -294,6 +295,18 @@ export default function Home({ navigation }: { navigation: any }) {
         </View>
       );
     } else {
+      // Check if provider_logo exists for debit transactions
+      if (transaction.provider_logo) {
+        return (
+          <View style={[styles.transactionIcon, styles.debitIcon]}>
+            <Image
+              source={{ uri: transaction.provider_logo }}
+              style={styles.transactionLogo}
+              resizeMode="contain"
+            />
+          </View>
+        );
+      }
       return (
         <View style={[styles.transactionIcon, styles.debitIcon]}>
           <Ionicons name="arrow-up" size={20} color="#EF4444" />
@@ -318,12 +331,44 @@ export default function Home({ navigation }: { navigation: any }) {
   };
 
   const renderTransaction = ({ item }: { item: Transaction }) => {
-    const isCredit = [
-      'Fund Wallet',
-      'Commission',
-      'Referral Commission',
-      'Refund'
-    ].includes(item.name);
+    const isBonus = ['Commission', 'Referral Commission'].includes(item.name);
+    const isFundWallet = item.name === 'Fund Wallet';
+    const isRefund = item.name === 'Refund';
+    const isCredit = isFundWallet || isBonus || isRefund;
+
+    // Get icon
+    let iconElement;
+    if (isBonus) {
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.bonusIcon]}>
+          <Ionicons name="gift" size={24} color="#10B981" />
+        </View>
+      );
+    } else if (item.provider_logo && !isCredit) {
+      // Debit transaction with provider logo - use light red background
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.debitIconBg]}>
+          <Image
+            source={{ uri: item.provider_logo }}
+            style={styles.transactionLogo}
+            contentFit="contain"
+          />
+        </View>
+      );
+    } else if (isCredit) {
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.creditIcon]}>
+          <Ionicons name="arrow-down" size={24} color="#10B981" />
+        </View>
+      );
+    } else {
+      // Debit transaction without logo - use light red background
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.debitIconBg]}>
+          <Ionicons name="arrow-up" size={24} color="#EF4444" />
+        </View>
+      );
+    }
 
     return (
       <TouchableOpacity
@@ -331,7 +376,7 @@ export default function Home({ navigation }: { navigation: any }) {
         onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
       >
         <View style={styles.transactionLeft}>
-          {getTransactionIcon(item)}
+          {iconElement}
           <View style={styles.transactionDetails}>
             <Text style={styles.transactionTitle} numberOfLines={1}>
               {getTransactionDescription(item)}
@@ -339,18 +384,10 @@ export default function Home({ navigation }: { navigation: any }) {
             <Text style={styles.transactionDate}>
               {formatDate(item.created_at)}
             </Text>
-            {/* {item.type === "Electricity" && item.electricity_token && (
-              <Text style={styles.electricityToken}>
-                Token: {item.electricity_token}
-              </Text>
-            )} */}
           </View>
         </View>
-        <Text style={[
-          styles.transactionAmount,
-          isCredit ? styles.amountCredit : styles.amountDebit
-        ]}>
-          {isCredit ? '+' : '-'}₦{formatAmount(item.amount)}
+        <Text style={[styles.transactionAmount, isCredit ? styles.amountCredit : styles.amountDebit]}>
+          ₦{formatAmount(item.amount)}
         </Text>
       </TouchableOpacity>
     );
@@ -814,15 +851,22 @@ const styles = StyleSheet.create({
   },
   transactionLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
   transactionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10
+    marginRight: 12
   },
-  creditIcon: { backgroundColor: "#ECFDF5" },
-  debitIcon: { backgroundColor: "#FEF3F2" },
+  creditIcon: {
+    backgroundColor: "#ECFDF5"  // Light green for credits (Top Up, Refund)
+  },
+  debitIconBg: {
+    backgroundColor: "#FEF3F2"  // Light red for debits
+  },
+  bonusIcon: {
+    backgroundColor: "#ECFDF5",  // Light green for bonus transactions
+  },
   transactionDetails: { flex: 1 },
   transactionTitle: {
     fontSize: 14,
@@ -835,18 +879,22 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontFamily: "Poppins-Regular"
   },
-  electricityToken: {
-    fontSize: 11,
-    color: "#64748B",
-    fontFamily: "Poppins-Regular",
-    marginTop: 2,
-  },
   transactionAmount: {
     fontSize: 14,
     fontFamily: "Poppins-SemiBold"
   },
-  amountCredit: { color: "#10B981" },
-  amountDebit: { color: "#EF4444" },
+  amountCredit: {
+    color: "#10B981"  // Green for credit transactions
+  },
+  amountDebit: {
+    color: "#EF4444"  // Light red for debit transactions
+  },
+  transactionLogo: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  debitIcon: { backgroundColor: "#FEF3F2" },
 
   // empty state
   empty: {

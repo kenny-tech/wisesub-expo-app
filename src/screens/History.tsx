@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { Image } from "expo-image";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -54,29 +55,6 @@ export default function History({ navigation }: { navigation: any }) {
     setRefreshing(false);
   };
 
-  const getTransactionIcon = (transaction: Transaction) => {
-    const isCredit = [
-      'Fund Wallet',
-      'Commission',
-      'Referral Commission',
-      'Refund'
-    ].includes(transaction.name);
-
-    if (isCredit) {
-      return (
-        <View style={[styles.transactionIcon, styles.creditIcon]}>
-          <Ionicons name="arrow-down" size={20} color="#10B981" />
-        </View>
-      );
-    } else {
-      return (
-        <View style={[styles.transactionIcon, styles.debitIcon]}>
-          <Ionicons name="arrow-up" size={20} color="#EF4444" />
-        </View>
-      );
-    }
-  };
-
   const getTransactionDescription = (transaction: Transaction) => {
     if (transaction.name === "Commission") {
       return `Bonus from ${transaction.type} purchase`;
@@ -84,22 +62,50 @@ export default function History({ navigation }: { navigation: any }) {
       return "Top Up";
     } else {
       let description = transaction.name;
-
-      if (transaction.type) {
-        description += ` ${transaction.type}`;
-      }
-
+      if (transaction.type) description += ` ${transaction.type}`;
       return description;
     }
   };
 
   const renderTransaction = ({ item }: { item: Transaction }) => {
-    const isCredit = [
-      'Fund Wallet',
-      'Commission',
-      'Referral Commission',
-      'Refund'
-    ].includes(item.name);
+    const isBonus = ['Commission', 'Referral Commission'].includes(item.name);
+    const isFundWallet = item.name === 'Fund Wallet';
+    const isRefund = item.name === 'Refund';
+    const isCredit = isFundWallet || isBonus || isRefund;
+
+    // Get icon
+    let iconElement;
+    if (isBonus) {
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.bonusIcon]}>
+          <Ionicons name="gift" size={24} color="#10B981" />
+        </View>
+      );
+    } else if (item.provider_logo && !isCredit) {
+      // Debit transaction with provider logo - use light red background
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.debitIconBg]}>
+          <Image
+            source={{ uri: item.provider_logo }}
+            style={styles.transactionLogo}
+            contentFit="contain"
+          />
+        </View>
+      );
+    } else if (isCredit) {
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.creditIcon]}>
+          <Ionicons name="arrow-down" size={24} color="#10B981" />
+        </View>
+      );
+    } else {
+      // Debit transaction without logo - use light red background
+      iconElement = (
+        <View style={[styles.transactionIcon, styles.debitIconBg]}>
+          <Ionicons name="arrow-up" size={24} color="#EF4444" />
+        </View>
+      );
+    }
 
     return (
       <TouchableOpacity
@@ -107,7 +113,7 @@ export default function History({ navigation }: { navigation: any }) {
         onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
       >
         <View style={styles.transactionLeft}>
-          {getTransactionIcon(item)}
+          {iconElement}
           <View style={styles.transactionDetails}>
             <Text style={styles.transactionTitle} numberOfLines={1}>
               {getTransactionDescription(item)}
@@ -117,16 +123,12 @@ export default function History({ navigation }: { navigation: any }) {
             </Text>
           </View>
         </View>
-        <Text style={[
-          styles.transactionAmount,
-          isCredit ? styles.amountCredit : styles.amountDebit
-        ]}>
-          {isCredit ? '+' : '-'}₦{formatAmount(item.amount)}
+        <Text style={[styles.transactionAmount, isCredit ? styles.amountCredit : styles.amountDebit]}>
+          ₦{formatAmount(item.amount)}
         </Text>
       </TouchableOpacity>
     );
   };
-
   const formatAmount = (amt: string) =>
     parseFloat(amt || "0").toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -203,7 +205,6 @@ export default function History({ navigation }: { navigation: any }) {
           transactionsLoading && transactions.length > 0 ? (
             <View style={styles.loadingMore}>
               <ActivityIndicator size="small" color="#1F54DD" />
-              {/* <Text style={styles.loadingMoreText}>Updating...</Text> */}
             </View>
           ) : null
         )}
@@ -285,18 +286,21 @@ const styles = StyleSheet.create({
     flex: 1
   },
   transactionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10
+    marginRight: 12
   },
   creditIcon: {
-    backgroundColor: "#ECFDF5"
+    backgroundColor: "#ECFDF5"  // Light green for credits (Top Up, Refund)
   },
-  debitIcon: {
-    backgroundColor: "#FEF3F2"
+  debitIconBg: {
+    backgroundColor: "#FEF3F2"  // Light red for debits
+  },
+  bonusIcon: {
+    backgroundColor: "#ECFDF5",  // Light green for bonus transactions
   },
   transactionDetails: {
     flex: 1
@@ -317,10 +321,15 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold"
   },
   amountCredit: {
-    color: "#10B981"
+    color: "#10B981"  // Green for credit transactions
   },
   amountDebit: {
-    color: "#EF4444"
+    color: "#EF4444"  // Light red for debit transactions
+  },
+  transactionLogo: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   empty: {
     flex: 1,
