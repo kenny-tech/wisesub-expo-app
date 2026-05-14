@@ -1,11 +1,13 @@
-import React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import React from "react";
 
-import Home from "../screens/Home";
 import History from "../screens/History";
-import Rewards from "../screens/Rewards";
+import Home from "../screens/Home";
 import Profile from "../screens/Profile";
+import Rewards from "../screens/Rewards";
+
+import { useSessionGuard } from "../hooks/useSessionGuard";
 
 export type RootTabParamList = {
   Home: undefined;
@@ -17,6 +19,9 @@ export type RootTabParamList = {
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function TabNavigator() {
+
+  useSessionGuard(); // guards every authenticated screen
+
   return (
     <Tab.Navigator
       screenOptions={{

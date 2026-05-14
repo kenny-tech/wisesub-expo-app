@@ -1,4 +1,5 @@
 import { showError } from '@/src/utils/toast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as Device from 'expo-device';
 import React, { useEffect, useState } from 'react';
@@ -35,6 +36,7 @@ const SigninScreen: React.FC = () => {
 
   useEffect(() => {
     getDeviceId();
+    loadSavedEmail();
   }, []);
 
   useEffect(() => {
@@ -52,6 +54,25 @@ const SigninScreen: React.FC = () => {
       setDeviceId(deviceId);
     } catch (error) {
       console.log('Error getting device ID:', error);
+    }
+  };
+
+  const loadSavedEmail = async () => {
+    try {
+      const savedEmail = await AsyncStorage.getItem('userEmail');
+      if (savedEmail) {
+        setFormData(prev => ({ ...prev, email: savedEmail }));
+      }
+    } catch (error) {
+      console.log('Error loading saved email:', error);
+    }
+  };
+
+  const saveEmail = async (email: string) => {
+    try {
+      await AsyncStorage.setItem('userEmail', email);
+    } catch (error) {
+      console.log('Error saving email:', error);
     }
   };
 
@@ -82,6 +103,9 @@ const SigninScreen: React.FC = () => {
       };
 
       await dispatch(loginUser(payload)).unwrap();
+
+      // Save email after successful login
+      await saveEmail(formData.email.toLowerCase().trim());
 
       navigation.navigate('Tabs');
     } catch (error: any) {

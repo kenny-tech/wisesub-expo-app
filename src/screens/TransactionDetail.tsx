@@ -45,6 +45,12 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     'Refund'
   ].includes(transaction.name);
 
+  const isBonus = ['Commission', 'Referral Commission'].includes(transaction.name);
+  const isWiseSubTransaction = [
+    'Fund Wallet',
+    'Refund'
+  ].includes(transaction.name);
+
   const getStatusColor = () => {
     return isCredit ? '#10B981' : '#EF4444';
   };
@@ -53,17 +59,11 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     return isCredit ? 'Credit' : 'Debit';
   };
 
-  // Check if this is a WiseSub transaction (no provider logo)
-  const isWiseSubTransaction = [
-    'Fund Wallet',
-    'Commission',
-    'Referral Commission',
-    'Refund'
-  ].includes(transaction.name);
-
   // Get the appropriate logo
   const getLogoSource = () => {
-    if (isWiseSubTransaction) {
+    if (isBonus) {
+      return null; // Will show gift icon instead
+    } else if (isWiseSubTransaction) {
       return require('../../assets/images/logo.png');
     } else if (transaction.provider_logo) {
       return { uri: transaction.provider_logo };
@@ -73,7 +73,9 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
 
   // Get service icon based on transaction type
   const getServiceIcon = () => {
-    if (isWiseSubTransaction) {
+    if (isBonus) {
+      return 'gift'; // Gift icon for bonus transactions
+    } else if (isWiseSubTransaction) {
       return 'business'; // Bank icon for WiseSub transactions
     }
 
@@ -92,12 +94,34 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  // Get icon color
+  const getIconColor = () => {
+    if (isBonus) {
+      return '#10B981'; // Green for bonus
+    } else if (isWiseSubTransaction) {
+      return '#1F54DD'; // Blue for WiseSub
+    }
+    return '#64748B'; // Gray for others
+  };
+
+  // Get container background color
+  const getContainerBackground = () => {
+    if (isBonus) {
+      return '#ECFDF5'; // Light green for bonus
+    } else if (isWiseSubTransaction) {
+      return '#E0E7FF'; // Light blue for WiseSub
+    }
+    return '#FFFFFF'; // White for provider logos
+  };
+
   // Only show receipt for electricity transactions with a token
   const isElectricityWithToken =
     transaction.type === 'Electricity' && !!transaction.electricity_token;
 
   const logoSource = getLogoSource();
   const serviceIcon = getServiceIcon();
+  const iconColor = getIconColor();
+  const containerBg = getContainerBackground();
 
   const handleCopyToken = async (token: string) => {
     try {
@@ -151,9 +175,17 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.logoSection}>
           <View style={[
             styles.logoContainer,
-            isWiseSubTransaction ? styles.wiseSubLogoContainer : styles.providerLogoContainer
+            { backgroundColor: containerBg }
           ]}>
-            {logoSource ? (
+            {isBonus ? (
+              <View style={styles.iconFallback}>
+                <Ionicons
+                  name={serviceIcon}
+                  size={32}
+                  color={iconColor}
+                />
+              </View>
+            ) : logoSource ? (
               <Image
                 source={logoSource}
                 style={[
@@ -168,7 +200,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons
                   name={serviceIcon}
                   size={32}
-                  color={isWiseSubTransaction ? "#1F54DD" : "#64748B"}
+                  color={iconColor}
                 />
               </View>
             )}
@@ -186,7 +218,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.amountCard}>
           <Text style={styles.amountLabel}>Amount</Text>
           <Text style={[styles.amount, { color: getStatusColor() }]}>
-            {isCredit ? '+' : '-'}₦{formatAmount(transaction.amount)}
+            ₦{formatAmount(transaction.amount)}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
             <Text style={[styles.statusText, { color: getStatusColor() }]}>
@@ -203,11 +235,6 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.infoGrid}>
-            {/* <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Transaction Reference</Text>
-              <Text style={styles.infoValue}>{transaction.reference}</Text>
-            </View> */}
-
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Date</Text>
               <Text style={styles.infoValue}>{formatDate(transaction.created_at)}</Text>
@@ -282,7 +309,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             {transaction.units && (
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <Ionicons name="person" size={16} color="#64748B" />
+                  <Ionicons name="flash" size={16} color="#64748B" />
                   <Text style={styles.detailLabel}>Units</Text>
                 </View>
                 <Text style={styles.detailValue}>{transaction.units}</Text>
@@ -301,7 +328,6 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                     <Ionicons name="copy-outline" size={14} color="#1F54DD" />
                   </TouchableOpacity>
                 </View>
-                {/* <Text style={styles.detailValue}>{transaction.reference}</Text> */}
               </View>
             )}
             {isElectricityWithToken && (
@@ -400,14 +426,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
     overflow: 'hidden',
-  },
-  wiseSubLogoContainer: {
-    backgroundColor: '#E0E7FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  providerLogoContainer: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },

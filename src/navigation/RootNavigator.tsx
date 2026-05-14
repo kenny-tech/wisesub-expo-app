@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createStackNavigator } from '@react-navigation/stack';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { RootStackParamList } from './types';
 
 import ForgotPassword from '../screens/auth/ForgotPassword';
@@ -26,8 +27,33 @@ import TabNavigator from './TabNavigator';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
+
+  useEffect(() => {
+    checkSavedEmail();
+  }, []);
+
+  const checkSavedEmail = async () => {
+    try {
+      const savedEmail = await AsyncStorage.getItem('userEmail');
+      if (savedEmail) {
+        setInitialRoute('Signin');
+      } else {
+        setInitialRoute('Welcome');
+      }
+    } catch (error) {
+      console.log('Error checking saved email:', error);
+      setInitialRoute('Welcome');
+    }
+  };
+
+  if (initialRoute === null) {
+    return null; // Or a loading screen
+  }
+
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
       <Stack.Screen name="Welcome" component={Welcome} />
       <Stack.Screen name="Signin" component={Signin} />
       <Stack.Screen name="Signup" component={Signup} />

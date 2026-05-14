@@ -417,24 +417,11 @@ export default function CableTv({ navigation }: { navigation: any }) {
             response.data.content.error,
             [
               {
-                text: 'Cancel',
-                style: 'cancel',
+                text: 'Okay',
+                style: 'default',
                 onPress: () => {
                   setErrors(prev => ({ ...prev, decoderNumber: 'Decoder may be invalid' }));
                   setCustomerName('');
-                }
-              },
-              {
-                text: 'Proceed Anyway',
-                style: 'destructive',
-                onPress: () => {
-                  setCustomerName('Customer (Unverified)');
-                  setErrors(prev => {
-                    const newErrors = { ...prev };
-                    delete newErrors.decoderNumber;
-                    return newErrors;
-                  });
-                  showError('Warning', 'Proceeding with unverified decoder. Please ensure the decoder number is correct.');
                 }
               }
             ]

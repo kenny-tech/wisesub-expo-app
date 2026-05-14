@@ -505,28 +505,14 @@ export default function Electricity({ navigation }: { navigation: any }) {
             response.data.content.error,
             [
               {
-                text: 'Cancel',
-                style: 'cancel',
+                text: 'Okay',
+                style: 'default',
                 onPress: () => {
                   setErrors((prev) => ({
                     ...prev,
                     meterNumber: response.data.content.error
                   }));
                   setCustomerName('');
-                }
-              },
-              {
-                text: 'Proceed Anyway',
-                style: 'destructive',
-                onPress: () => {
-                  setCustomerName('Customer (Validation Warning)');
-                  setMinPurchaseAmount(500);
-                  setErrors(prev => {
-                    const newErrors = { ...prev };
-                    delete newErrors.meterNumber;
-                    return newErrors;
-                  });
-                  showError('Warning', 'Proceeding with meter that may be invalid. Please double-check the number.');
                 }
               }
             ]
