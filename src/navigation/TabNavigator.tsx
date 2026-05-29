@@ -8,6 +8,7 @@ import Profile from "../screens/Profile";
 import Rewards from "../screens/Rewards";
 
 import { useSessionGuard } from "../hooks/useSessionGuard";
+import { useTheme } from "../theme/ThemeContext";
 
 export type RootTabParamList = {
   Home: undefined;
@@ -21,13 +22,18 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 export default function TabNavigator() {
 
   useSessionGuard(); // guards every authenticated screen
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#1F54DD",
-        tabBarInactiveTintColor: "#94A3B8",
+        tabBarActiveTintColor: colors.tabActive,
+        tabBarInactiveTintColor: colors.tabInactive,
+        tabBarStyle: {
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBarBorder,
+        },
         tabBarLabelStyle: {
           fontSize: 12,
           fontFamily: "Poppins-Medium",

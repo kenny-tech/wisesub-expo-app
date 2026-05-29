@@ -1,12 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface AuthHeaderProps {
   title: string;
@@ -23,16 +18,15 @@ const AuthHeader: React.FC<AuthHeaderProps> = ({
   onBackPress,
   logo = true,
 }) => {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
-      {/* Back Button */}
       {showBackButton && (
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
       )}
-
-      {/* Logo */}
       {logo && (
         <Image
           source={require('../../../assets/images/logo.png')}
@@ -40,12 +34,10 @@ const AuthHeader: React.FC<AuthHeaderProps> = ({
           resizeMode="contain"
         />
       )}
-
-      {/* Title */}
-      <Text style={styles.title}>{title}</Text>
-
-      {/* Subtitle */}
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+      {subtitle && (
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
+      )}
     </View>
   );
 };
@@ -71,14 +63,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'Poppins-Bold',
-    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
     textAlign: 'center',
     lineHeight: 24,
   },

@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TextInputProps,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
 export interface FormInputProps extends TextInputProps {
   label?: string;
@@ -21,19 +16,27 @@ const FormInput: React.FC<FormInputProps> = ({
   showLabel = true,
   ...props
 }) => {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, containerStyle]}>
-      {showLabel && label && <Text style={styles.label}>{label}</Text>}
+      {showLabel && label && (
+        <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>
+      )}
       <TextInput
         style={[
           styles.input,
-          error && styles.inputError,
-          props.editable === false && styles.inputDisabled,
+          {
+            backgroundColor: colors.inputBackground,
+            borderColor: error ? colors.error : colors.inputBorder,
+            color: colors.inputText,
+          },
+          props.editable === false && { backgroundColor: colors.backgroundSecondary, color: colors.textSecondary },
         ]}
-        placeholderTextColor="#94A3B8"
+        placeholderTextColor={colors.inputPlaceholder}
         {...props}
       />
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 };
@@ -46,30 +49,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#374151',
     marginBottom: 8,
   },
   input: {
     width: '100%',
     height: 50,
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 10,
     paddingHorizontal: 12,
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
-    backgroundColor: '#FFFFFF',
-    color: '#000000'
-  },
-  inputError: {
-    borderColor: '#DC2626',
-  },
-  inputDisabled: {
-    backgroundColor: '#F8FAFC',
-    color: '#64748B',
   },
   errorText: {
-    color: '#DC2626',
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
     marginTop: 4,

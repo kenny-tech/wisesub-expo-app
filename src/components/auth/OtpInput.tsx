@@ -6,6 +6,7 @@ import {
   TextInputKeyPressEventData,
   View,
 } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface OtpInputProps {
   length?: number;
@@ -20,55 +21,33 @@ const OtpInput: React.FC<OtpInputProps> = ({
 }) => {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
   const inputRefs = useRef<TextInput[]>([]);
+  const { colors } = useTheme();
 
   useEffect(() => {
-    if (autoFocus && inputRefs.current[0]) {
-      inputRefs.current[0].focus();
-    }
+    if (autoFocus && inputRefs.current[0]) inputRefs.current[0].focus();
   }, [autoFocus]);
 
   const handleChange = (text: string, index: number) => {
     if (text.length > 1) {
-      // Handle paste
       const pastedText = text.slice(0, length - index);
       const newOtp = [...otp];
-      
       pastedText.split('').forEach((char, charIndex) => {
-        if (index + charIndex < length) {
-          newOtp[index + charIndex] = char;
-        }
+        if (index + charIndex < length) newOtp[index + charIndex] = char;
       });
-      
       setOtp(newOtp);
-      
-      // Move focus to next empty input or last input
       const nextIndex = Math.min(index + pastedText.length, length - 1);
-      if (inputRefs.current[nextIndex]) {
-        inputRefs.current[nextIndex].focus();
-      }
-      
-      // Check if complete
+      inputRefs.current[nextIndex]?.focus();
       const completeOtp = newOtp.join('');
-      if (completeOtp.length === length && onOtpComplete) {
-        onOtpComplete(completeOtp);
-      }
+      if (completeOtp.length === length && onOtpComplete) onOtpComplete(completeOtp);
       return;
     }
 
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
-
-    // Auto-focus next input
-    if (text && index < length - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    // Check if OTP is complete
+    if (text && index < length - 1) inputRefs.current[index + 1]?.focus();
     const completeOtp = newOtp.join('');
-    if (completeOtp.length === length && onOtpComplete) {
-      onOtpComplete(completeOtp);
-    }
+    if (completeOtp.length === length && onOtpComplete) onOtpComplete(completeOtp);
   };
 
   const handleKeyPress = (
@@ -85,10 +64,16 @@ const OtpInput: React.FC<OtpInputProps> = ({
       {otp.map((digit, index) => (
         <TextInput
           key={index}
-          ref={(ref) => {
-            if (ref) inputRefs.current[index] = ref;
-          }}
-          style={[styles.otpInput, digit && styles.otpInputFilled]}
+          ref={(ref) => { if (ref) inputRefs.current[index] = ref; }}
+          style={[
+            styles.otpInput,
+            {
+              backgroundColor: colors.inputBackground,
+              borderColor: digit ? colors.primary : colors.inputBorder,
+              color: colors.inputText,
+            },
+            digit && { backgroundColor: colors.primaryLight },
+          ]}
           value={digit}
           onChangeText={(text) => handleChange(text, index)}
           onKeyPress={(e) => handleKeyPress(e, index)}
@@ -97,6 +82,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
           selectTextOnFocus
           textContentType="oneTimeCode"
           autoComplete="sms-otp"
+          placeholderTextColor={colors.inputPlaceholder}
         />
       ))}
     </View>
@@ -115,17 +101,10 @@ const styles = StyleSheet.create({
     width: 45,
     height: 55,
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 10,
     textAlign: 'center',
     fontSize: 20,
     fontFamily: 'Poppins-SemiBold',
-    backgroundColor: '#FFFFFF',
-    color: '#000000'
-  },
-  otpInputFilled: {
-    borderColor: '#1F54DD',
-    backgroundColor: '#F8FAFC',
   },
 });
 

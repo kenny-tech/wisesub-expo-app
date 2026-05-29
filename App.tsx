@@ -3,10 +3,12 @@ import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import { AppState, AppStateStatus, Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
+import { useOTAUpdate } from './src/hooks/useOTAUpdate';
+import { useTheme } from './src/theme/ThemeContext';
 
 import toastConfig from './src/components/AppToast';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
@@ -39,10 +41,10 @@ SplashScreen.preventAutoHideAsync();
 const AppContent = () => {
   // Navigation reference for handling navigation from notifications
   const navigationRef = useRef<any>(null);
-  
+
   // State for app ready status
   const [appIsReady, setAppIsReady] = useState(false);
-  
+
   // Load your fonts
   const [fontsLoaded, fontError] = useFonts({
     'Poppins-Regular': Poppins_400Regular,
@@ -63,7 +65,7 @@ const AppContent = () => {
     if (lastNotificationResponse && navigationRef.current?.isReady()) {
       const { data } = lastNotificationResponse.notification.request.content;
       console.log('App opened from notification:', data);
-      
+
       // Handle navigation based on notification data
       if (data?.screen) {
         // Small delay to ensure navigation is fully ready
@@ -101,9 +103,9 @@ const AppContent = () => {
    */
   const handleForegroundNotification = useCallback((notification: Notifications.Notification) => {
     const { title, body } = notification.request.content;
-    
+
     console.log('Foreground notification received');
-    
+
     // Show in-app toast notification
     Toast.show({
       type: 'info',
@@ -121,7 +123,7 @@ const AppContent = () => {
    */
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(handleForegroundNotification);
-    
+
     return () => {
       subscription.remove();
     };
@@ -173,7 +175,7 @@ const AppContent = () => {
         }}
       >
         <RootNavigator />
-        
+
         <Toast
           config={toastConfig}
           position="top"
@@ -187,9 +189,19 @@ const AppContent = () => {
 
 // Main App component with Redux Provider
 export default function App() {
+  useOTAUpdate({ silent: true }); // Check for OTA updates on every launch
+  const { isDark } = useTheme();
+
   return (
-    <Provider store={store}>
-      <AppContent />
-    </Provider>
+    <>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
+      <Provider store={store}>
+        <AppContent />
+      </Provider>
+    </>
   );
 }
