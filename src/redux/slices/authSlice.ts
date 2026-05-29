@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import * as SecureStore from 'expo-secure-store';
+import { SECURE_BIOMETRIC_KEY, SECURE_TOKEN_KEY } from '../../hooks/useBiometrics';
 import { authService, LoginData, RegisterData } from '../../services/authService';
 import { profileService } from '../../services/profileService';
 import { APP_CONSTANTS } from '../../utils/constants';
@@ -32,6 +34,18 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Write the auth token to SecureStore (encrypted, hardware-backed). */
+const persistToken = (token: string) =>
+  SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+
+/** Remove token + biometric flag from SecureStore on logout. */
+const clearSecureStorage = async () => {
+  await SecureStore.deleteItemAsync(SECURE_TOKEN_KEY);
+  await SecureStore.deleteItemAsync(SECURE_BIOMETRIC_KEY);
 };
 
 // Async Thunks
@@ -72,6 +86,9 @@ export const loginUser = createAsyncThunk(
       // Remove token from user object before storing
       const { token: _, ...user } = userData;
 
+      // ── Store token securely; user profile in plain AsyncStorage ──
+      await persistToken(token);
+
       // Store in AsyncStorage
       await AsyncStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN, token);
       await AsyncStorage.setItem(
@@ -93,27 +110,45 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+/**
+ * loginWithBiometric
+ * ───────────────────
+ * Called from Signin when the user authenticates with Face ID / Fingerprint.
+ * The token is already in SecureStore — we just read it and restore the session.
+ * If the token is absent or revoked (401), we return an error so the UI can
+ * prompt the user to sign in with their password.
+ */
+export const loginWithBiometric = createAsyncThunk(
+  'auth/loginBiometric',
+  async (token: string, { rejectWithValue }) => {
+    try {
+      // Restore user profile from AsyncStorage (written during last password login)
+      const userData = await AsyncStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
+      if (!userData) throw new Error('NO_PROFILE');
+
+      return { token, user: JSON.parse(userData) as User };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Biometric login failed');
+    }
+  },
+);
+
 export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
       // First call the logout API endpoint
       await profileService.logout();
-      
-      // Then clear local storage
-      await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
-      await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
-      await AsyncStorage.removeItem('userEmail'); // Clear saved email on logout
-      
       return true;
     } catch (error: any) {
+      return true;
+    } finally {
+      await clearSecureStorage();
       // Even if API fails, still clear local storage
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
-      await AsyncStorage.removeItem('userEmail'); // Clear saved email on logout
-      
-      return true;
     }
+
   }
 );
 
@@ -121,7 +156,7 @@ export const checkAuthStatus = createAsyncThunk(
   'auth/checkStatus',
   async (_, { rejectWithValue }) => {
     try {
-      const token = await AsyncStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
+      const token = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
       const userData = await AsyncStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
 
       if (token && userData) {
@@ -214,6 +249,20 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload as string;
     });
+
+    // Biometric login
+    builder
+      .addCase(loginWithBiometric.pending, (state) => { state.isLoading = true; state.error = null; })
+      .addCase(loginWithBiometric.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.token = payload.token;
+        state.user = payload.user;
+      })
+      .addCase(loginWithBiometric.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload as string;
+      });
 
     // Logout
     builder.addCase(logoutUser.fulfilled, (state) => {

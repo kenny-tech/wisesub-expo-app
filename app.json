@@ -7,6 +7,14 @@
     "icon": "./assets/images/icon.png",
     "scheme": "wisesub",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/28ac9c1e-dade-4754-80ec-9da37ab55ae8"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -42,7 +50,8 @@
       "expo-font",
       "expo-image",
       "expo-web-browser",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

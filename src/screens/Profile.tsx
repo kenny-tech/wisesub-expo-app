@@ -8,22 +8,38 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
+import { useBiometrics } from '../hooks/useBiometrics';
 import { useAppDispatch } from "../redux/hooks";
 import { useProfile } from "../redux/hooks/useProfile";
 import { logoutUser } from "../redux/slices/authSlice";
+import { useTheme } from '../theme/ThemeContext';
 
 export default function Profile({ navigation }: { navigation: any }) {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [biometricToggling, setBiometricToggling] = useState(false);
 
   const dispatch = useAppDispatch();
   const { user } = useProfile();
+  const { colors, isDark, toggleDark } = useTheme();
 
   const handleLogoutModal = () => setIsLogoutModalVisible(() => !isLogoutModalVisible);
+
+  const {
+    isBiometricAvailable,
+    isBiometricEnabled,
+    biometricType,
+    enableBiometric,
+    disableBiometric,
+  } = useBiometrics();
+
+  const styles = makeStyles(colors);
+
 
   const handleLogout = async () => {
     try {
@@ -47,6 +63,33 @@ export default function Profile({ navigation }: { navigation: any }) {
     }
   };
 
+  // ── Biometric toggle ───────────────────────────────────────────────────────
+  const handleBiometricToggle = async (value: boolean) => {
+    if (biometricToggling) return;
+    setBiometricToggling(true);
+    try {
+      if (value) {
+        /**
+         * Enable: the token is already in SecureStore from the last login.
+         * enableBiometric() verifies the token exists, then prompts the
+         * user once with biometric to confirm intent, then sets the flag.
+         * No password is involved.
+         */
+        const success = await enableBiometric();
+        if (!success) {
+          Alert.alert(
+            'Could Not Enable',
+            'Biometric authentication was not confirmed, or your session has expired. Please sign in with your password first.',
+          );
+        }
+      } else {
+        await disableBiometric();
+      }
+    } finally {
+      setBiometricToggling(false);
+    }
+  };
+
   const openLink = (url: string) => {
     Linking.openURL(url).catch(err =>
       Alert.alert('Error', 'Unable to open link')
@@ -58,17 +101,19 @@ export default function Profile({ navigation }: { navigation: any }) {
   };
 
   const ProfileItem = ({
-    icon,
-    title,
-    onPress,
-    isDestructive = false
+    icon, title, onPress, isDestructive = false, rightElement,
   }: {
     icon: React.ReactNode;
     title: string;
-    onPress: () => void;
+    onPress?: () => void;
     isDestructive?: boolean;
+    rightElement?: React.ReactNode;
   }) => (
-    <TouchableOpacity onPress={onPress} style={styles.profileItem}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.profileItem}
+      activeOpacity={rightElement ? 1 : 0.7}
+    >
       <View style={styles.profileItemLeft}>
         <View style={[styles.iconContainer, isDestructive && styles.destructiveIcon]}>
           {icon}
@@ -77,11 +122,13 @@ export default function Profile({ navigation }: { navigation: any }) {
           {title}
         </Text>
       </View>
-      <Ionicons
-        name="chevron-forward"
-        size={20}
-        color={isDestructive ? "#EF4444" : "#94A3B8"}
-      />
+      {rightElement ?? (
+        <Ionicons
+          name="chevron-forward"
+          size={20}
+          color={isDestructive ? colors.error : colors.textMuted}
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -176,14 +223,55 @@ export default function Profile({ navigation }: { navigation: any }) {
           </View>
         </View>
 
+        {/* ── Appearance ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <View style={styles.sectionContent}>
+            <ProfileItem
+              icon={<Ionicons name={isDark ? 'moon' : 'sunny-outline'} size={20} color={colors.primary} />}
+              title={isDark ? 'Dark Mode' : 'Light Mode'}
+              rightElement={
+                <Switch
+                  value={isDark}
+                  onValueChange={toggleDark}
+                  trackColor={{ false: colors.divider, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                />
+              }
+            />
+          </View>
+        </View>
+
+        {/* ── Security ── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Security</Text>
           <View style={styles.sectionContent}>
             <ProfileItem
-              icon={<Ionicons name="lock-closed-outline" size={20} color="#1F54DD" />}
+              icon={<Ionicons name="lock-closed-outline" size={20} color={colors.primary} />}
               title="Change Password"
-              onPress={() => navigation.navigate("ChangePassword")}
+              onPress={() => navigation.navigate('ChangePassword')}
             />
+            {isBiometricAvailable && (
+              <ProfileItem
+                icon={
+                  <Ionicons
+                    name={biometricType === 'Face ID' ? 'scan-outline' : 'finger-print-outline'}
+                    size={20}
+                    color={colors.primary}
+                  />
+                }
+                title={`${biometricType} Login`}
+                rightElement={
+                  <Switch
+                    value={isBiometricEnabled}
+                    onValueChange={handleBiometricToggle}
+                    trackColor={{ false: colors.divider, true: colors.primary }}
+                    thumbColor="#FFFFFF"
+                    disabled={biometricToggling}
+                  />
+                }
+              />
+            )}
           </View>
         </View>
 
@@ -233,210 +321,83 @@ export default function Profile({ navigation }: { navigation: any }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-  },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatarContainer: {
-    marginRight: 16,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#1F54DD",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#1F54DD",
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    header: {
+      backgroundColor: colors.background,
+      paddingHorizontal: 20, paddingTop: 60, paddingBottom: 30,
+      borderBottomWidth: 1, borderBottomColor: colors.separator,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 32,
-    fontFamily: "Poppins-Bold",
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 24,
-    fontFamily: "Poppins-Bold",
-    color: "#0F172A",
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 16,
-    fontFamily: "Poppins-Regular",
-    color: "#64748B",
-  },
-  section: {
-    marginTop: 8,
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontFamily: "Poppins-SemiBold",
-    color: "#64748B",
-    marginBottom: 12,
-    marginTop: 16,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  sectionContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
+    profileHeader: { flexDirection: 'row', alignItems: 'center' },
+    avatar: {
+      width: 80, height: 80, borderRadius: 40,
+      backgroundColor: colors.primary,
+      justifyContent: 'center', alignItems: 'center',
+      marginRight: 16,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
     },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  profileItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-  },
-  profileItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#F1F6FF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  destructiveIcon: {
-    backgroundColor: "#FEF2F2",
-  },
-  profileItemText: {
-    fontSize: 16,
-    fontFamily: "Poppins-Medium",
-    color: "#0F172A",
-    flex: 1,
-  },
-  destructiveText: {
-    color: "#EF4444",
-  },
-  versionContainer: {
-    alignItems: "center",
-    paddingVertical: 32,
-  },
-  versionText: {
-    fontSize: 14,
-    fontFamily: "Poppins-Regular",
-    color: "#94A3B8",
-  },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  modalContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 24,
-    alignItems: "center",
-    width: "100%",
-    maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    avatarText: { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Bold' },
+    avatarContainer: {
+      marginRight: 16,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  modalIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FEF2F2",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: "Poppins-Bold",
-    color: "#0F172A",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalDescription: {
-    fontSize: 16,
-    fontFamily: "Poppins-Regular",
-    color: "#64748B",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-    width: "100%",
-  },
-  modalButton: {
-    flex: 1,
-    height: 52,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  logoutButton: {
-    backgroundColor: "#EF4444",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontFamily: "Poppins-Medium",
-    color: "#64748B",
-  },
-  logoutButtonText: {
-    fontSize: 16,
-    fontFamily: "Poppins-Medium",
-    color: "#FFFFFF",
-  },
-});
+    scrollView: {
+      flex: 1,
+    },
+    userInfo: { flex: 1 },
+    userName: { fontSize: 24, fontFamily: 'Poppins-Bold', color: colors.textPrimary, marginBottom: 4 },
+    userEmail: { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary },
+    section: { marginTop: 8, paddingHorizontal: 20 },
+    sectionTitle: {
+      fontSize: 14, fontFamily: 'Poppins-SemiBold', color: colors.textSecondary,
+      marginBottom: 12, marginTop: 16, textTransform: 'uppercase', letterSpacing: 0.5,
+    },
+    sectionContent: {
+      backgroundColor: colors.card, borderRadius: 16, overflow: 'hidden',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    },
+    profileItem: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingVertical: 16, paddingHorizontal: 16,
+      borderBottomWidth: 1, borderBottomColor: colors.separator,
+    },
+    profileItemLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    iconContainer: {
+      width: 40, height: 40, borderRadius: 12,
+      backgroundColor: colors.iconContainerBlue,
+      justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    },
+    destructiveIcon: { backgroundColor: colors.iconContainerRed },
+    profileItemText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textPrimary, flex: 1 },
+    destructiveText: { color: colors.error },
+    versionContainer: { alignItems: 'center', paddingVertical: 32 },
+    versionText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: colors.textMuted },
+
+    // Modal
+    modalOverlay: {
+      flex: 1, backgroundColor: colors.overlay,
+      justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20,
+    },
+    modalContainer: {
+      backgroundColor: colors.card, borderRadius: 24, padding: 24,
+      alignItems: 'center', width: '100%', maxWidth: 400,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1, shadowRadius: 16, elevation: 8,
+    },
+    modalIcon: {
+      width: 80, height: 80, borderRadius: 40,
+      backgroundColor: colors.iconContainerRed,
+      justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+    },
+    modalTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+    modalDescription: { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+    modalButtons: { flexDirection: 'row', gap: 12, width: '100%' },
+    modalButton: { flex: 1, height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    cancelButton: { backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.divider },
+    logoutButton: { backgroundColor: colors.error },
+    cancelButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textSecondary },
+    logoutButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: '#FFFFFF' },
+  });
