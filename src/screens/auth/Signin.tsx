@@ -2,7 +2,7 @@
  * Signin.tsx — production-ready
  *
  * Biometric flow:
- *  1. Check token exists in SecureStore → show fingerprint/Face ID button
+ *  1. Check token exists in SecureStore → show fingerprint/Face ID icon
  *  2. On tap → prompt biometric → on success → read token → dispatch loginWithBiometric
  *  3. If token missing/revoked → clear biometric flag → show message to sign in with password
  */
@@ -33,9 +33,9 @@ import { AuthValidators } from '../../utils/validators/authValidators';
 
 const SigninScreen: React.FC = () => {
   const navigation = useNavigation();
-  const dispatch   = useAppDispatch();
+  const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((s) => s.auth);
-  const { colors }           = useTheme();
+  const { colors } = useTheme();
 
   const {
     isBiometricAvailable,
@@ -47,7 +47,7 @@ const SigninScreen: React.FC = () => {
   } = useBiometrics();
 
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors,   setErrors]   = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [deviceId, setDeviceId] = useState('');
 
   const styles = makeStyles(colors);
@@ -57,11 +57,11 @@ const SigninScreen: React.FC = () => {
     (async () => {
       try {
         setDeviceId(Device.osBuildId ?? Device.modelId ?? 'mobile-device');
-      } catch (_) {}
+      } catch (_) { }
       try {
         const saved = await AsyncStorage.getItem('userEmail');
         if (saved) setFormData((p) => ({ ...p, email: saved }));
-      } catch (_) {}
+      } catch (_) { }
     })();
   }, []);
 
@@ -77,7 +77,7 @@ const SigninScreen: React.FC = () => {
     if (errors[field]) setErrors((p) => ({ ...p, [field]: '' }));
   };
 
-  // ── Password login ─────────────────────────────────────────────────────────
+  // ── Password login (regular Sign In button) ────────────────────────────────
   const handleSignin = async () => {
     const validation = AuthValidators.validateLogin(formData);
     setErrors(validation.errors);
@@ -85,9 +85,9 @@ const SigninScreen: React.FC = () => {
 
     try {
       await dispatch(loginUser({
-        email:     formData.email.toLowerCase().trim(),
-        password:  formData.password,
-        channel:   APP_CONSTANTS.CHANNELS.MOBILE,
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        channel: APP_CONSTANTS.CHANNELS.MOBILE,
         device_id: deviceId,
       })).unwrap();
 
@@ -100,13 +100,12 @@ const SigninScreen: React.FC = () => {
     }
   };
 
-  // ── Biometric login ────────────────────────────────────────────────────────
+  // ── Biometric login (triggered by fingerprint icon) ────────────────────────
   const handleBiometricLogin = async () => {
     try {
       // Step 1: ensure a token exists before bothering the user
       const token = await getStoredToken();
       if (!token) {
-        // Token was wiped (e.g. logout on another device)
         await clearBiometricOnTokenRevoke();
         Alert.alert(
           'Sign In Required',
@@ -117,15 +116,13 @@ const SigninScreen: React.FC = () => {
 
       // Step 2: show biometric prompt
       const authenticated = await promptBiometric(`Sign in with ${biometricType}`);
-      if (!authenticated) return; // user cancelled or failed — do nothing
+      if (!authenticated) return; // user cancelled or failed
 
       // Step 3: restore session using the stored token
       await dispatch(loginWithBiometric(token)).unwrap();
 
       navigation.navigate('Tabs');
     } catch (err: any) {
-      // If the error is NO_PROFILE the local data was wiped; ask them to
-      // sign in with password.
       if (err?.message === 'NO_PROFILE') {
         await clearBiometricOnTokenRevoke();
         Alert.alert(
@@ -138,8 +135,8 @@ const SigninScreen: React.FC = () => {
     }
   };
 
-  // Show biometric button only when hardware is available AND user opted in
-  const showBiometricButton = isBiometricAvailable && isBiometricEnabled;
+  // Show biometric icon only when hardware is available AND user opted in
+  const showBiometricIcon = isBiometricAvailable && isBiometricEnabled;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -187,7 +184,7 @@ const SigninScreen: React.FC = () => {
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          {/* Primary: Sign In with password */}
+          {/* Regular Sign In button (password) */}
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleSignin}
@@ -198,23 +195,34 @@ const SigninScreen: React.FC = () => {
               : <Text style={styles.buttonText}>Sign In</Text>}
           </TouchableOpacity>
 
-          {/* Secondary: Biometric sign-in */}
-          {showBiometricButton && (
+          {/* BIG, CENTRALIZED, SPACED FINGERPRINT ICON */}
+          <View style={styles.biometricIconContainer}>
             <TouchableOpacity
-              style={[styles.biometricButton, isLoading && styles.buttonDisabled]}
-              onPress={handleBiometricLogin}
-              disabled={isLoading}
+              style={styles.fingerprintCircle}
+              onPress={showBiometricIcon ? handleBiometricLogin : undefined}
+              disabled={!showBiometricIcon || isLoading}
+              activeOpacity={showBiometricIcon ? 0.7 : 1}
             >
-              <Ionicons
-                name={biometricType === 'Face ID' ? 'scan-outline' : 'finger-print-outline'}
-                size={22}
-                color={colors.primary}
-              />
-              <Text style={styles.biometricText}>
-                Sign in with {biometricType}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator size="large" color={colors.primary} />
+              ) : (
+                <Ionicons
+                  name={
+                    showBiometricIcon && biometricType === 'Face ID'
+                      ? 'scan-outline'
+                      : 'finger-print-outline'
+                  }
+                  size={80}
+                  color={showBiometricIcon ? colors.primary : colors.disabled}
+                />
+              )}
             </TouchableOpacity>
-          )}
+            {!showBiometricIcon && (
+              <Text style={styles.biometricUnavailableText}>
+                Biometric login not set up. Use password below.
+              </Text>
+            )}
+          </View>
 
           <TouchableOpacity
             style={styles.linkContainer}
@@ -237,26 +245,47 @@ const SigninScreen: React.FC = () => {
 
 const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
   StyleSheet.create({
-    container:     { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: colors.background },
     scrollContent: { flexGrow: 1 },
     formContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 20, paddingTop: 20 },
 
+    // Regular password button (unchanged)
     button: {
       width: '100%', maxWidth: 320, height: 48,
       backgroundColor: colors.primary,
       alignItems: 'center', justifyContent: 'center',
       borderRadius: 6, marginTop: 20,
     },
-    buttonDisabled:           { opacity: 0.6 },
-    buttonText:               { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+    buttonDisabled: { opacity: 0.6 },
+    buttonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
 
-    biometricButton: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      width: '100%', maxWidth: 320, height: 48,
-      borderRadius: 6, borderWidth: 1.5, borderColor: colors.primary,
-      marginTop: 12, gap: 8, backgroundColor: colors.primaryLight,
+    // Big fingerprint icon container
+    biometricIconContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: 30,
+      width: '100%',
     },
-    biometricText: { color: colors.primary, fontSize: 15, fontFamily: 'Poppins-SemiBold' },
+    fingerprintCircle: {
+      width: 130,
+      height: 130,
+      borderRadius: 65,
+      backgroundColor: colors.primaryLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    biometricUnavailableText: {
+      marginTop: 12,
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontFamily: 'Poppins-Regular',
+    },
 
     forgotPasswordContainer: {
       width: '100%', maxWidth: 320,
@@ -269,8 +298,8 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       textAlign: 'center', marginBottom: 16,
     },
     linkContainer: { marginTop: 15 },
-    linkText:      { fontSize: 14, color: colors.textSecondary, fontFamily: 'Poppins-Regular' },
-    link:          { color: colors.primary, fontFamily: 'Poppins-SemiBold' },
+    linkText: { fontSize: 14, color: colors.textSecondary, fontFamily: 'Poppins-Regular' },
+    link: { color: colors.primary, fontFamily: 'Poppins-SemiBold' },
   });
 
 export default SigninScreen;
