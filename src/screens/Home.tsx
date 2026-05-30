@@ -283,7 +283,7 @@ export default function Home({ navigation }: { navigation: any }) {
         <Ionicons name="receipt-outline" size={48} color={colors.textMuted} />
         <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No transactions yet</Text>
         <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-          Your transaction history will appear here once you start using our services.
+          Your recent transactions will appear here once you start using our services.
         </Text>
       </View>
     );

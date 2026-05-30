@@ -124,7 +124,7 @@ export default function History({ navigation }: { navigation: any }) {
           <Ionicons name="receipt-outline" size={64} color={colors.textMuted} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Transaction Yet</Text>
           <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-            Get started by making transactions to track your financial activities!
+            Your transaction history will appear here once you start using our services.
           </Text>
         </View>
       );

@@ -149,7 +149,6 @@ export const logoutUser = createAsyncThunk(
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
       // await AsyncStorage.removeItem('userEmail');
     }
-
   }
 );
 

@@ -53,21 +53,23 @@ const ResetPasswordScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <AuthHeader title="Reset Password" subtitle="Create a new password for your account" showBackButton onBackPress={() => navigation.goBack()} logo />
-        <View style={styles.formContainer}>
-          <PasswordInput placeholder="Enter new password" value={formData.password} onChangeText={(t) => handleInputChange('password', t)} error={errors.password} showPasswordHint />
-          <PasswordInput placeholder="Confirm new password" value={formData.confirmPassword} onChangeText={(t) => handleInputChange('confirmPassword', t)} error={errors.confirmPassword} isConfirmPassword passwordToMatch={formData.password} />
-          <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleResetPassword} disabled={loading}>
-            {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.buttonText}>Reset Password</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.linkContainer} onPress={() => navigation.navigate('Signin')}>
-            <Text style={styles.linkText}>Back to <Text style={styles.link}>Sign In</Text></Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <AuthHeader title="Reset Password" subtitle="Create a new password for your account" showBackButton onBackPress={() => navigation.goBack()} logo />
+          <View style={styles.formContainer}>
+            <PasswordInput placeholder="Enter new password" value={formData.password} onChangeText={(t) => handleInputChange('password', t)} error={errors.password} showPasswordHint />
+            <PasswordInput placeholder="Confirm new password" value={formData.confirmPassword} onChangeText={(t) => handleInputChange('confirmPassword', t)} error={errors.confirmPassword} isConfirmPassword passwordToMatch={formData.password} />
+            <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleResetPassword} disabled={loading}>
+              {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.buttonText}>Reset Password</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.linkContainer} onPress={() => navigation.navigate('Signin')}>
+              <Text style={styles.linkText}>Back to <Text style={styles.link}>Sign In</Text></Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 

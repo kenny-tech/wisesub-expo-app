@@ -75,44 +75,46 @@ const SignupScreen: React.FC = () => {
   const openLink = (url: string) => Linking.openURL(url).catch(() => showError('Error', 'Unable to open link'));
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <AuthHeader title="Create an Account" showBackButton onBackPress={() => navigation.goBack()} logo />
-        <View style={styles.formContainer}>
-          <FormInput placeholder="Enter your full name" value={formData.name} onChangeText={(t) => handleInputChange('name', t)} error={errors.name} autoCapitalize="words" showLabel={false} />
-          <FormInput placeholder="Enter your email" value={formData.email} onChangeText={(t) => handleInputChange('email', t)} error={errors.email} keyboardType="email-address" autoCapitalize="none" showLabel={false} />
-          <FormInput placeholder="Enter your phone number" value={formData.phone} onChangeText={(t) => handleInputChange('phone', t)} error={errors.phone} keyboardType="phone-pad" showLabel={false} />
-          <PasswordInput placeholder="Enter your password" value={formData.password} onChangeText={(t) => handleInputChange('password', t)} error={errors.password} showLabel={false} showPasswordHint />
-          <PasswordInput placeholder="Confirm your password" value={formData.confirmPassword} onChangeText={(t) => handleInputChange('confirmPassword', t)} error={errors.confirmPassword} showLabel={false} isConfirmPassword passwordToMatch={formData.password} />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <AuthHeader title="Create an Account" showBackButton onBackPress={() => navigation.goBack()} logo />
+          <View style={styles.formContainer}>
+            <FormInput placeholder="Enter your full name" value={formData.name} onChangeText={(t) => handleInputChange('name', t)} error={errors.name} autoCapitalize="words" showLabel={false} />
+            <FormInput placeholder="Enter your email" value={formData.email} onChangeText={(t) => handleInputChange('email', t)} error={errors.email} keyboardType="email-address" autoCapitalize="none" showLabel={false} />
+            <FormInput placeholder="Enter your phone number" value={formData.phone} onChangeText={(t) => handleInputChange('phone', t)} error={errors.phone} keyboardType="phone-pad" showLabel={false} />
+            <PasswordInput placeholder="Enter your password" value={formData.password} onChangeText={(t) => handleInputChange('password', t)} error={errors.password} showLabel={false} showPasswordHint />
+            <PasswordInput placeholder="Confirm your password" value={formData.confirmPassword} onChangeText={(t) => handleInputChange('confirmPassword', t)} error={errors.confirmPassword} showLabel={false} isConfirmPassword passwordToMatch={formData.password} />
 
-          <View style={styles.referralContainer}>
-            <TouchableOpacity style={styles.referralToggle} onPress={() => { setShowReferral(v => !v); if (showReferral) handleInputChange('referralCode', ''); }} activeOpacity={0.7}>
-              <Ionicons name="gift-outline" size={16} color={colors.primary} style={styles.referralIcon} />
-              <Text style={styles.referralToggleText}>{showReferral ? 'Remove referral code' : 'I have a referral code'}</Text>
-              <Ionicons name={showReferral ? 'chevron-up' : 'chevron-down'} size={16} color={colors.primary} />
+            <View style={styles.referralContainer}>
+              <TouchableOpacity style={styles.referralToggle} onPress={() => { setShowReferral(v => !v); if (showReferral) handleInputChange('referralCode', ''); }} activeOpacity={0.7}>
+                <Ionicons name="gift-outline" size={16} color={colors.primary} style={styles.referralIcon} />
+                <Text style={styles.referralToggleText}>{showReferral ? 'Remove referral code' : 'I have a referral code'}</Text>
+                <Ionicons name={showReferral ? 'chevron-up' : 'chevron-down'} size={16} color={colors.primary} />
+              </TouchableOpacity>
+              {showReferral && (
+                <FormInput placeholder="Enter referral code (Optional)" value={formData.referralCode} onChangeText={(t) => handleInputChange('referralCode', t)} error={errors.referralCode} showLabel={false} autoCapitalize="none" />
+              )}
+            </View>
+
+            <Text style={styles.termsText}>
+              By creating an account, you agree to our{' '}
+              <Text style={styles.link} onPress={() => openLink('https://www.wisesub.com.ng/terms-and-conditions')}>Terms of Service</Text>
+              {' '}and{' '}
+              <Text style={styles.link} onPress={() => openLink('https://www.wisesub.com.ng/privacy-policy')}>Privacy Policy</Text>
+            </Text>
+
+            <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSignup} disabled={loading}>
+              {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
             </TouchableOpacity>
-            {showReferral && (
-              <FormInput placeholder="Enter referral code (Optional)" value={formData.referralCode} onChangeText={(t) => handleInputChange('referralCode', t)} error={errors.referralCode} showLabel={false} autoCapitalize="none" />
-            )}
+            <TouchableOpacity style={styles.linkContainer} onPress={() => navigation.navigate('Signin')}>
+              <Text style={styles.linkText}>Already have an account? <Text style={styles.link}>Sign In</Text></Text>
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.termsText}>
-            By creating an account, you agree to our{' '}
-            <Text style={styles.link} onPress={() => openLink('https://www.wisesub.com.ng/terms-and-conditions')}>Terms of Service</Text>
-            {' '}and{' '}
-            <Text style={styles.link} onPress={() => openLink('https://www.wisesub.com.ng/privacy-policy')}>Privacy Policy</Text>
-          </Text>
-
-          <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSignup} disabled={loading}>
-            {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.linkContainer} onPress={() => navigation.navigate('Signin')}>
-            <Text style={styles.linkText}>Already have an account? <Text style={styles.link}>Sign In</Text></Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ height: 150 }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={{ height: 150 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 

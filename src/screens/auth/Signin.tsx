@@ -141,104 +141,106 @@ const SigninScreen: React.FC = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <AuthHeader
-          title="Welcome Back"
-          subtitle="Sign in to your account"
-          showBackButton={false}
-          logo
-        />
-
-        <View style={styles.formContainer}>
-          <FormInput
-            placeholder="Enter your email"
-            value={formData.email}
-            onChangeText={(t) => handleInputChange('email', t)}
-            error={errors.email}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            showLabel={false}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <AuthHeader
+            title="Welcome Back"
+            subtitle="Sign in to your account"
+            showBackButton={false}
+            logo
           />
 
-          <PasswordInput
-            placeholder="Enter your password"
-            value={formData.password}
-            onChangeText={(t) => handleInputChange('password', t)}
-            error={errors.password}
-            showLabel={false}
-          />
+          <View style={styles.formContainer}>
+            <FormInput
+              placeholder="Enter your email"
+              value={formData.email}
+              onChangeText={(t) => handleInputChange('email', t)}
+              error={errors.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              showLabel={false}
+            />
 
-          <TouchableOpacity
-            style={styles.forgotPasswordContainer}
-            onPress={() => navigation.navigate('ForgotPassword')}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
+            <PasswordInput
+              placeholder="Enter your password"
+              value={formData.password}
+              onChangeText={(t) => handleInputChange('password', t)}
+              error={errors.password}
+              showLabel={false}
+            />
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          {/* Regular Sign In button (password) */}
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSignin}
-            disabled={isLoading}
-          >
-            {isLoading
-              ? <ActivityIndicator size="small" color="#FFFFFF" />
-              : <Text style={styles.buttonText}>Sign In</Text>}
-          </TouchableOpacity>
-
-          {/* BIG, CENTRALIZED, SPACED FINGERPRINT ICON */}
-          <View style={styles.biometricIconContainer}>
             <TouchableOpacity
-              style={styles.fingerprintCircle}
-              onPress={showBiometricIcon ? handleBiometricLogin : undefined}
-              disabled={!showBiometricIcon || isLoading}
-              activeOpacity={showBiometricIcon ? 0.7 : 1}
+              style={styles.forgotPasswordContainer}
+              onPress={() => navigation.navigate('ForgotPassword')}
             >
-              {isLoading ? (
-                <ActivityIndicator size="large" color={colors.primary} />
-              ) : (
-                <Ionicons
-                  name={
-                    showBiometricIcon && biometricType === 'Face ID'
-                      ? 'scan-outline'
-                      : 'finger-print-outline'
-                  }
-                  size={80}
-                  color={showBiometricIcon ? colors.primary : colors.disabled}
-                />
-              )}
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
-            {!showBiometricIcon && (
-              <Text style={styles.biometricUnavailableText}>
-                Biometric login is not set up or has been cleared. Please sign in and enable it from your profile.
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            {/* Regular Sign In button (password) */}
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleSignin}
+              disabled={isLoading}
+            >
+              {isLoading
+                ? <ActivityIndicator size="small" color="#FFFFFF" />
+                : <Text style={styles.buttonText}>Sign In</Text>}
+            </TouchableOpacity>
+
+            {/* BIG, CENTRALIZED, SPACED FINGERPRINT ICON */}
+            <View style={styles.biometricIconContainer}>
+              <TouchableOpacity
+                style={styles.fingerprintCircle}
+                onPress={showBiometricIcon ? handleBiometricLogin : undefined}
+                disabled={!showBiometricIcon || isLoading}
+                activeOpacity={showBiometricIcon ? 0.7 : 1}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="large" color={colors.primary} />
+                ) : (
+                  <Ionicons
+                    name={
+                      showBiometricIcon && biometricType === 'Face ID'
+                        ? 'scan-outline'
+                        : 'finger-print-outline'
+                    }
+                    size={80}
+                    color={showBiometricIcon ? colors.primary : colors.disabled}
+                  />
+                )}
+              </TouchableOpacity>
+              {!showBiometricIcon && (
+                <Text style={styles.biometricUnavailableText}>
+                  Biometric login is not set up or has been cleared. Please sign in and enable it from your profile.
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.linkContainer}
+              onPress={() => navigation.navigate('Signup')}
+            >
+              <Text style={styles.linkText}>
+                Don't have an account?{' '}
+                <Text style={styles.link}>Sign Up</Text>
               </Text>
-            )}
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.linkContainer}
-            onPress={() => navigation.navigate('Signup')}
-          >
-            <Text style={styles.linkText}>
-              Don't have an account?{' '}
-              <Text style={styles.link}>Sign Up</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
