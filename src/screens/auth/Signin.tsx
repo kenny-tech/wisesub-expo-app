@@ -96,7 +96,8 @@ const SigninScreen: React.FC = () => {
 
       navigation.navigate('Tabs');
     } catch (err: any) {
-      showError('Sign In Failed', err?.message ?? 'Please check your credentials.');
+      console.log(err);
+      showError('Sign In Failed', err ?? 'Please check your credentials.');
     }
   };
 
