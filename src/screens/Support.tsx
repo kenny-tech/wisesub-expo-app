@@ -7,9 +7,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { supportStyles as styles } from '../styles/sharedStyles';
+import { makeSupportStyles } from '../styles/sharedStyles';
+import { useTheme } from "../theme/ThemeContext";
 
 export default function Support({ navigation }: { navigation: any }) {
+  const { colors } = useTheme();
+  const styles = makeSupportStyles(colors);
+
   const contactMethods = [
     {
       id: 1,
@@ -29,31 +33,13 @@ export default function Support({ navigation }: { navigation: any }) {
       backgroundColor: "#FCE8E6",
       onPress: () => Linking.openURL('mailto:support@wisesub.com.ng?subject=Support%20Request')
     },
-    // {
-    //   id: 3,
-    //   title: "Phone Support",
-    //   description: "Call us during business hours (9AM - 5PM)",
-    //   icon: "call" as const,
-    //   color: "#34A853",
-    //   backgroundColor: "#E6F4EA",
-    //   onPress: () => Linking.openURL('tel:+2348021088554')
-    // },
-    // {
-    //   id: 4,
-    //   title: "FAQ & Help Center",
-    //   description: "Find answers to common questions",
-    //   icon: "help-circle" as const,
-    //   color: "#1F54DD",
-    //   backgroundColor: "#E0E7FF",
-    //   onPress: () => console.log('Navigate to FAQ')
-    // }
   ];
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>Help & Support</Text>
         <View style={styles.placeholder} />
@@ -62,7 +48,7 @@ export default function Support({ navigation }: { navigation: any }) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Support Header */}
         <View style={styles.supportHeader}>
-          <Ionicons name="help-buoy" size={64} color="#1F54DD" />
+          <Ionicons name="help-buoy" size={64} color={colors.primary} />
           <Text style={styles.supportTitle}>How can we help you?</Text>
           <Text style={styles.supportDescription}>
             Get in touch with our support team through any of the channels below. We're here to help!
@@ -91,27 +77,27 @@ export default function Support({ navigation }: { navigation: any }) {
                   <Text style={styles.contactDescription}>{method.description}</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#64748B" />
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Additional Info */}
-        <View style={styles.infoCard}>
+        {/* <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>Support Hours</Text>
           <View style={styles.infoItem}>
-            <Ionicons name="time" size={16} color="#64748B" />
+            <Ionicons name="time" size={16} color={colors.textSecondary} />
             <Text style={styles.infoText}>Monday - Friday: 9:00 AM - 6:00 PM</Text>
           </View>
           <View style={styles.infoItem}>
-            <Ionicons name="time" size={16} color="#64748B" />
+            <Ionicons name="time" size={16} color={colors.textSecondary} />
             <Text style={styles.infoText}>Saturday: 10:00 AM - 4:00 PM</Text>
           </View>
           <View style={styles.infoItem}>
-            <Ionicons name="time" size={16} color="#64748B" />
+            <Ionicons name="time" size={16} color={colors.textSecondary} />
             <Text style={styles.infoText}>Sunday: Closed</Text>
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.footer} />
       </ScrollView>

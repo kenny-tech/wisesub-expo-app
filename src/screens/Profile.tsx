@@ -1,34 +1,25 @@
-import { Ionicons } from "@expo/vector-icons";
-import * as Application from "expo-application";
-import React, { useState } from "react";
+import { Ionicons } from '@expo/vector-icons';
+import * as Application from 'expo-application';
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+  ActivityIndicator, Alert, Linking, Modal,
+  ScrollView, StyleSheet, Switch, Text,
+  TouchableOpacity, View,
+} from 'react-native';
 import { useBiometrics } from '../hooks/useBiometrics';
-import { useAppDispatch } from "../redux/hooks";
-import { useProfile } from "../redux/hooks/useProfile";
-import { logoutUser } from "../redux/slices/authSlice";
+import { useAppDispatch } from '../redux/hooks';
+import { useProfile } from '../redux/hooks/useProfile';
+import { logoutUser } from '../redux/slices/authSlice';
 import { useTheme } from '../theme/ThemeContext';
 
 export default function Profile({ navigation }: { navigation: any }) {
-  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [biometricToggling, setBiometricToggling] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [logoutLoading,      setLogoutLoading]      = useState(false);
+  const [biometricToggling,  setBiometricToggling]  = useState(false);
 
-  const dispatch = useAppDispatch();
-  const { user } = useProfile();
+  const dispatch       = useAppDispatch();
+  const { user }       = useProfile();
   const { colors, isDark, toggleDark } = useTheme();
-
-  const handleLogoutModal = () => setIsLogoutModalVisible(() => !isLogoutModalVisible);
 
   const {
     isBiometricAvailable,
@@ -40,26 +31,18 @@ export default function Profile({ navigation }: { navigation: any }) {
 
   const styles = makeStyles(colors);
 
-
+  // ── Logout ─────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     try {
-      setLoading(true);
-
-      // Call Redux logout thunk which clears AsyncStorage
+      setLogoutLoading(true);
       await dispatch(logoutUser()).unwrap();
-
-      setLoading(false);
-      handleLogoutModal();
-
-      // Navigate to login screen
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Signin' }],
-      });
-    } catch (error: any) {
-      setLoading(false);
-      console.error('Logout error:', error);
-      Alert.alert('Error', error.message || 'Something went wrong');
+      // logoutUser clears SecureStore token + biometric flag automatically
+      navigation.reset({ index: 0, routes: [{ name: 'Signin' }] });
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Something went wrong');
+    } finally {
+      setLogoutLoading(false);
+      setLogoutModalVisible(false);
     }
   };
 
@@ -90,16 +73,13 @@ export default function Profile({ navigation }: { navigation: any }) {
     }
   };
 
-  const openLink = (url: string) => {
-    Linking.openURL(url).catch(err =>
-      Alert.alert('Error', 'Unable to open link')
-    );
-  };
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const openLink = (url: string) =>
+    Linking.openURL(url).catch(() => Alert.alert('Error', 'Unable to open link'));
 
-  const getFirstCharacter = (name: string) => {
-    return name ? name.charAt(0).toUpperCase() : "U";
-  };
+  const getInitial = (name?: string) => (name ? name.charAt(0).toUpperCase() : 'U');
 
+  // ── Sub-components ─────────────────────────────────────────────────────────
   const ProfileItem = ({
     icon, title, onPress, isDestructive = false, rightElement,
   }: {
@@ -132,72 +112,16 @@ export default function Profile({ navigation }: { navigation: any }) {
     </TouchableOpacity>
   );
 
-  // Logout Confirmation Modal
-  const LogoutConfirmationModal = () => (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={isLogoutModalVisible}
-      onRequestClose={handleLogoutModal}
-    >
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPressOut={handleLogoutModal}
-      >
-        <View style={styles.modalContainer}>
-          {/* Warning Icon */}
-          <View style={styles.modalIcon}>
-            <Ionicons name="log-out-outline" size={32} color="#EF4444" />
-          </View>
-
-          {/* Title */}
-          <Text style={styles.modalTitle}>Log Out</Text>
-
-          {/* Description */}
-          <Text style={styles.modalDescription}>
-            Are you sure you want to log out? You'll need to sign in again to access your account.
-          </Text>
-
-          {/* Buttons */}
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={handleLogoutModal}
-              disabled={loading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modalButton, styles.logoutButton]}
-              onPress={handleLogout}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.logoutButtonText}>Log Out</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-        {/* Header */}
+      <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── Header ── */}
         <View style={styles.header}>
           <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {getFirstCharacter(user?.name)}
-                </Text>
-              </View>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{getInitial(user?.name)}</Text>
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{user?.name}</Text>
@@ -206,19 +130,19 @@ export default function Profile({ navigation }: { navigation: any }) {
           </View>
         </View>
 
-        {/* Profile Sections */}
+        {/* ── Account ── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.sectionContent}>
             <ProfileItem
-              icon={<Ionicons name="person-outline" size={20} color="#1F54DD" />}
+              icon={<Ionicons name="person-outline" size={20} color={colors.primary} />}
               title="Profile Information"
-              onPress={() => navigation.navigate("ProfileInfo")}
+              onPress={() => navigation.navigate('ProfileInfo')}
             />
             <ProfileItem
-              icon={<Ionicons name="people-outline" size={20} color="#1F54DD" />}
+              icon={<Ionicons name="people-outline" size={20} color={colors.primary} />}
               title="Refer & Earn"
-              onPress={() => navigation.navigate("Referral")}
+              onPress={() => navigation.navigate('Referral')}
             />
           </View>
         </View>
@@ -275,55 +199,97 @@ export default function Profile({ navigation }: { navigation: any }) {
           </View>
         </View>
 
+        {/* ── Support ── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support</Text>
           <View style={styles.sectionContent}>
             <ProfileItem
-              icon={<Ionicons name="help-circle-outline" size={20} color="#1F54DD" />}
+              icon={<Ionicons name="help-circle-outline" size={20} color={colors.primary} />}
               title="Help & Support"
-              onPress={() => navigation.navigate("Support")}
+              onPress={() => navigation.navigate('Support')}
             />
             <ProfileItem
-              icon={<Ionicons name="document-text-outline" size={20} color="#1F54DD" />}
+              icon={<Ionicons name="document-text-outline" size={20} color={colors.primary} />}
               title="Terms & Conditions"
               onPress={() => openLink('https://www.wisesub.com.ng/terms-and-conditions')}
             />
             <ProfileItem
-              icon={<Ionicons name="shield-checkmark-outline" size={20} color="#1F54DD" />}
+              icon={<Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />}
               title="Privacy Policy"
               onPress={() => openLink('https://www.wisesub.com.ng/privacy-policy')}
             />
           </View>
         </View>
 
+        {/* ── Log out ── */}
         <View style={styles.section}>
           <View style={styles.sectionContent}>
             <ProfileItem
-              icon={<Ionicons name="log-out-outline" size={20} color="#EF4444" />}
+              icon={<Ionicons name="log-out-outline" size={20} color={colors.error} />}
               title="Log Out"
-              onPress={handleLogoutModal}
-              isDestructive={true}
+              onPress={() => setLogoutModalVisible(true)}
+              isDestructive
             />
           </View>
         </View>
 
-        {/* App Version */}
         <View style={styles.versionContainer}>
           <Text style={styles.versionText}>
-            Version {Application.nativeApplicationVersion || "1.0.0"}
+            Version {Application.nativeApplicationVersion ?? '1.0.0'}
           </Text>
         </View>
       </ScrollView>
 
-      {/* Logout Confirmation Modal */}
-      <LogoutConfirmationModal />
+      {/* ── Logout confirmation modal ── */}
+      <Modal
+        animationType="fade"
+        transparent
+        visible={logoutModalVisible}
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPressOut={() => !logoutLoading && setLogoutModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalIcon}>
+              <Ionicons name="log-out-outline" size={32} color={colors.error} />
+            </View>
+            <Text style={styles.modalTitle}>Log Out</Text>
+            <Text style={styles.modalDescription}>
+              Are you sure you want to log out? You'll need to sign in again to access your account.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setLogoutModalVisible(false)}
+                disabled={logoutLoading}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.logoutButton]}
+                onPress={handleLogout}
+                disabled={logoutLoading}
+              >
+                {logoutLoading
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
+                  : <Text style={styles.logoutButtonText}>Log Out</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
   StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.background },
+    screen:        { flex: 1, backgroundColor: colors.background },
     header: {
       backgroundColor: colors.background,
       paddingHorizontal: 20, paddingTop: 60, paddingBottom: 30,
@@ -339,17 +305,11 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
     },
-    avatarText: { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Bold' },
-    avatarContainer: {
-      marginRight: 16,
-    },
-    scrollView: {
-      flex: 1,
-    },
-    userInfo: { flex: 1 },
-    userName: { fontSize: 24, fontFamily: 'Poppins-Bold', color: colors.textPrimary, marginBottom: 4 },
-    userEmail: { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary },
-    section: { marginTop: 8, paddingHorizontal: 20 },
+    avatarText:    { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Bold' },
+    userInfo:      { flex: 1 },
+    userName:      { fontSize: 24, fontFamily: 'Poppins-Bold',    color: colors.textPrimary, marginBottom: 4 },
+    userEmail:     { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary },
+    section:       { marginTop: 8, paddingHorizontal: 20 },
     sectionTitle: {
       fontSize: 14, fontFamily: 'Poppins-SemiBold', color: colors.textSecondary,
       marginBottom: 12, marginTop: 16, textTransform: 'uppercase', letterSpacing: 0.5,
@@ -364,17 +324,17 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       paddingVertical: 16, paddingHorizontal: 16,
       borderBottomWidth: 1, borderBottomColor: colors.separator,
     },
-    profileItemLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    profileItemLeft:   { flexDirection: 'row', alignItems: 'center', flex: 1 },
     iconContainer: {
       width: 40, height: 40, borderRadius: 12,
       backgroundColor: colors.iconContainerBlue,
       justifyContent: 'center', alignItems: 'center', marginRight: 12,
     },
-    destructiveIcon: { backgroundColor: colors.iconContainerRed },
-    profileItemText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textPrimary, flex: 1 },
-    destructiveText: { color: colors.error },
-    versionContainer: { alignItems: 'center', paddingVertical: 32 },
-    versionText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: colors.textMuted },
+    destructiveIcon:   { backgroundColor: colors.iconContainerRed },
+    profileItemText:   { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textPrimary, flex: 1 },
+    destructiveText:   { color: colors.error },
+    versionContainer:  { alignItems: 'center', paddingVertical: 32 },
+    versionText:       { fontSize: 14, fontFamily: 'Poppins-Regular', color: colors.textMuted },
 
     // Modal
     modalOverlay: {
@@ -392,12 +352,12 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       backgroundColor: colors.iconContainerRed,
       justifyContent: 'center', alignItems: 'center', marginBottom: 16,
     },
-    modalTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+    modalTitle:       { fontSize: 20, fontFamily: 'Poppins-Bold',    color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
     modalDescription: { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-    modalButtons: { flexDirection: 'row', gap: 12, width: '100%' },
-    modalButton: { flex: 1, height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    cancelButton: { backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.divider },
-    logoutButton: { backgroundColor: colors.error },
+    modalButtons:     { flexDirection: 'row', gap: 12, width: '100%' },
+    modalButton:      { flex: 1, height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    cancelButton:     { backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.divider },
+    logoutButton:     { backgroundColor: colors.error },
     cancelButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textSecondary },
     logoutButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: '#FFFFFF' },
   });

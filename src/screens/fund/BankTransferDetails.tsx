@@ -31,6 +31,8 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
   const route = useRoute<RouteProp<BankTransferDetailsRouteProps, 'BankTransferDetails'>>();
   const { transferDetails, amount } = route.params;
 
+  console.log(transferDetails);
+
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const formatAmount = (amt: string): string => {
@@ -80,6 +82,13 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
 
         {/* Details card */}
         <View style={styles.detailsCard}>
+
+          {/* Note */}
+          <View style={styles.detailRow}>
+            <View style={styles.detailLabelContainer}>
+              <Text style={styles.detailLabel}>{transferDetails?.note}</Text>
+            </View>
+          </View>
 
           {/* Amount */}
           <View style={styles.detailRow}>

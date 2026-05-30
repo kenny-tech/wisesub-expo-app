@@ -219,7 +219,7 @@ const SigninScreen: React.FC = () => {
             </TouchableOpacity>
             {!showBiometricIcon && (
               <Text style={styles.biometricUnavailableText}>
-                Biometric login not set up or cleared. Sign in with password and enable it in your profile.
+                Biometric login is not set up or has been cleared. Please sign in and enable it from your profile.
               </Text>
             )}
           </View>
@@ -281,7 +281,7 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
     },
     biometricUnavailableText: {
       marginTop: 12,
-      fontSize: 14,
+      fontSize: 13,
       color: colors.textSecondary,
       textAlign: 'center',
       fontFamily: 'Poppins-Regular',

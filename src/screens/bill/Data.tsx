@@ -22,6 +22,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -101,88 +102,11 @@ const AWUF_NETWORK_OPTIONS = [
   },
 ];
 
-// Recent Customers Modal Component
-function RecentCustomersModal({
-  visible,
-  onClose,
-  customers,
-  loading,
-  onSelectCustomer
-}: {
-  visible: boolean;
-  onClose: () => void;
-  customers: RecentCustomer[];
-  loading: boolean;
-  onSelectCustomer: (customer: string) => void;
-}) {
-  const renderCustomer = ({ item }: { item: RecentCustomer }) => (
-    <TouchableOpacity
-      style={modalStyles.customerItem}
-      onPress={() => onSelectCustomer(item.customer)}
-    >
-      <View style={modalStyles.customerIcon}>
-        <Ionicons name="person-circle-outline" size={24} color="#1F54DD" />
-      </View>
-      <View style={modalStyles.customerInfo}>
-        <Text style={modalStyles.customerPhone}>{item.customer}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-    </TouchableOpacity>
-  );
-
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={modalStyles.overlay}
-        activeOpacity={1}
-        onPressOut={onClose}
-      >
-        <View style={modalStyles.container}>
-          <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Recent Customers</Text>
-            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
-              <Ionicons name="close" size={24} color="#64748B" />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={modalStyles.subtitle}>
-            Select a phone number from your recent purchases
-          </Text>
-
-          {loading ? (
-            <View style={modalStyles.loadingContainer}>
-              <ActivityIndicator size="large" color="#1F54DD" />
-              <Text style={modalStyles.loadingText}>Loading recent customers...</Text>
-            </View>
-          ) : customers.length === 0 ? (
-            <View style={modalStyles.emptyContainer}>
-              <Ionicons name="people-outline" size={48} color="#94A3B8" />
-              <Text style={modalStyles.emptyTitle}>No Recent Customers</Text>
-              <Text style={modalStyles.emptyDescription}>
-                Your recent customers will appear here after you make purchases
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={customers}
-              renderItem={renderCustomer}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={modalStyles.listContent}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
-
 export default function Data({ navigation }: { navigation: any }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const modalStyles = makeModalStyles(colors);
+
   // State
   const [phone, setPhone] = useState('');
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -558,8 +482,8 @@ export default function Data({ navigation }: { navigation: any }) {
         label: 'Data Plan',
         value: planName || '',
         icon: 'layers-outline',
-        iconColor: '#64748B',
-        valueColor: '#0F172A',
+        iconColor: colors.textSecondary,
+        valueColor: colors.textPrimary,
       });
     }
 
@@ -568,7 +492,7 @@ export default function Data({ navigation }: { navigation: any }) {
         label: 'Phone Number',
         value: phone,
         icon: 'call-outline',
-        iconColor: '#64748B',
+        iconColor: colors.textSecondary,
       });
     }
 
@@ -577,7 +501,7 @@ export default function Data({ navigation }: { navigation: any }) {
         label: 'Validity',
         value: selectedPlan.validity,
         icon: 'time-outline',
-        iconColor: '#64748B',
+        iconColor: colors.textSecondary,
       });
     }
 
@@ -602,14 +526,85 @@ export default function Data({ navigation }: { navigation: any }) {
     return parseFloat(selectedPlan.variation_amount?.toString() || '0');
   };
 
+  // Recent Customers Modal (now inside component to access colors)
+  function RecentCustomersModalInner({ visible, onClose, customers, loading, onSelectCustomer }: {
+    visible: boolean; onClose: () => void; customers: RecentCustomer[];
+    loading: boolean; onSelectCustomer: (c: string) => void;
+  }) {
+    const renderCustomer = ({ item }: { item: RecentCustomer }) => (
+      <TouchableOpacity
+        style={modalStyles.customerItem}
+        onPress={() => onSelectCustomer(item.customer)}
+      >
+        <View style={modalStyles.customerIcon}>
+          <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
+        </View>
+        <View style={modalStyles.customerInfo}>
+          <Text style={[modalStyles.customerPhone, { color: colors.textPrimary }]}>{item.customer}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      </TouchableOpacity>
+    );
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={visible}
+        onRequestClose={onClose}
+      >
+        <TouchableOpacity
+          style={modalStyles.overlay}
+          activeOpacity={1}
+          onPressOut={onClose}
+        >
+          <View style={[modalStyles.container, { backgroundColor: colors.card }]}>
+            <View style={[modalStyles.header, { borderBottomColor: colors.separator }]}>
+              <Text style={[modalStyles.title, { color: colors.textPrimary }]}>Recent Customers</Text>
+              <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[modalStyles.subtitle, { color: colors.textSecondary }]}>
+              Select a phone number from your recent purchases
+            </Text>
+
+            {loading ? (
+              <View style={modalStyles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[modalStyles.loadingText, { color: colors.textSecondary }]}>Loading recent customers...</Text>
+              </View>
+            ) : customers.length === 0 ? (
+              <View style={modalStyles.emptyContainer}>
+                <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+                <Text style={[modalStyles.emptyTitle, { color: colors.textSecondary }]}>No Recent Customers</Text>
+                <Text style={[modalStyles.emptyDescription, { color: colors.textMuted }]}>
+                  Your recent customers will appear here after you make purchases
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={customers}
+                renderItem={renderCustomer}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={modalStyles.listContent}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.separator }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title}>Buy Data</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Buy Data</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -620,22 +615,23 @@ export default function Data({ navigation }: { navigation: any }) {
       >
         {/* Network Selection Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Network</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Select Network</Text>
 
           {/* AWUF Networks Row */}
-          <Text style={styles.subSectionTitle}>AWUF Plans</Text>
+          <Text style={[styles.subSectionTitle, { color: colors.textSecondary }]}>AWUF Plans</Text>
           <View style={styles.networksRow}>
             {AWUF_NETWORK_OPTIONS.map((network) => (
               <TouchableOpacity
                 key={network.value}
                 style={[
                   styles.networkCard,
-                  selectedNetwork?.value === network.value && styles.networkCardSelected
+                  { backgroundColor: colors.backgroundSecondary },
+                  selectedNetwork?.value === network.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
                 ]}
                 onPress={() => handleNetworkSelect(network)}
                 activeOpacity={0.7}
               >
-                <View style={styles.networkLogoContainer}>
+                <View style={[styles.networkLogoContainer, { backgroundColor: colors.card }]}>
                   <Image
                     source={network.logoLocal}
                     style={styles.networkLogo}
@@ -644,7 +640,8 @@ export default function Data({ navigation }: { navigation: any }) {
                 </View>
                 <Text style={[
                   styles.networkName,
-                  selectedNetwork?.value === network.value && styles.networkNameSelected
+                  { color: colors.textSecondary },
+                  selectedNetwork?.value === network.value && { color: colors.primary, fontFamily: 'Poppins-SemiBold' }
                 ]} numberOfLines={1}>
                   {network.name}
                 </Text>
@@ -656,19 +653,20 @@ export default function Data({ navigation }: { navigation: any }) {
           </View>
 
           {/* Regular Networks Row */}
-          <Text style={[styles.subSectionTitle, styles.regularTitle]}>Regular Plans</Text>
+          <Text style={[styles.subSectionTitle, { color: colors.textSecondary, marginTop: 16 }]}>Regular Plans</Text>
           <View style={styles.networksRow}>
             {REGULAR_NETWORK_OPTIONS.map((network) => (
               <TouchableOpacity
                 key={network.value}
                 style={[
                   styles.networkCard,
-                  selectedNetwork?.value === network.value && styles.networkCardSelected
+                  { backgroundColor: colors.backgroundSecondary },
+                  selectedNetwork?.value === network.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
                 ]}
                 onPress={() => handleNetworkSelect(network)}
                 activeOpacity={0.7}
               >
-                <View style={styles.networkLogoContainer}>
+                <View style={[styles.networkLogoContainer, { backgroundColor: colors.card }]}>
                   <Image
                     source={network.logoLocal}
                     style={styles.networkLogo}
@@ -677,7 +675,8 @@ export default function Data({ navigation }: { navigation: any }) {
                 </View>
                 <Text style={[
                   styles.networkName,
-                  selectedNetwork?.value === network.value && styles.networkNameSelected
+                  { color: colors.textSecondary },
+                  selectedNetwork?.value === network.value && { color: colors.primary, fontFamily: 'Poppins-SemiBold' }
                 ]} numberOfLines={1}>
                   {network.name}
                 </Text>
@@ -686,17 +685,18 @@ export default function Data({ navigation }: { navigation: any }) {
           </View>
 
           {errors.network && (
-            <Text style={styles.errorText}>{errors.network}</Text>
+            <Text style={[styles.errorText, { color: colors.error }]}>{errors.network}</Text>
           )}
         </View>
 
         {/* Data Plan Selection */}
         {selectedNetwork && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Data Plan</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Data Plan</Text>
             <TouchableOpacity
               style={[
                 styles.dataPlanButton,
+                { backgroundColor: colors.backgroundSecondary, borderColor: errors.plan ? colors.error : colors.divider },
                 errors.plan && styles.dataPlanButtonError
               ]}
               onPress={() => setShowPlanModal(true)}
@@ -706,10 +706,10 @@ export default function Data({ navigation }: { navigation: any }) {
                 {selectedPlan ? (
                   <>
                     <View style={styles.selectedPlanInfo}>
-                      <Text style={styles.selectedPlanName} numberOfLines={1}>
+                      <Text style={[styles.selectedPlanName, { color: colors.textPrimary }]} numberOfLines={1}>
                         {isAwuf ? selectedPlan.package_name : selectedPlan.name}
                       </Text>
-                      <Text style={styles.selectedPlanPrice}>
+                      <Text style={[styles.selectedPlanPrice, { color: colors.primary }]}>
                         ₦{formatAmount(
                           isAwuf
                             ? (selectedPlan.price || 0)
@@ -717,43 +717,44 @@ export default function Data({ navigation }: { navigation: any }) {
                         )}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#1F54DD" />
+                    <Ionicons name="chevron-forward" size={20} color={colors.primary} />
                   </>
                 ) : (
                   <>
                     <Text style={[
                       styles.dataPlanPlaceholder,
-                      loading && styles.dataPlanPlaceholderLoading
+                      { color: colors.textMuted },
+                      loading && { color: colors.textSecondary }
                     ]}>
                       {loading ? 'Loading plans...' : dataPlans.length === 0 ? 'No plans available' : 'Select Data Plan'}
                     </Text>
                     {!loading && dataPlans.length > 0 && (
-                      <Ionicons name="chevron-down" size={20} color="#94A3B8" />
+                      <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                     )}
                     {loading && (
-                      <ActivityIndicator size="small" color="#64748B" />
+                      <ActivityIndicator size="small" color={colors.textSecondary} />
                     )}
                   </>
                 )}
               </View>
             </TouchableOpacity>
             {errors.plan && (
-              <Text style={styles.errorText}>{errors.plan}</Text>
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.plan}</Text>
             )}
             {selectedNetwork && dataPlans.length === 0 && !loading && (
-              <Text style={styles.infoText}>
+              <Text style={[styles.infoText, { color: colors.textMuted }]}>
                 No plans available for {selectedNetwork.name}
               </Text>
             )}
           </View>
         )}
 
-        {/* Amount Display with Commission - Only show commission for VTPass */}
+        {/* Amount Display with Commission */}
         {selectedPlan && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Amount</Text>
-            <View style={styles.amountContainer}>
-              <Text style={styles.amountText}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Amount</Text>
+            <View style={[styles.amountContainer, { backgroundColor: colors.backgroundSecondary }]}>
+              <Text style={[styles.amountText, { color: '#10B981' }]}>
                 ₦{formatAmount(
                   isAwuf
                     ? (selectedPlan.price || 0)
@@ -762,19 +763,10 @@ export default function Data({ navigation }: { navigation: any }) {
               </Text>
             </View>
 
-            {/* {isAwuf && (
-              <View style={styles.awufInfoContainer}>
-                <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
-                <Text style={styles.awufInfoText}>
-                  AWUF data includes special bonus
-                </Text>
-              </View>
-            )} */}
-
             {/* Show commission only for VTPass plans */}
             {!isAwuf && commission > 0 && (
               <View style={styles.commissionContainer}>
-                <Text style={styles.commissionText}>
+                <Text style={[styles.commissionText, { color: '#10B981' }]}>
                   You will earn: ₦{formatAmount(commission)}
                 </Text>
                 {loadingCommission && (
@@ -788,28 +780,29 @@ export default function Data({ navigation }: { navigation: any }) {
         {/* Phone Number Input */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Phone Number</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Phone Number</Text>
             <TouchableOpacity
               onPress={fetchRecentCustomers}
               disabled={loadingRecentCustomers}
             >
-              <Text style={styles.beneficiaryLink}>
+              <Text style={[styles.beneficiaryLink, { color: colors.primary }]}>
                 {loadingRecentCustomers ? 'Loading...' : 'Choose from recent'}
               </Text>
             </TouchableOpacity>
           </View>
           <View style={[
             styles.inputContainer,
+            { backgroundColor: colors.backgroundSecondary, borderColor: errors.phone ? colors.error : colors.divider },
             errors.phone && styles.inputContainerError
           ]}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.textPrimary }]}
               placeholder="Enter 11-digit phone number"
               value={phone}
               onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
               maxLength={11}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
             />
             <TouchableOpacity
               style={styles.contactButton}
@@ -817,14 +810,14 @@ export default function Data({ navigation }: { navigation: any }) {
               disabled={loadingRecentCustomers}
             >
               {loadingRecentCustomers ? (
-                <ActivityIndicator size="small" color="#64748B" />
+                <ActivityIndicator size="small" color={colors.textSecondary} />
               ) : (
-                <Ionicons name="people-outline" size={20} color="#64748B" />
+                <Ionicons name="people-outline" size={20} color={colors.textSecondary} />
               )}
             </TouchableOpacity>
           </View>
           {errors.phone && (
-            <Text style={styles.errorText}>{errors.phone}</Text>
+            <Text style={[styles.errorText, { color: colors.error }]}>{errors.phone}</Text>
           )}
         </View>
 
@@ -832,6 +825,7 @@ export default function Data({ navigation }: { navigation: any }) {
         <TouchableOpacity
           style={[
             styles.proceedButton,
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             (isSubmitting || !selectedPlan) && styles.proceedButtonDisabled
           ]}
           onPress={handleProceed}
@@ -861,7 +855,7 @@ export default function Data({ navigation }: { navigation: any }) {
       />
 
       {/* Recent Customers Modal */}
-      <RecentCustomersModal
+      <RecentCustomersModalInner
         visible={showRecentModal}
         onClose={() => setShowRecentModal(false)}
         customers={recentCustomers}
@@ -890,371 +884,64 @@ export default function Data({ navigation }: { navigation: any }) {
   );
 }
 
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-    minHeight: 400,
-    maxHeight: '80%',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginBottom: 24,
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  customerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  customerIcon: {
-    marginRight: 12,
-  },
-  customerInfo: {
-    flex: 1,
-  },
-  customerPhone: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginTop: 12,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#64748B',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyDescription: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
-    textAlign: 'center',
-    maxWidth: 300,
-    lineHeight: 20,
-  },
+const makeStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, borderBottomWidth: 1 },
+  backButton: { padding: 4 },
+  title: { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  placeholder: { width: 32 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
+  section: { paddingHorizontal: 20, marginBottom: 24 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 12 },
+  subSectionTitle: { fontSize: 14, fontFamily: 'Poppins-Medium', marginBottom: 8 },
+  networksRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  beneficiaryLink: { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  networkCard: { alignItems: 'center', borderRadius: 12, padding: 12, width: width / 4 - 20, height: 100, borderWidth: 2, borderColor: 'transparent', position: 'relative' },
+  networkLogoContainer: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  networkLogo: { width: 36, height: 36, borderRadius: 18 },
+  networkName: { fontSize: 11, fontFamily: 'Poppins-Medium', textAlign: 'center' },
+  awufBadge: { position: 'absolute', top: 5, right: 5, backgroundColor: '#F59E0B', borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2 },
+  awufBadgeText: { fontSize: 8, fontFamily: 'Poppins-Bold', color: '#FFFFFF' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, height: 56, borderWidth: 1 },
+  inputContainerError: { borderColor: colors.error },
+  input: { flex: 1, fontSize: 16, fontFamily: 'Poppins-Regular' },
+  contactButton: { padding: 8 },
+  dataPlanButton: { borderRadius: 12, paddingHorizontal: 16, height: 56, borderWidth: 1, justifyContent: 'center' },
+  dataPlanButtonError: { borderColor: colors.error },
+  dataPlanButtonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  selectedPlanInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  selectedPlanName: { fontSize: 14, fontFamily: 'Poppins-Medium', flex: 1, marginRight: 12 },
+  selectedPlanPrice: { fontSize: 14, fontFamily: 'Poppins-SemiBold' },
+  dataPlanPlaceholder: { fontSize: 16, fontFamily: 'Poppins-Regular' },
+  amountContainer: { borderRadius: 12, paddingHorizontal: 16, height: 56, justifyContent: 'center' },
+  amountText: { fontSize: 18, fontFamily: 'Poppins-Bold' },
+  commissionContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  commissionText: { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  commissionLoader: { marginLeft: 8 },
+  proceedButton: { marginHorizontal: 20, borderRadius: 12, height: 56, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, marginTop: 8, marginBottom: 24 },
+  proceedButtonDisabled: { backgroundColor: '#94A3B8', opacity: 0.6 },
+  proceedButtonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+  errorText: { fontSize: 12, fontFamily: 'Poppins-Regular', marginTop: 8 },
+  infoText: { fontSize: 12, fontFamily: 'Poppins-Regular', textAlign: 'center', fontStyle: 'italic', marginTop: 8 },
 });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  backButton: {
-    padding: 4,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
-  },
-  placeholder: {
-    width: 32,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
-    marginBottom: 12,
-  },
-  subSectionTitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-    marginBottom: 8,
-  },
-  regularTitle: {
-    marginTop: 16,
-  },
-  networksRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  beneficiaryLink: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#1F54DD',
-  },
-  networkCard: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    width: width / 4 - 20,
-    height: 100,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    position: 'relative',
-  },
-  networkCardSelected: {
-    borderColor: '#1F54DD',
-    backgroundColor: '#F1F6FF',
-  },
-  networkLogoContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  networkLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  networkName: {
-    fontSize: 11,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-    textAlign: 'center',
-  },
-  networkNameSelected: {
-    color: '#1F54DD',
-    fontFamily: 'Poppins-SemiBold',
-  },
-  awufBadge: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: '#F59E0B',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  awufBadgeText: {
-    fontSize: 8,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  inputContainerError: {
-    borderColor: '#EF4444',
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: '#0F172A',
-  },
-  contactButton: {
-    padding: 8,
-  },
-  dataPlanButton: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    justifyContent: 'center',
-  },
-  dataPlanButtonError: {
-    borderColor: '#EF4444',
-  },
-  dataPlanButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectedPlanInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectedPlanName: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
-    flex: 1,
-    marginRight: 12,
-  },
-  selectedPlanPrice: {
-    fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#1F54DD',
-  },
-  dataPlanPlaceholder: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
-  },
-  dataPlanPlaceholderLoading: {
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-  },
-  amountContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    justifyContent: 'center',
-  },
-  amountText: {
-    fontSize: 18,
-    fontFamily: 'Poppins-Bold',
-    color: '#10B981',
-  },
-  commissionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  commissionText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#10B981',
-  },
-  commissionLoader: {
-    marginLeft: 8,
-  },
-  awufInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    backgroundColor: '#FEF3C7',
-    padding: 8,
-    borderRadius: 8,
-  },
-  awufInfoText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    color: '#92400E',
-    marginLeft: 4,
-  },
-  proceedButton: {
-    backgroundColor: '#1F54DD',
-    marginHorizontal: 20,
-    borderRadius: 12,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#1F54DD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  proceedButtonDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.6,
-  },
-  proceedButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    marginTop: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginTop: 8,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+const makeModalStyles = (colors: any) => StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  container: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, minHeight: 400, maxHeight: '80%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, borderBottomWidth: 1, paddingBottom: 12 },
+  title: { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  closeButton: { padding: 4 },
+  subtitle: { fontSize: 14, fontFamily: 'Poppins-Regular', marginBottom: 24 },
+  listContent: { paddingBottom: 20 },
+  customerItem: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: colors.divider, backgroundColor: colors.backgroundSecondary },
+  customerIcon: { marginRight: 12 },
+  customerInfo: { flex: 1 },
+  customerPhone: { fontSize: 16, fontFamily: 'Poppins-Medium' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+  loadingText: { fontSize: 14, fontFamily: 'Poppins-Regular', marginTop: 12 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+  emptyTitle: { fontSize: 18, fontFamily: 'Poppins-SemiBold', marginTop: 16, marginBottom: 8 },
+  emptyDescription: { fontSize: 14, fontFamily: 'Poppins-Regular', textAlign: 'center', maxWidth: 300, lineHeight: 20 },
 });
