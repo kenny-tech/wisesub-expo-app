@@ -191,7 +191,7 @@ export default function Home({ navigation }: { navigation: any }) {
           style={[
             styles.serviceName,
             item.comingSoon && styles.comingSoonServiceName,
-            { color: colors.textSecondary }      // theme‑aware text color
+            { color: colors.textPrimary }      // theme‑aware text color
           ]}
           numberOfLines={1}
         >
