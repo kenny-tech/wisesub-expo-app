@@ -36,7 +36,7 @@ interface Props {
 }
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = makeStyles(colors);
 
   const { transaction } = route.params;
@@ -68,7 +68,10 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     if (isBonus) {
       return null; // Will show gift icon instead
     } else if (isWiseSubTransaction) {
-      return require('../../assets/images/logo.png');
+      // Use theme‑aware logo: black for light mode, white for dark mode
+      return isDark
+        ? require('../../assets/images/logo_white.png')
+        : require('../../assets/images/logo_black.png');
     } else if (transaction.provider_logo) {
       return { uri: transaction.provider_logo };
     }
