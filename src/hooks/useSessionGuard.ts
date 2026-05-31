@@ -22,7 +22,7 @@ export function useSessionGuard() {
 
     Alert.alert(
       "Session Ended",
-      "Your account was signed in on another device. You have been logged out here for your security.",
+      "Your account was signed in on another device, or you just changed your password. Please log in again for your security.",
       [
         {
           text: "Sign In Again",
