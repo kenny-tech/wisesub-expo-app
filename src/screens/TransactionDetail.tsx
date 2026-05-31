@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { ElectricityTokenDisplay } from '../components/bills/ElectricityTokenDisplay';
 import { formatAmount, formatDate } from '../helper/util';
+import { useTheme } from '../theme/ThemeContext';
 import { showError, showSuccess } from '../utils/toast';
 
 type RootStackParamList = {
@@ -35,6 +36,9 @@ interface Props {
 }
 
 const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
+  const { colors, isDark } = useTheme();
+  const styles = makeStyles(colors);
+
   const { transaction } = route.params;
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
@@ -64,7 +68,10 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     if (isBonus) {
       return null; // Will show gift icon instead
     } else if (isWiseSubTransaction) {
-      return require('../../assets/images/logo.png');
+      // Use theme‑aware logo: black for light mode, white for dark mode
+      return isDark
+        ? require('../../assets/images/logo_white.png')
+        : require('../../assets/images/logo_black.png');
     } else if (transaction.provider_logo) {
       return { uri: transaction.provider_logo };
     }
@@ -99,9 +106,9 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     if (isBonus) {
       return '#10B981'; // Green for bonus
     } else if (isWiseSubTransaction) {
-      return '#1F54DD'; // Blue for WiseSub
+      return colors.primary; // Use theme primary for WiseSub
     }
-    return '#64748B'; // Gray for others
+    return colors.textSecondary;
   };
 
   // Get container background color
@@ -109,9 +116,9 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     if (isBonus) {
       return '#ECFDF5'; // Light green for bonus
     } else if (isWiseSubTransaction) {
-      return '#E0E7FF'; // Light blue for WiseSub
+      return `${colors.primary}20`; // Light tint of theme primary
     }
-    return '#FFFFFF'; // White for provider logos
+    return colors.card;
   };
 
   // Only show receipt for electricity transactions with a token
@@ -158,32 +165,22 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.separator }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title}>Transaction Details</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Transaction Details</Text>
         <View style={styles.placeholder} />
       </View>
 
       <View style={styles.content}>
         {/* Logo/Icon Section */}
-        <View style={styles.logoSection}>
-          <View style={[
-            styles.logoContainer,
-            { backgroundColor: containerBg }
-          ]}>
+        <View style={[styles.logoSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+          <View style={[styles.logoContainer, { backgroundColor: containerBg, borderColor: colors.divider }]}>
             {isBonus ? (
               <View style={styles.iconFallback}>
-                <Ionicons
-                  name={serviceIcon}
-                  size={32}
-                  color={iconColor}
-                />
+                <Ionicons name={serviceIcon} size={32} color={iconColor} />
               </View>
             ) : logoSource ? (
               <Image
@@ -197,26 +194,22 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
               />
             ) : (
               <View style={styles.iconFallback}>
-                <Ionicons
-                  name={serviceIcon}
-                  size={32}
-                  color={iconColor}
-                />
+                <Ionicons name={serviceIcon} size={32} color={iconColor} />
               </View>
             )}
           </View>
 
           <View style={styles.serviceInfo}>
-            <Text style={styles.serviceName}>{getDisplayName(transaction.name)}</Text>
-            <Text style={styles.serviceType}>
+            <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{getDisplayName(transaction.name)}</Text>
+            <Text style={[styles.serviceType, { color: colors.textSecondary }]}>
               {transaction.type || (isWiseSubTransaction ? 'Wallet Transaction' : 'Service Purchase')}
             </Text>
           </View>
         </View>
 
         {/* Amount Card */}
-        <View style={styles.amountCard}>
-          <Text style={styles.amountLabel}>Amount</Text>
+        <View style={[styles.amountCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+          <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
           <Text style={[styles.amount, { color: getStatusColor() }]}>
             ₦{formatAmount(transaction.amount)}
           </Text>
@@ -228,28 +221,22 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         {/* Transaction Info Card */}
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
           <View style={styles.infoHeader}>
-            <Ionicons name="information-circle" size={20} color="#1F54DD" />
-            <Text style={styles.infoTitle}>Transaction Information</Text>
+            <Ionicons name="information-circle" size={20} color={colors.primary} />
+            <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>Transaction Information</Text>
           </View>
 
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Date</Text>
-              <Text style={styles.infoValue}>{formatDate(transaction.created_at)}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Date</Text>
+              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{formatDate(transaction.created_at)}</Text>
             </View>
 
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Status</Text>
-              <View style={[
-                styles.statusIndicator,
-                { backgroundColor: isCredit ? '#10B98120' : '#EF444420' }
-              ]}>
-                <Text style={[
-                  styles.statusIndicatorText,
-                  { color: getStatusColor() }
-                ]}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Status</Text>
+              <View style={[styles.statusIndicator, { backgroundColor: isCredit ? '#10B98120' : '#EF444420' }]}>
+                <Text style={[styles.statusIndicatorText, { color: getStatusColor() }]}>
                   {isCredit ? 'Completed' : 'Completed'}
                 </Text>
               </View>
@@ -258,49 +245,49 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         {/* Details Card */}
-        <View style={styles.detailsCard}>
-          <View style={styles.detailsHeader}>
-            <Ionicons name="receipt" size={20} color="#1F54DD" />
-            <Text style={styles.detailsTitle}>Transaction Details</Text>
+        <View style={[styles.detailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+          <View style={[styles.detailsHeader, { borderBottomColor: colors.divider }]}>
+            <Ionicons name="receipt" size={20} color={colors.primary} />
+            <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transaction Details</Text>
           </View>
 
           <View style={styles.detailsContent}>
             <View style={styles.detailRow}>
               <View style={styles.detailLeft}>
-                <Ionicons name="cube" size={16} color="#64748B" />
-                <Text style={styles.detailLabel}>Service Type</Text>
+                <Ionicons name="cube" size={16} color={colors.textSecondary} />
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Service Type</Text>
               </View>
-              <Text style={styles.detailValue}>{getDisplayName(transaction.name)}</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{getDisplayName(transaction.name)}</Text>
             </View>
 
             <View style={styles.detailRow}>
               <View style={styles.detailLeft}>
-                <Ionicons name="grid" size={16} color="#64748B" />
-                <Text style={styles.detailLabel}>Category</Text>
+                <Ionicons name="grid" size={16} color={colors.textSecondary} />
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Category</Text>
               </View>
-              <Text style={styles.detailValue}>{getDisplayName(transaction.type) || 'General'}</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{getDisplayName(transaction.type) || 'General'}</Text>
             </View>
 
             {transaction.customer && (
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <Ionicons name="person" size={16} color="#64748B" />
-                  <Text style={styles.detailLabel}>Customer</Text>
+                  <Ionicons name="person" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Customer</Text>
                 </View>
-                <Text style={styles.detailValue}>{transaction.customer}</Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transaction.customer}</Text>
               </View>
             )}
 
             {transaction.electricity_token && (
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <Ionicons name="key" size={16} color="#64748B" />
-                  <Text style={styles.detailLabel}>Meter Token</Text>
+                  <Ionicons name="key" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Meter Token</Text>
                 </View>
                 <View style={styles.tokenContainer}>
-                  <Text style={styles.tokenValue}>{transaction.electricity_token}</Text>
+                  <Text style={[styles.tokenValue, { color: colors.primary }]}>{transaction.electricity_token}</Text>
                   <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyToken(transaction.electricity_token)}>
-                    <Ionicons name="copy-outline" size={14} color="#1F54DD" />
+                    <Ionicons name="copy-outline" size={14} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -309,49 +296,49 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
             {transaction.units && (
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <Ionicons name="flash" size={16} color="#64748B" />
-                  <Text style={styles.detailLabel}>Units</Text>
+                  <Ionicons name="flash" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Units</Text>
                 </View>
-                <Text style={styles.detailValue}>{transaction.units}</Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transaction.units}</Text>
               </View>
             )}
 
             {transaction.reference && (
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
-                  <Ionicons name="document-text" size={16} color="#64748B" />
-                  <Text style={styles.detailLabel}>Reference</Text>
+                  <Ionicons name="document-text" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Reference</Text>
                 </View>
                 <View style={styles.referenceContainer}>
-                  <Text style={styles.referenceValue}>{transaction.reference}</Text>
+                  <Text style={[styles.referenceValue, { color: colors.textPrimary }]}>{transaction.reference}</Text>
                   <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyReference(transaction.reference)}>
-                    <Ionicons name="copy-outline" size={14} color="#1F54DD" />
+                    <Ionicons name="copy-outline" size={14} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
             )}
             {isElectricityWithToken && (
               <TouchableOpacity
-                style={styles.receiptButton}
+                style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
                 onPress={() => setShowReceiptModal(true)}
               >
-                <Ionicons name="receipt-outline" size={18} color="#1F54DD" />
-                <Text style={styles.receiptButtonText}>View Receipt</Text>
+                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
 
         {/* Help Section */}
-        <View style={styles.helpCard}>
+        <View style={[styles.helpCard, { backgroundColor: colors.primaryLight, borderColor: `${colors.primary}20` }]}>
           <View style={styles.helpHeader}>
-            <Ionicons name="help-circle" size={20} color="#1F54DD" />
-            <Text style={styles.helpTitle}>Need Help?</Text>
+            <Ionicons name="help-circle" size={20} color={colors.primary} />
+            <Text style={[styles.helpTitle, { color: colors.textPrimary }]}>Need Help?</Text>
           </View>
-          <Text style={styles.helpText}>
+          <Text style={[styles.helpText, { color: colors.textSecondary }]}>
             If you have any questions about this transaction, please contact our support team.
           </Text>
-          <TouchableOpacity style={styles.supportButton} onPress={() => navigation.navigate("Support")} >
+          <TouchableOpacity style={[styles.supportButton, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate("Support")} >
             <Ionicons name="chatbubble-ellipses" size={18} color="#FFFFFF" />
             <Text style={styles.supportButtonText}>Contact Support</Text>
           </TouchableOpacity>
@@ -375,10 +362,9 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -387,9 +373,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   backButton: {
     padding: 4,
@@ -397,7 +381,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
   },
   placeholder: {
     width: 32,
@@ -411,12 +394,10 @@ const styles = StyleSheet.create({
   logoSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   logoContainer: {
     width: 60,
@@ -427,7 +408,6 @@ const styles = StyleSheet.create({
     marginRight: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   logoImage: {
     width: '100%',
@@ -453,28 +433,23 @@ const styles = StyleSheet.create({
   serviceName: {
     fontSize: 18,
     fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
     marginBottom: 4,
   },
   serviceType: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
   },
   // Amount Card
   amountCard: {
-    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   amountLabel: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
     marginBottom: 8,
   },
   amount: {
@@ -493,12 +468,10 @@ const styles = StyleSheet.create({
   },
   // Info Card
   infoCard: {
-    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   infoHeader: {
     flexDirection: 'row',
@@ -508,7 +481,6 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
     marginLeft: 8,
   },
   infoGrid: {
@@ -524,13 +496,11 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
   },
   statusIndicator: {
     paddingHorizontal: 8,
@@ -544,11 +514,9 @@ const styles = StyleSheet.create({
   },
   // Details Card
   detailsCard: {
-    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
   detailsHeader: {
@@ -556,12 +524,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   detailsTitle: {
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
     marginLeft: 8,
   },
   detailsContent: {
@@ -580,13 +546,11 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
     marginLeft: 8,
   },
   detailValue: {
     fontSize: 14,
     fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
     textAlign: 'right',
     flex: 1,
     marginLeft: 16,
@@ -598,7 +562,6 @@ const styles = StyleSheet.create({
   tokenValue: {
     fontSize: 14,
     fontFamily: 'Poppins-SemiBold',
-    color: '#1F54DD',
     marginRight: 8,
   },
   referenceContainer: {
@@ -608,7 +571,6 @@ const styles = StyleSheet.create({
   referenceValue: {
     fontSize: 14,
     fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
     marginRight: 8,
   },
   copyButton: {
@@ -616,11 +578,9 @@ const styles = StyleSheet.create({
   },
   // Help Card
   helpCard: {
-    backgroundColor: '#F0F9FF',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E0F2FE',
   },
   helpHeader: {
     flexDirection: 'row',
@@ -630,18 +590,15 @@ const styles = StyleSheet.create({
   helpTitle: {
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
     marginLeft: 8,
   },
   helpText: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
-    color: '#64748B',
     lineHeight: 20,
     marginBottom: 16,
   },
   supportButton: {
-    backgroundColor: '#1F54DD',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -658,16 +615,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F6FF',
     borderRadius: 12,
     padding: 16,
     marginVertical: 12,
     borderWidth: 1,
-    borderColor: '#1F54DD',
     gap: 8,
   },
   receiptButtonText: {
-    color: '#1F54DD',
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
   },

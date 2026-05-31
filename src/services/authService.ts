@@ -120,9 +120,10 @@ class AuthService {
   }
 
   // Resend OTP - uses authApi (no token needed)
-  async resendOtp(email: string, otpType: string) {
+  async resendOtp(name:string, email: string, otpType: string) {
     try {
       const response = await authApi.post(API_ENDPOINTS.RESEND_OTP, {
+        name,
         email,
         otp_type: otpType
       });

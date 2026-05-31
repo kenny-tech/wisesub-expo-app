@@ -12,9 +12,10 @@ import {
 } from "react-native";
 import PasswordInput from "../components/auth/PasswordInput";
 import { ChangePasswordData, profileService } from "../services/profileService";
-import { changePasswordStyles as styles } from '../styles/sharedStyles';
+import { makeChangePasswordStyles } from '../styles/sharedStyles';
+import { useTheme } from '../theme/ThemeContext';
 import { showError, showSuccess } from "../utils/toast";
-import { AuthValidators } from "../utils/validators/authValidators"; // ← add this
+import { AuthValidators } from "../utils/validators/authValidators";
 
 interface PasswordErrors {
   current_password?: string;
@@ -23,6 +24,9 @@ interface PasswordErrors {
 }
 
 export default function ChangePassword({ navigation }: { navigation: any }) {
+  const { colors } = useTheme();
+  const styles = makeChangePasswordStyles(colors);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formData, setFormData] = useState<ChangePasswordData>({
@@ -39,40 +43,31 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
 
   const validateForm = (): boolean => {
     const newErrors: PasswordErrors = {};
-
     if (!formData.current_password.trim()) {
       newErrors.current_password = "Current password is required";
     }
-
     const passwordError = AuthValidators.validatePassword(formData.password);
     if (passwordError) newErrors.password = passwordError;
-
     const confirmError = AuthValidators.validateConfirmPassword(
       formData.password,
       formData.confirm_password
     );
     if (confirmError) newErrors.confirm_password = confirmError;
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChangePassword = async () => {
     setIsSubmitting(true);
-
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
-
     setLoading(true);
-
     try {
       const response = await profileService.changePassword(formData);
-
       if (response.success) {
         showSuccess('Success', response.message || 'Password changed successfully!');
-
         setTimeout(() => {
           navigation.reset({
             index: 0,
@@ -86,7 +81,6 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
             apiErrors[key as keyof PasswordErrors] = response.errors![key][0];
           });
           setErrors(apiErrors);
-
           const firstError = Object.values(apiErrors)[0];
           if (firstError) showError('Error', firstError);
         } else {
@@ -113,7 +107,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
     <View style={styles.screen}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>Change Password</Text>
         <View style={styles.placeholder} />
@@ -125,12 +119,11 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
       >
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.card}>
-
             {/* Current Password */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { paddingTop: 20 }]}>Current Password</Text>
               <View style={[styles.inputContainer, errors.current_password && styles.inputError]}>
-                <Ionicons name="lock-closed" size={20} color="#64748B" />
+                <Ionicons name="lock-closed" size={20} color={colors.textSecondary} />
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter current password"
@@ -140,7 +133,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
                     setFormData({ ...formData, current_password: text });
                     clearError('current_password');
                   }}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
                 <TouchableOpacity
                   onPress={() => toggleShowPassword('current')}
@@ -149,7 +142,7 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
                   <Ionicons
                     name={showPasswords.current ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#64748B"
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
@@ -205,7 +198,6 @@ export default function ChangePassword({ navigation }: { navigation: any }) {
               )}
             </TouchableOpacity>
           </View>
-
           <View style={{ height: 100 }} />
         </ScrollView>
       </KeyboardAvoidingView>

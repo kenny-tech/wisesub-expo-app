@@ -3,142 +3,80 @@ import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
 import { CommissionConfig, commissionService } from '@/src/services/commissionService';
-import { RecentCustomer, walletService } from '@/src/services/walletService'; // Import the service
+import { RecentCustomer, walletService } from '@/src/services/walletService';
 import { showError, showSuccess } from '@/src/utils/toast';
 import { AirtimeValidators } from '@/src/utils/validators/airtimeValidators';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+  ActivityIndicator, FlatList, Image, Modal, ScrollView,
+  StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
-// Define networks with URL paths
 const NETWORKS = [
-  {
-    id: 'mtn',
-    name: 'MTN',
-    logo: `${IMAGE_BASE_URL}/mtn.png`,
-    logoLocal: require('../../../assets/images/mtn.png')
-  },
-  {
-    id: 'airtel',
-    name: 'Airtel',
-    logo: `${IMAGE_BASE_URL}/airtel.png`,
-    logoLocal: require('../../../assets/images/airtel.png')
-  },
-  {
-    id: 'glo',
-    name: 'Glo',
-    logo: `${IMAGE_BASE_URL}/glo.png`,
-    logoLocal: require('../../../assets/images/glo.png')
-  },
-  {
-    id: '9mobile',
-    name: '9mobile',
-    logo: `${IMAGE_BASE_URL}/ninemobile.png`,
-    logoLocal: require('../../../assets/images/ninemobile.png')
-  },
+  { id: 'mtn',     name: 'MTN',     logo: `${IMAGE_BASE_URL}/mtn.png`,       logoLocal: require('../../../assets/images/mtn.png') },
+  { id: 'airtel',  name: 'Airtel',  logo: `${IMAGE_BASE_URL}/airtel.png`,    logoLocal: require('../../../assets/images/airtel.png') },
+  { id: 'glo',     name: 'Glo',     logo: `${IMAGE_BASE_URL}/glo.png`,       logoLocal: require('../../../assets/images/glo.png') },
+  { id: '9mobile', name: '9mobile', logo: `${IMAGE_BASE_URL}/ninemobile.png`,logoLocal: require('../../../assets/images/ninemobile.png') },
 ];
 
-// Map network array to match the service structure
-const NETWORK_OPTIONS = NETWORKS.map(network => ({
-  value: network.id,
-  name: network.name,
-  serviceID: network.id === 'mtn' ? 'mtn' :
-    network.id === 'airtel' ? 'airtel' :
-      network.id === 'glo' ? 'glo' : 'etisalat',
-  logo: network.logo,
-  logoLocal: network.logoLocal,
+const NETWORK_OPTIONS = NETWORKS.map(n => ({
+  value: n.id,
+  name: n.name,
+  serviceID: n.id === 'mtn' ? 'mtn' : n.id === 'airtel' ? 'airtel' : n.id === 'glo' ? 'glo' : 'etisalat',
+  logo: n.logo,
+  logoLocal: n.logoLocal,
 }));
 
-// Predefined airtime amounts
 const AIRTIME_AMOUNTS = ['100', '200', '500', '1000', '2000', '5000'];
 
-// Recent Customers Modal Component
-function RecentCustomersModal({
-  visible,
-  onClose,
-  customers,
-  loading,
-  onSelectCustomer
-}: {
-  visible: boolean;
-  onClose: () => void;
-  customers: RecentCustomer[];
-  loading: boolean;
-  onSelectCustomer: (customer: string) => void;
+function RecentCustomersModal({ visible, onClose, customers, loading, onSelectCustomer }: {
+  visible: boolean; onClose: () => void; customers: RecentCustomer[];
+  loading: boolean; onSelectCustomer: (c: string) => void;
 }) {
-  const renderCustomer = ({ item }: { item: RecentCustomer }) => (
-    <TouchableOpacity
-      style={modalStyles.customerItem}
-      onPress={() => onSelectCustomer(item.customer)}
-    >
-      <View style={modalStyles.customerIcon}>
-        <Ionicons name="person-circle-outline" size={24} color="#1F54DD" />
-      </View>
-      <View style={modalStyles.customerInfo}>
-        <Text style={modalStyles.customerPhone}>{item.customer}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-    </TouchableOpacity>
-  );
+  const { colors } = useTheme();
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={modalStyles.overlay}
-        activeOpacity={1}
-        onPressOut={onClose}
-      >
-        <View style={modalStyles.container}>
-          {/* Header */}
-          <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Recent Customers</Text>
+    <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
+      <TouchableOpacity style={[modalStyles.overlay]} activeOpacity={1} onPressOut={onClose}>
+        <View style={[modalStyles.container, { backgroundColor: colors.card }]}>
+          <View style={[modalStyles.header, { borderBottomColor: colors.separator }]}>
+            <Text style={[modalStyles.title, { color: colors.textPrimary }]}>Recent Customers</Text>
             <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
-              <Ionicons name="close" size={24} color="#64748B" />
+              <Ionicons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
+          <Text style={[modalStyles.subtitle, { color: colors.textSecondary }]}>Select a phone number from your recent purchases</Text>
 
-          {/* Subtitle */}
-          <Text style={modalStyles.subtitle}>
-            Select a phone number from your recent purchases
-          </Text>
-
-          {/* Loading State */}
           {loading ? (
             <View style={modalStyles.loadingContainer}>
-              <ActivityIndicator size="large" color="#1F54DD" />
-              <Text style={modalStyles.loadingText}>Loading recent customers...</Text>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[modalStyles.loadingText, { color: colors.textSecondary }]}>Loading recent customers...</Text>
             </View>
           ) : customers.length === 0 ? (
             <View style={modalStyles.emptyContainer}>
-              <Ionicons name="people-outline" size={48} color="#94A3B8" />
-              <Text style={modalStyles.emptyTitle}>No Recent Customers</Text>
-              <Text style={modalStyles.emptyDescription}>
-                Your recent customers will appear here after you make purchases
-              </Text>
+              <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+              <Text style={[modalStyles.emptyTitle, { color: colors.textSecondary }]}>No Recent Customers</Text>
+              <Text style={[modalStyles.emptyDescription, { color: colors.textMuted }]}>Your recent customers will appear here after you make purchases</Text>
             </View>
           ) : (
             <FlatList
               data={customers}
-              renderItem={renderCustomer}
               keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={modalStyles.listContent}
               showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={[modalStyles.customerItem, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]} onPress={() => onSelectCustomer(item.customer)}>
+                  <View style={modalStyles.customerIcon}>
+                    <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
+                  </View>
+                  <View style={modalStyles.customerInfo}>
+                    <Text style={[modalStyles.customerPhone, { color: colors.textPrimary }]}>{item.customer}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
             />
           )}
         </View>
@@ -148,859 +86,244 @@ function RecentCustomersModal({
 }
 
 export default function Airtime({ navigation }: { navigation: any }) {
-  // State
+  const { colors } = useTheme();
+
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedNetwork, setSelectedNetwork] = useState<(typeof NETWORK_OPTIONS)[0] | null>(null);
-
-  // Commission state
+  const [selectedNetwork, setSelectedNetwork] = useState<typeof NETWORK_OPTIONS[0] | null>(null);
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
-  const [commission, setCommission] = useState<number>(0);
-  const [loadingCommission, setLoadingCommission] = useState<boolean>(false);
-
-  // Recent customers state
+  const [commission, setCommission] = useState(0);
+  const [loadingCommission, setLoadingCommission] = useState(false);
   const [showRecentModal, setShowRecentModal] = useState(false);
   const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
   const [loadingRecentCustomers, setLoadingRecentCustomers] = useState(false);
 
-  // Helper functions
-  const clearFieldError = (field: string) => {
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[field];
-      return newErrors;
-    });
-  };
+  const clearFieldError = (field: string) => setErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
 
-  // Fetch commission configuration on component mount
-  useEffect(() => {
-    fetchCommissionConfig();
-  }, []);
+  useEffect(() => { fetchCommissionConfig(); }, []);
 
-  // Fetch commission configuration
   const fetchCommissionConfig = async () => {
     setLoadingCommission(true);
     try {
-      const response = await commissionService.getCommissionConfig('Airtime');
-      if (response.success && response.data) {
-        setCommissionConfig(response.data);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch commission config:', error);
-    } finally {
-      setLoadingCommission(false);
-    }
+      const r = await commissionService.getCommissionConfig('Airtime');
+      if (r.success && r.data) setCommissionConfig(r.data);
+    } catch (e) { console.error(e); } finally { setLoadingCommission(false); }
   };
 
-  // Calculate commission when amount changes
-  const calculateCommissionForAmount = (amountValue: number) => {
-    if (!commissionConfig || amountValue <= 0) {
-      setCommission(0);
-      return;
-    }
-
-    const calculatedCommission = commissionService.calculateCommission(
-      amountValue,
-      commissionConfig
-    );
-    setCommission(calculatedCommission);
+  const calculateCommission = (val: number) => {
+    if (!commissionConfig || val <= 0) { setCommission(0); return; }
+    setCommission(commissionService.calculateCommission(val, commissionConfig));
   };
 
-  // Network selection handler
-  const handleNetworkSelect = (network: typeof NETWORK_OPTIONS[0]) => {
-    setSelectedNetwork(network);
-    clearFieldError('network');
-  };
-
-  // Amount selection handler
-  const handleAmountSelect = (selectedAmount: string) => {
-    setAmount(selectedAmount);
-    setCustomAmount('');
-    clearFieldError('amount');
-
-    calculateCommissionForAmount(Number(selectedAmount));
-  };
-
-  // Custom amount input handler
+  const handleNetworkSelect = (n: typeof NETWORK_OPTIONS[0]) => { setSelectedNetwork(n); clearFieldError('network'); };
+  const handleAmountSelect = (a: string) => { setAmount(a); setCustomAmount(''); clearFieldError('amount'); calculateCommission(Number(a)); };
   const handleCustomAmountChange = (text: string) => {
-    const cleanedText = text.replace(/[^\d.]/g, '');
-
-    const parts = cleanedText.split('.');
-    if (parts.length > 2) {
-      return;
-    }
-
-    if (parts[1] && parts[1].length > 2) {
-      return;
-    }
-
-    setCustomAmount(cleanedText);
-
-    if (cleanedText) {
-      setAmount(cleanedText);
-      calculateCommissionForAmount(Number(cleanedText));
-    } else {
-      setAmount('');
-      setCommission(0);
-    }
-
+    const cleaned = text.replace(/[^\d.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2 || (parts[1] && parts[1].length > 2)) return;
+    setCustomAmount(cleaned);
+    setAmount(cleaned || '');
+    calculateCommission(cleaned ? Number(cleaned) : 0);
     clearFieldError('amount');
   };
+  const handlePhoneChange = (text: string) => { setPhone(text); if (errors.phone) clearFieldError('phone'); };
 
-  // Phone number change handler
-  const handlePhoneChange = (text: string) => {
-    setPhone(text);
-    if (errors.phone) {
-      clearFieldError('phone');
-    }
-  };
-
-  // Fetch recent customers
   const fetchRecentCustomers = async () => {
     setLoadingRecentCustomers(true);
     try {
-      const response = await walletService.getRecentCustomers({
-        type: 'Airtime',
-        limit: 15
-      });
-      
-      if (response.success) {
-        setRecentCustomers(response.data);
-        setShowRecentModal(true);
-      } else {
-        showError('Error', response.message || 'Failed to fetch recent customers');
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch recent customers:', error);
-      showError('Error', 'Failed to load recent customers');
-    } finally {
-      setLoadingRecentCustomers(false);
-    }
+      const r = await walletService.getRecentCustomers({ type: 'Airtime', limit: 15 });
+      if (r.success) { setRecentCustomers(r.data); setShowRecentModal(true); }
+      else showError('Error', r.message || 'Failed to fetch recent customers');
+    } catch (e) { showError('Error', 'Failed to load recent customers'); }
+    finally { setLoadingRecentCustomers(false); }
   };
 
-  // Handle customer selection from recent
-  const handleSelectCustomer = (customerPhone: string) => {
-    setPhone(customerPhone);
-    setShowRecentModal(false);
-  };
+  const handleSelectCustomer = (p: string) => { setPhone(p); setShowRecentModal(false); };
 
-  // Form validation
   const validateForm = () => {
-    const validation = AirtimeValidators.validateAirtimeForm({
-      phone,
-      network: selectedNetwork?.value || null,
-      amount: amount || null
-    });
-
-    if (!validation.isValid) {
-      setErrors(validation.errors);
-
-      const firstError = Object.values(validation.errors)[0];
-      if (firstError) {
-        showError('Validation Error', firstError);
-      }
-
-      return false;
-    }
-
+    const v = AirtimeValidators.validateAirtimeForm({ phone, network: selectedNetwork?.value || null, amount: amount || null });
+    if (!v.isValid) { setErrors(v.errors); const first = Object.values(v.errors)[0]; if (first) showError('Validation Error', first); return false; }
     return true;
   };
 
-  // Show confirmation modal
   const handleProceed = () => {
-    if (!validateForm()) {
-      return;
-    }
-    
-    if (!selectedNetwork) {
-      showError('Error', 'Please select a network');
-      return;
-    }
-
+    if (!validateForm() || !selectedNetwork) { if (!selectedNetwork) showError('Error', 'Please select a network'); return; }
     setShowConfirmModal(true);
   };
 
-  // Purchase airtime (called from confirmation modal)
   const purchaseAirtime = async () => {
-    if (!selectedNetwork) {
-      showError('Error', 'Please select a network');
-      return { success: false };
-    }
-
+    if (!selectedNetwork) return { success: false };
     setIsSubmitting(true);
-
     try {
-      const payload = {
-        serviceID: selectedNetwork.serviceID,
-        amount: parseFloat(amount),
-        customer: phone,
-        type: 'Airtime',
-        provider_logo: selectedNetwork.logo,
-        name: selectedNetwork.name,
-        service_type: 'Airtime',
-        billersCode: phone,
-        variation_code: 'default',
-        phone: phone,
-        network: selectedNetwork.value,
-        network_name: selectedNetwork.name,
-      };
-
-      console.log('Airtime purchase payload:', payload);
-
-      const response = await billService.purchaseData(payload);
-
-      if (response.success) {
-        showSuccess('Success', response.message || 'Airtime purchase successful!');
-        
-        // Reset form
-        setPhone('');
-        setAmount('');
-        setCustomAmount('');
-        setSelectedNetwork(null);
-        setCommission(0);
-        
-        setShowConfirmModal(false);
-        navigation.navigate('Tabs');
-        return { success: true, data: response.data };
-      } else {
-        showError('Error', response.message || 'Airtime purchase failed');
-        return { success: false };
-      }
+      const payload = { serviceID: selectedNetwork.serviceID, amount: parseFloat(amount), customer: phone, type: 'Airtime', provider_logo: selectedNetwork.logo, name: selectedNetwork.name, service_type: 'Airtime', billersCode: phone, variation_code: 'default', phone, network: selectedNetwork.value, network_name: selectedNetwork.name };
+      const r = await billService.purchaseData(payload);
+      if (r.success) {
+        showSuccess('Success', r.message || 'Airtime purchase successful!');
+        setPhone(''); setAmount(''); setCustomAmount(''); setSelectedNetwork(null); setCommission(0);
+        setShowConfirmModal(false); navigation.navigate('Tabs');
+        return { success: true, data: r.data };
+      } else { showError('Error', r.message || 'Airtime purchase failed'); return { success: false }; }
     } catch (error: any) {
-      console.error('Airtime purchase error:', error);
-
-      let errorMessage = 'Airtime purchase failed. Please try again.';
-
-      if (error.errors) {
-        const apiErrors: Record<string, string> = {};
-        Object.entries(error.errors).forEach(([field, messages]) => {
-          if (Array.isArray(messages) && messages.length > 0) {
-            apiErrors[field] = messages[0];
-          }
-        });
-        setErrors(apiErrors);
-
-        const firstError = Object.values(apiErrors)[0];
-        if (firstError) {
-          showError('Validation Error', firstError);
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-        showError('Error', errorMessage);
-      } else {
-        showError('Error', errorMessage);
-      }
-
-      setShowConfirmModal(false);
-      return { success: false, message: errorMessage };
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (error.errors) { const apiErrors: Record<string, string> = {}; Object.entries(error.errors).forEach(([f, m]) => { if (Array.isArray(m) && m.length) apiErrors[f] = m[0]; }); setErrors(apiErrors); const first = Object.values(apiErrors)[0]; if (first) showError('Validation Error', first); }
+      else showError('Error', error.message || 'Airtime purchase failed. Please try again.');
+      setShowConfirmModal(false); return { success: false };
+    } finally { setIsSubmitting(false); }
   };
 
-  // Prepare details for confirmation modal
   const getConfirmationDetails = (): PurchaseDetail[] => {
     const details: PurchaseDetail[] = [];
-    
-    if (amount) {
-      details.push({
-        label: 'Amount',
-        value: `₦${formatAmount(amount)}`,
-        icon: 'cash-outline',
-        iconColor: '#64748B',
-        valueColor: '#10B981',
-      });
-    }
-    
-    if (phone) {
-      details.push({
-        label: 'Phone Number',
-        value: phone,
-        icon: 'call-outline',
-        iconColor: '#64748B',
-      });
-    }
-    
+    if (amount) details.push({ label: 'Amount', value: `₦${formatAmount(amount)}`, icon: 'cash-outline', iconColor: '#64748B', valueColor: '#10B981' });
+    if (phone) details.push({ label: 'Phone Number', value: phone, icon: 'call-outline', iconColor: '#64748B' });
     return details;
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.separator }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title}>Buy Airtime</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Buy Airtime</Text>
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Network Selection Section */}
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Network Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Network</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Select Network</Text>
           <View style={styles.networksContainer}>
             {NETWORK_OPTIONS.map((network) => (
-              <TouchableOpacity
-                key={network.value}
-                style={[
-                  styles.networkCard,
-                  selectedNetwork?.value === network.value && styles.networkCardSelected
-                ]}
-                onPress={() => handleNetworkSelect(network)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.networkLogoContainer}>
-                  <Image
-                    source={network.logoLocal}
-                    style={styles.networkLogo}
-                    resizeMode="contain"
-                  />
+              <TouchableOpacity key={network.value} style={[styles.networkCard, { backgroundColor: colors.backgroundSecondary }, selectedNetwork?.value === network.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight }]} onPress={() => handleNetworkSelect(network)} activeOpacity={0.7}>
+                <View style={[styles.networkLogoContainer, { backgroundColor: colors.card }]}>
+                  <Image source={network.logoLocal} style={styles.networkLogo} resizeMode="contain" />
                 </View>
-                <Text style={[
-                  styles.networkName,
-                  selectedNetwork?.value === network.value && styles.networkNameSelected
-                ]} numberOfLines={1}>
-                  {network.name}
-                </Text>
+                <Text style={[styles.networkName, { color: colors.textSecondary }, selectedNetwork?.value === network.value && { color: colors.primary, fontFamily: 'Poppins-SemiBold' }]} numberOfLines={1}>{network.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          {errors.network && (
-            <Text style={styles.errorText}>{errors.network}</Text>
-          )}
+          {errors.network && <Text style={styles.errorText}>{errors.network}</Text>}
         </View>
 
-        {/* Phone Number Input */}
+        {/* Phone Number */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Phone Number</Text>
-            <TouchableOpacity 
-              onPress={fetchRecentCustomers}
-              disabled={loadingRecentCustomers}
-            >
-              <Text style={styles.beneficiaryLink}>
-                {loadingRecentCustomers ? 'Loading...' : 'Choose from recent'}
-              </Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Phone Number</Text>
+            <TouchableOpacity onPress={fetchRecentCustomers} disabled={loadingRecentCustomers}>
+              <Text style={[styles.beneficiaryLink, { color: colors.primary }]}>{loadingRecentCustomers ? 'Loading...' : 'Choose from recent'}</Text>
             </TouchableOpacity>
           </View>
-          <View style={[
-            styles.inputContainer,
-            errors.phone && styles.inputContainerError
-          ]}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 11-digit phone number"
-              value={phone}
-              onChangeText={handlePhoneChange}
-              keyboardType="phone-pad"
-              maxLength={11}
-              placeholderTextColor="#94A3B8"
-            />
-            <TouchableOpacity 
-              style={styles.contactButton} 
-              onPress={fetchRecentCustomers}
-              disabled={loadingRecentCustomers}
-            >
-              {loadingRecentCustomers ? (
-                <ActivityIndicator size="small" color="#64748B" />
-              ) : (
-                <Ionicons name="people-outline" size={20} color="#64748B" />
-              )}
+          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundSecondary, borderColor: errors.phone ? colors.error : colors.divider }]}>
+            <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="Enter 11-digit phone number" value={phone} onChangeText={handlePhoneChange} keyboardType="phone-pad" maxLength={11} placeholderTextColor={colors.textMuted} />
+            <TouchableOpacity style={styles.contactButton} onPress={fetchRecentCustomers} disabled={loadingRecentCustomers}>
+              {loadingRecentCustomers ? <ActivityIndicator size="small" color={colors.textSecondary} /> : <Ionicons name="people-outline" size={20} color={colors.textSecondary} />}
             </TouchableOpacity>
           </View>
-          {errors.phone && (
-            <Text style={styles.errorText}>{errors.phone}</Text>
-          )}
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
         </View>
 
-        {/* Amount Selection */}
+        {/* Amount */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Amount</Text>
-
-          {/* Custom amount input */}
-          <View style={[
-            styles.inputContainer,
-            errors.amount && styles.inputContainerError
-          ]}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter custom amount"
-              value={customAmount}
-              onChangeText={handleCustomAmountChange}
-              keyboardType="decimal-pad"
-              placeholderTextColor="#94A3B8"
-            />
-            <Text style={styles.currencySymbol}>₦</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Amount</Text>
+          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundSecondary, borderColor: errors.amount ? colors.error : colors.divider }]}>
+            <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="Enter custom amount" value={customAmount} onChangeText={handleCustomAmountChange} keyboardType="decimal-pad" placeholderTextColor={colors.textMuted} />
+            <Text style={[styles.currencySymbol, { color: colors.textSecondary }]}>₦</Text>
           </View>
 
-          {/* Quick select amounts */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.amountsScroll}
-            contentContainerStyle={styles.amountsScrollContent}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.amountsScroll} contentContainerStyle={styles.amountsScrollContent}>
             {AIRTIME_AMOUNTS.map((amt) => (
-              <TouchableOpacity
-                key={amt}
-                style={[
-                  styles.amountChip,
-                  amount === amt && styles.amountChipSelected
-                ]}
-                onPress={() => handleAmountSelect(amt)}
-              >
-                <Text style={[
-                  styles.amountChipText,
-                  amount === amt && styles.amountChipTextSelected
-                ]}>
-                  ₦{formatAmount(amt)}
-                </Text>
+              <TouchableOpacity key={amt} style={[styles.amountChip, { backgroundColor: colors.card, borderColor: colors.divider }, amount === amt && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => handleAmountSelect(amt)}>
+                <Text style={[styles.amountChipText, { color: colors.textSecondary }, amount === amt && { color: '#FFFFFF' }]}>₦{formatAmount(amt)}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
+          {errors.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
 
-          {errors.amount && (
-            <Text style={styles.errorText}>{errors.amount}</Text>
-          )}
-
-          {/* Amount Display with Commission */}
           {amount && parseFloat(amount) > 0 && (
-            <View style={styles.amountDisplayContainer}>
+            <View style={[styles.amountDisplayContainer, { backgroundColor: colors.backgroundSecondary }]}>
               <View style={styles.amountDisplay}>
-                <Text style={styles.amountDisplayLabel}>Amount to pay:</Text>
+                <Text style={[styles.amountDisplayLabel, { color: colors.textSecondary }]}>Amount to pay:</Text>
                 <Text style={styles.amountDisplayValue}>₦{formatAmount(amount)}</Text>
               </View>
-
               {commission > 0 && (
-                <View style={styles.commissionContainer}>
-                  <Text style={styles.commissionText}>
-                    You will earn: ₦{formatAmount(commission)}
-                  </Text>
-                  {loadingCommission && (
-                    <ActivityIndicator size="small" color="#10B981" style={styles.commissionLoader} />
-                  )}
+                <View style={[styles.commissionContainer, { borderTopColor: colors.divider }]}>
+                  <Text style={styles.commissionText}>You will earn: ₦{formatAmount(commission)}</Text>
+                  {loadingCommission && <ActivityIndicator size="small" color="#10B981" style={styles.commissionLoader} />}
                 </View>
               )}
             </View>
           )}
         </View>
 
-        {/* Proceed Button */}
-        <TouchableOpacity
-          style={[
-            styles.proceedButton,
-            (isSubmitting || !amount || !selectedNetwork || !phone) && styles.proceedButtonDisabled
-          ]}
-          onPress={handleProceed}
-          disabled={isSubmitting || !amount || !selectedNetwork || !phone}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.proceedButtonText}>
-              {!amount || !selectedNetwork || !phone ? 'Fill all fields' : 'Proceed to Buy'}
-            </Text>
-          )}
+        <TouchableOpacity style={[styles.proceedButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, (isSubmitting || !amount || !selectedNetwork || !phone) && styles.proceedButtonDisabled]} onPress={handleProceed} disabled={isSubmitting || !amount || !selectedNetwork || !phone}>
+          {isSubmitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.proceedButtonText}>{!amount || !selectedNetwork || !phone ? 'Fill all fields' : 'Proceed to Buy'}</Text>}
         </TouchableOpacity>
 
         <View style={{ height: 320 }} />
       </ScrollView>
 
-      {/* Recent Customers Modal */}
-      <RecentCustomersModal
-        visible={showRecentModal}
-        onClose={() => setShowRecentModal(false)}
-        customers={recentCustomers}
-        loading={loadingRecentCustomers}
-        onSelectCustomer={handleSelectCustomer}
-      />
-
-      {/* Confirmation Modal */}
-      <ConfirmPurchaseModal
-        visible={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={purchaseAirtime}
-        title="Confirm Airtime Purchase"
-        providerLogo={selectedNetwork?.logoLocal}
-        providerName={selectedNetwork?.name}
-        details={getConfirmationDetails()}
-        amount={parseFloat(amount) || 0}
-        commission={commission}
-        loading={isSubmitting}
-        confirmButtonText="Buy Airtime"
-        infoNote="Airtime will be delivered instantly after successful payment"
-      />
+      <RecentCustomersModal visible={showRecentModal} onClose={() => setShowRecentModal(false)} customers={recentCustomers} loading={loadingRecentCustomers} onSelectCustomer={handleSelectCustomer} />
+      <ConfirmPurchaseModal visible={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={purchaseAirtime} title="Confirm Airtime Purchase" providerLogo={selectedNetwork?.logoLocal} providerName={selectedNetwork?.name} details={getConfirmationDetails()} amount={parseFloat(amount) || 0} commission={commission} loading={isSubmitting} confirmButtonText="Buy Airtime" infoNote="Airtime will be delivered instantly after successful payment" />
     </View>
   );
 }
 
 const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-    minHeight: 400,
-    maxHeight: '80%',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginBottom: 24,
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  customerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  customerIcon: {
-    marginRight: 12,
-  },
-  customerInfo: {
-    flex: 1,
-  },
-  customerPhone: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginTop: 12,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#64748B',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyDescription: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#94A3B8',
-    textAlign: 'center',
-    maxWidth: 300,
-    lineHeight: 20,
-  },
+  overlay:          { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  container:        { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, minHeight: 400, maxHeight: '80%' },
+  header:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, borderBottomWidth: 1, paddingBottom: 12 },
+  title:            { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  closeButton:      { padding: 4 },
+  subtitle:         { fontSize: 14, fontFamily: 'Poppins-Regular', marginBottom: 24, marginTop: 8 },
+  listContent:      { paddingBottom: 20 },
+  customerItem:     { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 16, marginBottom: 8, borderWidth: 1 },
+  customerIcon:     { marginRight: 12 },
+  customerInfo:     { flex: 1 },
+  customerPhone:    { fontSize: 16, fontFamily: 'Poppins-Medium' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+  loadingText:      { fontSize: 14, fontFamily: 'Poppins-Regular', marginTop: 12 },
+  emptyContainer:   { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+  emptyTitle:       { fontSize: 18, fontFamily: 'Poppins-SemiBold', marginTop: 16, marginBottom: 8 },
+  emptyDescription: { fontSize: 14, fontFamily: 'Poppins-Regular', textAlign: 'center', maxWidth: 300, lineHeight: 20 },
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  backButton: {
-    padding: 4,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
-  },
-  placeholder: {
-    width: 32,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#0F172A',
-    marginBottom: 16,
-  },
-  beneficiaryLink: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#1F54DD',
-  },
-  networksContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  networkCard: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    width: 80,
-    height: 90,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  networkCardSelected: {
-    borderColor: '#1F54DD',
-    backgroundColor: '#F1F6FF',
-  },
-  networkLogoContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  networkLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  networkName: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-    textAlign: 'center',
-  },
-  networkNameSelected: {
-    color: '#1F54DD',
-    fontFamily: 'Poppins-SemiBold',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  inputContainerError: {
-    borderColor: '#EF4444',
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: '#0F172A',
-  },
-  contactButton: {
-    padding: 8,
-  },
-  currencySymbol: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-    marginLeft: 8,
-  },
-  amountsScroll: {
-    marginHorizontal: -20,
-    marginTop: 12,
-  },
-  amountsScrollContent: {
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  amountChip: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minWidth: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  amountChipSelected: {
-    backgroundColor: '#1F54DD',
-    borderColor: '#1F54DD',
-  },
-  amountChipText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-  },
-  amountChipTextSelected: {
-    color: '#FFFFFF',
-  },
-  amountDisplayContainer: {
-    marginTop: 16,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 16,
-  },
-  amountDisplay: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  amountDisplayLabel: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#64748B',
-  },
-  amountDisplayValue: {
-    fontSize: 18,
-    fontFamily: 'Poppins-Bold',
-    color: '#10B981',
-  },
-  commissionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  commissionText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#10B981',
-  },
-  commissionLoader: {
-    marginLeft: 8,
-  },
-  proceedButton: {
-    backgroundColor: '#1F54DD',
-    marginHorizontal: 20,
-    borderRadius: 12,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#1F54DD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  proceedButtonDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.6,
-  },
-  proceedButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    marginTop: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    fontFamily: 'Poppins-Regular',
-    color: '#64748B',
-    marginTop: 8,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  infoSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F1F6FF',
-    borderRadius: 12,
-    marginHorizontal: 20,
-    marginTop: 16,
-  },
-  networkValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  networkLogoSmall: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-    borderRadius: 10,
-  },
-  networkValueText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#0F172A',
-  },
+  container:              { flex: 1 },
+  header:                 { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, borderBottomWidth: 1 },
+  backButton:             { padding: 4 },
+  title:                  { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  placeholder:            { width: 32 },
+  scrollView:             { flex: 1 },
+  scrollContent:          { paddingBottom: 40 },
+  section:                { paddingHorizontal: 20, marginBottom: 24 },
+  sectionHeader:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle:           { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 16 },
+  beneficiaryLink:        { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  networksContainer:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  networkCard:            { alignItems: 'center', borderRadius: 12, padding: 12, width: 80, height: 90, borderWidth: 2, borderColor: 'transparent' },
+  networkLogoContainer:   { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  networkLogo:            { width: 36, height: 36, borderRadius: 18 },
+  networkName:            { fontSize: 12, fontFamily: 'Poppins-Medium', textAlign: 'center' },
+  inputContainer:         { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, height: 56, borderWidth: 1 },
+  input:                  { flex: 1, fontSize: 16, fontFamily: 'Poppins-Regular' },
+  contactButton:          { padding: 8 },
+  currencySymbol:         { fontSize: 16, fontFamily: 'Poppins-Medium', marginLeft: 8 },
+  amountsScroll:          { marginHorizontal: -20, marginTop: 12 },
+  amountsScrollContent:   { paddingHorizontal: 20, gap: 8 },
+  amountChip:             { borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, minWidth: 80, alignItems: 'center', justifyContent: 'center' },
+  amountChipText:         { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  amountDisplayContainer: { marginTop: 16, borderRadius: 12, padding: 16 },
+  amountDisplay:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  amountDisplayLabel:     { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  amountDisplayValue:     { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#10B981' },
+  commissionContainer:    { flexDirection: 'row', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTopWidth: 1 },
+  commissionText:         { fontSize: 14, fontFamily: 'Poppins-Medium', color: '#10B981' },
+  commissionLoader:       { marginLeft: 8 },
+  proceedButton:          { marginHorizontal: 20, borderRadius: 12, height: 56, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, marginTop: 8, marginBottom: 24 },
+  proceedButtonDisabled:  { backgroundColor: '#94A3B8', opacity: 0.6 },
+  proceedButtonText:      { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+  errorText:              { color: '#EF4444', fontSize: 12, fontFamily: 'Poppins-Regular', marginTop: 8 },
 });

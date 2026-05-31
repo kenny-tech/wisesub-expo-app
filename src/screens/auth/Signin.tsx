@@ -1,192 +1,308 @@
+/**
+ * Signin.tsx — production-ready
+ *
+ * Biometric flow:
+ *  1. Check token exists in SecureStore → show fingerprint/Face ID icon
+ *  2. On tap → prompt biometric → on success → read token → dispatch loginWithBiometric
+ *  3. If token missing/revoked → clear biometric flag → show message to sign in with password
+ */
+
 import { showError } from '@/src/utils/toast';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as Device from 'expo-device';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
 import AuthHeader from '../../components/auth/AuthHeader';
 import FormInput from '../../components/auth/FormInput';
 import PasswordInput from '../../components/auth/PasswordInput';
+import { useBiometrics } from '../../hooks/useBiometrics';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { clearError, loginUser } from '../../redux/slices/authSlice';
-import styles from '../../styles/authStyles';
+import {
+  clearError,
+  loginUser,
+  loginWithBiometric,
+} from '../../redux/slices/authSlice';
+import { useTheme } from '../../theme/ThemeContext';
 import { APP_CONSTANTS } from '../../utils/constants';
 import { AuthValidators } from '../../utils/validators/authValidators';
 
 const SigninScreen: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { isLoading, error } = useAppSelector((s) => s.auth);
+  const { colors } = useTheme();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const {
+    isBiometricAvailable,
+    isBiometricEnabled,
+    biometricType,
+    promptBiometric,
+    getStoredToken,
+    clearBiometricOnTokenRevoke,
+  } = useBiometrics();
 
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deviceId, setDeviceId] = useState('');
 
+  const styles = makeStyles(colors);
+
+  // ── Init ───────────────────────────────────────────────────────────────────
   useEffect(() => {
-    getDeviceId();
-    loadSavedEmail();
+    (async () => {
+      try {
+        setDeviceId(Device.osBuildId ?? Device.modelId ?? 'mobile-device');
+      } catch (_) { }
+      try {
+        const saved = await AsyncStorage.getItem('userEmail');
+        if (saved) setFormData((p) => ({ ...p, email: saved }));
+      } catch (_) { }
+    })();
   }, []);
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        dispatch(clearError());
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
+    if (!error) return;
+    const t = setTimeout(() => dispatch(clearError()), 10_000);
+    return () => clearTimeout(t);
   }, [error, dispatch]);
 
-  const getDeviceId = async () => {
-    try {
-      const deviceId = Device.osBuildId || Device.modelId || 'mobile-device';
-      setDeviceId(deviceId);
-    } catch (error) {
-      console.log('Error getting device ID:', error);
-    }
-  };
-
-  const loadSavedEmail = async () => {
-    try {
-      const savedEmail = await AsyncStorage.getItem('userEmail');
-      if (savedEmail) {
-        setFormData(prev => ({ ...prev, email: savedEmail }));
-      }
-    } catch (error) {
-      console.log('Error loading saved email:', error);
-    }
-  };
-
-  const saveEmail = async (email: string) => {
-    try {
-      await AsyncStorage.setItem('userEmail', email);
-    } catch (error) {
-      console.log('Error saving email:', error);
-    }
-  };
-
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
+    setFormData((p) => ({ ...p, [field]: value }));
+    if (errors[field]) setErrors((p) => ({ ...p, [field]: '' }));
   };
 
-  const validateForm = () => {
+  // ── Password login (regular Sign In button) ────────────────────────────────
+  const handleSignin = async () => {
     const validation = AuthValidators.validateLogin(formData);
     setErrors(validation.errors);
-    return validation.isValid;
-  };
-
-  const handleSignin = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validation.isValid) return;
 
     try {
-      const payload = {
+      await dispatch(loginUser({
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
         channel: APP_CONSTANTS.CHANNELS.MOBILE,
         device_id: deviceId,
-      };
+      })).unwrap();
 
-      await dispatch(loginUser(payload)).unwrap();
-
-      // Save email after successful login
-      await saveEmail(formData.email.toLowerCase().trim());
+      // Persist email for pre-fill on next launch (non-sensitive)
+      await AsyncStorage.setItem('userEmail', formData.email.toLowerCase().trim());
 
       navigation.navigate('Tabs');
-    } catch (error: any) {
-      console.log('Login error:', error);
-      showError('Error', error);
+    } catch (err: any) {
+      console.log(err);
+      showError('Sign In Failed', err ?? 'Please check your credentials.');
     }
   };
 
+  // ── Biometric login (triggered by fingerprint icon) ────────────────────────
+  const handleBiometricLogin = async () => {
+    try {
+      // Step 1: ensure a token exists before bothering the user
+      const token = await getStoredToken();
+      if (!token) {
+        await clearBiometricOnTokenRevoke();
+        Alert.alert(
+          'Sign In Required',
+          'Your session has expired. Please sign in with your password to re-enable biometric login.',
+        );
+        return;
+      }
+
+      // Step 2: show biometric prompt
+      const authenticated = await promptBiometric(`Sign in with ${biometricType}`);
+      if (!authenticated) return; // user cancelled or failed
+
+      // Step 3: restore session using the stored token
+      await dispatch(loginWithBiometric(token)).unwrap();
+
+      navigation.navigate('Tabs');
+    } catch (err: any) {
+      if (err?.message === 'NO_PROFILE') {
+        await clearBiometricOnTokenRevoke();
+        Alert.alert(
+          'Sign In Required',
+          'Your session data was cleared. Please sign in with your password.',
+        );
+        return;
+      }
+      showError('Biometric Login Failed', err?.message ?? 'Please try again.');
+    }
+  };
+
+  // Show biometric icon only when hardware is available AND user opted in
+  const showBiometricIcon = isBiometricAvailable && isBiometricEnabled;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <AuthHeader
-          title="Welcome Back"
-          subtitle="Sign in to your account"
-          showBackButton={false}
-          logo
-        />
-
-        <View style={styles.formContainer}>
-          {/* Email Input - No label */}
-          <FormInput
-            placeholder="Enter your email"
-            value={formData.email}
-            onChangeText={(text) => handleInputChange('email', text)}
-            error={errors.email}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            showLabel={false}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <AuthHeader
+            title="Welcome Back"
+            subtitle="Sign in to your account"
+            showBackButton={false}
+            logo
           />
 
-          {/* Password Input - No label */}
-          <PasswordInput
-            placeholder="Enter your password"
-            value={formData.password}
-            onChangeText={(text) => handleInputChange('password', text)}
-            error={errors.password}
-            showLabel={false}
-          />
+          <View style={styles.formContainer}>
+            <FormInput
+              placeholder="Enter your email"
+              value={formData.email}
+              onChangeText={(t) => handleInputChange('email', t)}
+              error={errors.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              showLabel={false}
+            />
 
-          <TouchableOpacity
-            style={styles.forgotPasswordContainer}
-            onPress={() => navigation.navigate('ForgotPassword')}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
+            <PasswordInput
+              placeholder="Enter your password"
+              value={formData.password}
+              onChangeText={(t) => handleInputChange('password', t)}
+              error={errors.password}
+              showLabel={false}
+            />
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TouchableOpacity
+              style={styles.forgotPasswordContainer}
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSignin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={styles.linkContainer}
-            onPress={() => navigation.navigate('Signup')}
-          >
-            <Text style={styles.linkText}>
-              Don't have an account?{' '}
-              <Text style={styles.link}>Sign Up</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {/* Regular Sign In button (password) */}
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleSignin}
+              disabled={isLoading}
+            >
+              {isLoading
+                ? <ActivityIndicator size="small" color="#FFFFFF" />
+                : <Text style={styles.buttonText}>Sign In</Text>}
+            </TouchableOpacity>
+
+            {/* BIG, CENTRALIZED, SPACED FINGERPRINT ICON */}
+            <View style={styles.biometricIconContainer}>
+              <TouchableOpacity
+                style={styles.fingerprintCircle}
+                onPress={showBiometricIcon ? handleBiometricLogin : undefined}
+                disabled={!showBiometricIcon || isLoading}
+                activeOpacity={showBiometricIcon ? 0.7 : 1}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="large" color={colors.primary} />
+                ) : (
+                  <Ionicons
+                    name={
+                      showBiometricIcon && biometricType === 'Face ID'
+                        ? 'scan-outline'
+                        : 'finger-print-outline'
+                    }
+                    size={80}
+                    color={showBiometricIcon ? colors.primary : colors.disabled}
+                  />
+                )}
+              </TouchableOpacity>
+              {!showBiometricIcon && (
+                <Text style={styles.biometricUnavailableText}>
+                  Biometric login is not set up or has been cleared. Please sign in and enable it from your profile.
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.linkContainer}
+              onPress={() => navigation.navigate('Signup')}
+            >
+              <Text style={styles.linkText}>
+                Don't have an account?{' '}
+                <Text style={styles.link}>Sign Up</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    scrollContent: { flexGrow: 1 },
+    formContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 20, paddingTop: 20 },
+
+    // Regular password button (unchanged)
+    button: {
+      width: '100%', maxWidth: 320, height: 48,
+      backgroundColor: colors.primary,
+      alignItems: 'center', justifyContent: 'center',
+      borderRadius: 6, marginTop: 20,
+    },
+    buttonDisabled: { opacity: 0.6 },
+    buttonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+
+    // Big fingerprint icon container
+    biometricIconContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: 30,
+      width: '100%',
+    },
+    fingerprintCircle: {
+      width: 130,
+      height: 130,
+      borderRadius: 65,
+      backgroundColor: colors.primaryLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    biometricUnavailableText: {
+      marginTop: 12,
+      fontSize: 13,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontFamily: 'Poppins-Regular',
+    },
+
+    forgotPasswordContainer: {
+      width: '100%', maxWidth: 320,
+      alignItems: 'flex-end', marginTop: 8, marginBottom: 20,
+    },
+    forgotPasswordText: { color: colors.primary, fontSize: 14, fontFamily: 'Poppins-Regular' },
+
+    errorText: {
+      color: colors.error, fontSize: 14, fontFamily: 'Poppins-Regular',
+      textAlign: 'center', marginBottom: 16,
+    },
+    linkContainer: { marginTop: 4 },
+    linkText: { fontSize: 14, color: colors.textSecondary, fontFamily: 'Poppins-Regular' },
+    link: { color: colors.primary, fontFamily: 'Poppins-SemiBold' },
+  });
 
 export default SigninScreen;
