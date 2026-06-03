@@ -76,7 +76,7 @@ const AWUF_NETWORK_OPTIONS = [
     originalNetwork: 'mtn',
     logo: `${IMAGE_BASE_URL}/mtn.png`,
     logoLocal: require('../../../assets/images/mtn.png'),
-    providerCode: 'mtn-sme',
+    providerCode: 'mtn-awuf-data',
     serviceID: null,
     isAwuf: true,
   },
@@ -86,7 +86,7 @@ const AWUF_NETWORK_OPTIONS = [
     originalNetwork: 'airtel',
     logo: `${IMAGE_BASE_URL}/airtel.png`,
     logoLocal: require('../../../assets/images/airtel.png'),
-    providerCode: 'airtel-sme-cg',
+    providerCode: 'airtel-awuf-data',
     serviceID: null,
     isAwuf: true,
   },
@@ -96,7 +96,7 @@ const AWUF_NETWORK_OPTIONS = [
     originalNetwork: 'glo',
     logo: `${IMAGE_BASE_URL}/glo.png`,
     logoLocal: require('../../../assets/images/glo.png'),
-    providerCode: 'glo-gifting',
+    providerCode: 'gloawufdata',
     serviceID: null,
     isAwuf: true,
   },
@@ -764,7 +764,7 @@ export default function Data({ navigation }: { navigation: any }) {
             </View>
 
             {/* Show commission only for VTPass plans */}
-            {!isAwuf && commission > 0 && (
+            {/* {!isAwuf && commission > 0 && (
               <View style={styles.commissionContainer}>
                 <Text style={[styles.commissionText, { color: '#10B981' }]}>
                   You will earn: ₦{formatAmount(commission)}
@@ -773,7 +773,7 @@ export default function Data({ navigation }: { navigation: any }) {
                   <ActivityIndicator size="small" color="#10B981" style={styles.commissionLoader} />
                 )}
               </View>
-            )}
+            )} */}
           </View>
         )}
 

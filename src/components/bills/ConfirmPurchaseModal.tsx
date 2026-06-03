@@ -91,12 +91,12 @@ export const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({
               <Text style={[styles.amountValue, { color: colors.textPrimary }]}>₦{formatAmount(amount)}</Text>
             </View>
 
-            {commission > 0 && (
+            {/* {commission > 0 && (
               <View style={styles.commissionDetailRow}>
                 <Text style={styles.commissionLabel}>You Earn</Text>
                 <Text style={styles.commissionValue}>₦{formatAmount(commission)}</Text>
               </View>
-            )}
+            )} */}
 
             {showTotal && (
               <View style={[styles.totalDetailRow, { borderTopColor: colors.separator }]}>
