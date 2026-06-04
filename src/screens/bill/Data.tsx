@@ -617,6 +617,38 @@ export default function Data({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Select Network</Text>
 
+          {/* Regular Networks Row */}
+          <Text style={[styles.subSectionTitle, { color: colors.textSecondary, marginTop: 16 }]}>Regular Plans (Discounted)</Text>
+          <View style={styles.networksRow}>
+            {REGULAR_NETWORK_OPTIONS.map((network) => (
+              <TouchableOpacity
+                key={network.value}
+                style={[
+                  styles.networkCard,
+                  { backgroundColor: colors.backgroundSecondary },
+                  selectedNetwork?.value === network.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
+                ]}
+                onPress={() => handleNetworkSelect(network)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.networkLogoContainer, { backgroundColor: colors.card }]}>
+                  <Image
+                    source={network.logoLocal}
+                    style={styles.networkLogo}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={[
+                  styles.networkName,
+                  { color: colors.textSecondary },
+                  selectedNetwork?.value === network.value && { color: colors.primary, fontFamily: 'Poppins-SemiBold' }
+                ]} numberOfLines={1}>
+                  {network.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           {/* AWUF Networks Row */}
           <Text style={[styles.subSectionTitle, { color: colors.textSecondary }]}>AWUF Plans</Text>
           <View style={styles.networksRow}>
@@ -648,38 +680,6 @@ export default function Data({ navigation }: { navigation: any }) {
                 <View style={styles.awufBadge}>
                   <Text style={styles.awufBadgeText}>AWUF</Text>
                 </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Regular Networks Row */}
-          <Text style={[styles.subSectionTitle, { color: colors.textSecondary, marginTop: 16 }]}>Regular Plans</Text>
-          <View style={styles.networksRow}>
-            {REGULAR_NETWORK_OPTIONS.map((network) => (
-              <TouchableOpacity
-                key={network.value}
-                style={[
-                  styles.networkCard,
-                  { backgroundColor: colors.backgroundSecondary },
-                  selectedNetwork?.value === network.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
-                ]}
-                onPress={() => handleNetworkSelect(network)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.networkLogoContainer, { backgroundColor: colors.card }]}>
-                  <Image
-                    source={network.logoLocal}
-                    style={styles.networkLogo}
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text style={[
-                  styles.networkName,
-                  { color: colors.textSecondary },
-                  selectedNetwork?.value === network.value && { color: colors.primary, fontFamily: 'Poppins-SemiBold' }
-                ]} numberOfLines={1}>
-                  {network.name}
-                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -839,6 +839,12 @@ export default function Data({ navigation }: { navigation: any }) {
             </Text>
           )}
         </TouchableOpacity>
+        {isAwuf && (
+          <View style={styles.infoContainer}>
+            <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
+            <Text style={styles.infoText}>Dial *323*4# or *323*1# to check balance.</Text>
+          </View>
+        )}
 
         <View style={{ height: 320 }} />
       </ScrollView>
@@ -896,7 +902,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 12 },
   subSectionTitle: { fontSize: 14, fontFamily: 'Poppins-Medium', marginBottom: 8 },
-  networksRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  networksRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   beneficiaryLink: { fontSize: 14, fontFamily: 'Poppins-Medium' },
   networkCard: { alignItems: 'center', borderRadius: 12, padding: 12, width: width / 4 - 20, height: 100, borderWidth: 2, borderColor: 'transparent', position: 'relative' },
   networkLogoContainer: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
@@ -924,7 +930,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
   proceedButtonDisabled: { backgroundColor: '#94A3B8', opacity: 0.6 },
   proceedButtonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
   errorText: { fontSize: 12, fontFamily: 'Poppins-Regular', marginTop: 8 },
-  infoText: { fontSize: 12, fontFamily: 'Poppins-Regular', textAlign: 'center', fontStyle: 'italic', marginTop: 8 },
+  infoContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF3C7', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 20, marginBottom: 16 },
+  infoText: { flex: 1, fontSize: 12, fontFamily: 'Poppins-Regular', color: '#92400E', marginLeft: 8 },
 });
 
 const makeModalStyles = (colors: any) => StyleSheet.create({
