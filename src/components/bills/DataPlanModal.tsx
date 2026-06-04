@@ -100,12 +100,12 @@ export const DataPlanModal: React.FC<DataPlanModalProps> = ({
             />
           </View>
 
-          {isAwuf && (
+          {/* {isAwuf && (
             <View style={styles.infoContainer}>
               <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
               <Text style={styles.infoText}>AWUF data includes special bonus. Dial *323*4# or *323*1# to check balance.</Text>
             </View>
-          )}
+          )} */}
 
           {loading ? (
             <View style={styles.loadingContainer}>
