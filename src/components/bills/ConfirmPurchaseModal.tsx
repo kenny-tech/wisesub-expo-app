@@ -1,9 +1,18 @@
 import { formatAmount } from '@/src/helper/util';
 import { Ionicons } from '@expo/vector-icons';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, Modal, StyleSheet,
-  Text, TouchableOpacity, View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 
@@ -19,7 +28,7 @@ export interface PurchaseDetail {
 export interface ConfirmPurchaseModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (pin: string) => void; // now receives the pin
   title?: string;
   providerLogo?: any;
   providerName?: string;
@@ -33,11 +42,19 @@ export interface ConfirmPurchaseModalProps {
   infoNote?: string;
 }
 
-export const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({
-  visible, onClose, onConfirm,
+const PIN_LENGTH = 4;
+
+export const ConfirmPurchaseModal = React.memo<ConfirmPurchaseModalProps>(({
+  visible,
+  onClose,
+  onConfirm,
   title = 'Confirm Purchase',
-  providerLogo, providerName, details, amount,
-  commission = 0, loading = false,
+  providerLogo,
+  providerName,
+  details,
+  amount,
+  commission = 0,
+  loading = false,
   confirmButtonText = 'Confirm Purchase',
   cancelButtonText = 'Cancel',
   showTotal = true,
@@ -45,26 +62,73 @@ export const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  const renderDetailItem = (detail: PurchaseDetail, index: number) => (
-    <View key={index} style={styles.detailRow}>
-      <View style={styles.detailLabelContainer}>
-        {detail.icon && <Ionicons name={detail.icon as any} size={20} color={detail.iconColor || colors.textSecondary} />}
-        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{detail.label}</Text>
+  // ─── Local PIN state (no parent re-renders) ──────────────────────
+  const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const inputRef = useRef<TextInput>(null);
+
+  // Reset when modal opens
+  useEffect(() => {
+    if (visible) {
+      setPin('');
+      setPinError(null);
+      setShowPin(false);
+    }
+  }, [visible]);
+
+  const handlePinChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '').slice(0, PIN_LENGTH);
+    setPin(cleaned);
+    if (pinError) setPinError(null);
+  };
+
+  const handleConfirm = () => {
+    if (pin.length !== PIN_LENGTH) {
+      setPinError('Please enter your 4-digit transaction PIN');
+      return;
+    }
+    onConfirm(pin);
+  };
+
+  // ─── Memoize details to avoid re‑renders ──────────────────────────
+  const renderedDetails = React.useMemo(() => {
+    return details.map((detail, index) => (
+      <View key={index} style={styles.detailRow}>
+        <View style={styles.detailLabelContainer}>
+          {detail.icon && (
+            <Ionicons name={detail.icon as any} size={20} color={detail.iconColor || colors.textSecondary} />
+          )}
+          <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{detail.label}</Text>
+        </View>
+        {detail.customComponent ? (
+          detail.customComponent
+        ) : (
+          <Text
+            style={[
+              styles.detailValue,
+              { color: colors.textPrimary },
+              detail.valueColor ? { color: detail.valueColor } : {},
+            ]}
+            numberOfLines={detail.label === 'Data Plan' ? 2 : 1}
+          >
+            {detail.value}
+          </Text>
+        )}
       </View>
-      {detail.customComponent ? detail.customComponent : (
-        <Text
-          style={[styles.detailValue, { color: colors.textPrimary }, detail.valueColor ? { color: detail.valueColor } : {}]}
-          numberOfLines={detail.label === 'Data Plan' ? 2 : 1}
-        >
-          {detail.value}
-        </Text>
-      )}
-    </View>
-  );
+    ));
+  }, [details, colors]);
+
+  // ─── If not visible, render nothing ──────────────────────────────
+  if (!visible) return null;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPressOut={onClose}>
+      <KeyboardAvoidingView
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <TouchableOpacity style={styles.dismissArea} activeOpacity={1} onPress={onClose} />
         <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.separator }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{title}</Text>
@@ -73,104 +137,276 @@ export const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {(providerLogo || providerName) && (
-            <View style={[styles.providerSection, { borderBottomColor: colors.separator }]}>
-              {providerLogo && <Image source={providerLogo} style={styles.providerLogo} resizeMode="contain" />}
-              {providerName && <Text style={[styles.providerName, { color: colors.textPrimary }]}>{providerName}</Text>}
-            </View>
-          )}
-
-          <View style={styles.detailsContainer}>
-            <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transaction Details</Text>
-            {details.map((detail, index) => renderDetailItem(detail, index))}
-
-            <View style={[styles.divider, { backgroundColor: colors.separator }]} />
-
-            <View style={styles.amountDetailRow}>
-              <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
-              <Text style={[styles.amountValue, { color: colors.textPrimary }]}>₦{formatAmount(amount)}</Text>
-            </View>
-
-            {/* {commission > 0 && (
-              <View style={styles.commissionDetailRow}>
-                <Text style={styles.commissionLabel}>You Earn</Text>
-                <Text style={styles.commissionValue}>₦{formatAmount(commission)}</Text>
-              </View>
-            )} */}
-
-            {showTotal && (
-              <View style={[styles.totalDetailRow, { borderTopColor: colors.separator }]}>
-                <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total Cost</Text>
-                <Text style={styles.totalValue}>₦{formatAmount(amount)}</Text>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Provider */}
+            {(providerLogo || providerName) && (
+              <View style={[styles.providerSection, { borderBottomColor: colors.separator }]}>
+                {providerLogo && <Image source={providerLogo} style={styles.providerLogo} resizeMode="contain" />}
+                {providerName && <Text style={[styles.providerName, { color: colors.textPrimary }]}>{providerName}</Text>}
               </View>
             )}
-          </View>
 
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: colors.divider, backgroundColor: colors.backgroundSecondary }]}
-              onPress={onClose}
-              disabled={loading}
-            >
-              <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{cancelButtonText}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.confirmButton, loading && styles.confirmButtonDisabled]}
-              onPress={onConfirm}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                  <Text style={styles.confirmButtonText}>{confirmButtonText}</Text>
-                </>
+            {/* Transaction Details */}
+            <View style={styles.detailsContainer}>
+              <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transaction Details</Text>
+              {renderedDetails}
+
+              <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+
+              <View style={styles.amountDetailRow}>
+                <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
+                <Text style={[styles.amountValue, { color: colors.textPrimary }]}>
+                  ₦{formatAmount(amount)}
+                </Text>
+              </View>
+
+              {commission > 0 && (
+                <View style={styles.commissionDetailRow}>
+                  <Text style={styles.commissionLabel}>You Earn</Text>
+                  <Text style={styles.commissionValue}>₦{formatAmount(commission)}</Text>
+                </View>
               )}
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.modalInfoNote}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
-            <Text style={[styles.modalInfoText, { color: colors.textMuted }]}>{infoNote}</Text>
-          </View>
+              {showTotal && (
+                <View style={[styles.totalDetailRow, { borderTopColor: colors.separator }]}>
+                  <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total Cost</Text>
+                  <Text style={styles.totalValue}>₦{formatAmount(amount)}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* PIN Input – simple TextInput with eye toggle */}
+            <View style={styles.pinSection}>
+              <View style={styles.pinLabelRow}>
+                <Text style={[styles.pinLabel, { color: colors.textSecondary }]}>Transaction PIN</Text>
+                <TouchableOpacity
+                  onPress={() => setShowPin(prev => !prev)}
+                  style={styles.pinToggle}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name={showPin ? 'eye-off-outline' : 'eye-outline'}
+                    size={16}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.pinToggleText, { color: colors.textSecondary }]}>
+                    {showPin ? 'Hide' : 'Show'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                ref={inputRef}
+                style={[
+                  styles.pinInput,
+                  {
+                    backgroundColor: colors.backgroundSecondary,
+                    borderColor: pinError ? colors.error : colors.divider,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                secureTextEntry={!showPin}
+                maxLength={PIN_LENGTH}
+                keyboardType="number-pad"
+                value={pin}
+                onChangeText={handlePinChange}
+                placeholder="Enter 4-digit PIN"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+              />
+
+              {pinError && pin.length > 0 && (
+                <View style={styles.pinErrorRow}>
+                  <Ionicons name="alert-circle" size={14} color={colors.error} />
+                  <Text style={[styles.pinErrorText, { color: colors.error }]}>{pinError}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Footer */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[
+                  styles.cancelButton,
+                  { borderColor: colors.divider, backgroundColor: colors.backgroundSecondary },
+                ]}
+                onPress={onClose}
+                disabled={loading}
+              >
+                <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>
+                  {cancelButtonText}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.confirmButton, loading && styles.confirmButtonDisabled]}
+                onPress={handleConfirm}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                    <Text style={styles.confirmButtonText}>{confirmButtonText}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalInfoNote}>
+              <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+              <Text style={[styles.modalInfoText, { color: colors.textMuted }]}>{infoNote}</Text>
+            </View>
+          </ScrollView>
         </View>
-      </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
-};
+});
+
+ConfirmPurchaseModal.displayName = 'ConfirmPurchaseModal';
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  modalOverlay:          { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContainer:        { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%', paddingBottom: 20 },
-  modalHeader:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1 },
-  modalTitle:            { fontSize: 18, fontFamily: 'Poppins-SemiBold' },
-  closeButton:           { padding: 4 },
-  providerSection:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderBottomWidth: 1, gap: 12 },
-  providerLogo:          { width: 32, height: 32, borderRadius: 16 },
-  providerName:          { fontSize: 16, fontFamily: 'Poppins-SemiBold' },
-  detailsContainer:      { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 },
-  detailsTitle:          { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 20 },
-  detailRow:             { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  detailLabelContainer:  { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  detailLabel:           { fontSize: 14, fontFamily: 'Poppins-Medium', marginLeft: 8 },
-  detailValue:           { fontSize: 14, fontFamily: 'Poppins-Medium', textAlign: 'right', maxWidth: '70%' },
-  divider:               { height: 1, marginVertical: 16 },
-  amountDetailRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  amountLabel:           { fontSize: 14, fontFamily: 'Poppins-Medium' },
-  amountValue:           { fontSize: 16, fontFamily: 'Poppins-SemiBold' },
-  commissionDetailRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, backgroundColor: '#ECFDF5', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  commissionLabel:       { fontSize: 14, fontFamily: 'Poppins-Medium', color: '#10B981' },
-  commissionValue:       { fontSize: 14, fontFamily: 'Poppins-SemiBold', color: '#10B981' },
-  totalDetailRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 12, borderTopWidth: 1 },
-  totalLabel:            { fontSize: 16, fontFamily: 'Poppins-SemiBold' },
-  totalValue:            { fontSize: 20, fontFamily: 'Poppins-Bold', color: '#10B981' },
-  modalFooter:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, gap: 12 },
-  cancelButton:          { flex: 1, paddingVertical: 16, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
-  cancelButtonText:      { fontSize: 16, fontFamily: 'Poppins-Medium' },
-  confirmButton:         { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 12, backgroundColor: '#10B981' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  dismissArea: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  modalContainer: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' },
+  scrollContent: { paddingBottom: 20 },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+  },
+  modalTitle: { fontSize: 18, fontFamily: 'Poppins-SemiBold' },
+  closeButton: { padding: 4 },
+  providerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  providerLogo: { width: 32, height: 32, borderRadius: 16 },
+  providerName: { fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+  detailsContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 },
+  detailsTitle: { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 20 },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  detailLabelContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  detailLabel: { fontSize: 14, fontFamily: 'Poppins-Medium', marginLeft: 8 },
+  detailValue: { fontSize: 14, fontFamily: 'Poppins-Medium', textAlign: 'right', maxWidth: '70%' },
+  divider: { height: 1, marginVertical: 16 },
+  amountDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  amountLabel: { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  amountValue: { fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+  commissionDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  commissionLabel: { fontSize: 14, fontFamily: 'Poppins-Medium', color: '#10B981' },
+  commissionValue: { fontSize: 14, fontFamily: 'Poppins-SemiBold', color: '#10B981' },
+  totalDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  totalLabel: { fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+  totalValue: { fontSize: 20, fontFamily: 'Poppins-Bold', color: '#10B981' },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  cancelButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium' },
+  confirmButton: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+  },
   confirmButtonDisabled: { backgroundColor: '#94A3B8', opacity: 0.6 },
-  confirmButtonText:     { fontSize: 16, fontFamily: 'Poppins-SemiBold', color: '#FFFFFF' },
-  modalInfoNote:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 16, marginBottom: 30, gap: 8 },
-  modalInfoText:         { fontSize: 12, fontFamily: 'Poppins-Regular', textAlign: 'center', flex: 1 },
+  confirmButtonText: { fontSize: 16, fontFamily: 'Poppins-SemiBold', color: '#FFFFFF' },
+  modalInfoNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    marginBottom: 30,
+    gap: 8,
+  },
+  modalInfoText: { fontSize: 12, fontFamily: 'Poppins-Regular', textAlign: 'center', flex: 1 },
+
+  pinSection: { paddingHorizontal: 20, marginTop: 4, marginBottom: 8 },
+  pinLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  pinLabel: { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  pinToggle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  pinToggleText: { fontSize: 12, fontFamily: 'Poppins-Medium' },
+
+  pinInput: {
+    height: 56,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 24,
+    fontFamily: 'Poppins-Medium',
+    textAlign: 'center',
+    letterSpacing: 8,
+    borderWidth: 1,
+  },
+  pinErrorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    justifyContent: 'center',
+  },
+  pinErrorText: { fontSize: 12, fontFamily: 'Poppins-Regular' },
 });

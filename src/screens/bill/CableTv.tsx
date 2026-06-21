@@ -1,5 +1,4 @@
 import { CablePlanModal } from '@/src/components/bills/CablePlanModal';
-import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { formatAmount } from '@/src/helper/util';
 import { useProfile } from '@/src/redux/hooks/useProfile';
 import { IMAGE_BASE_URL } from '@/src/services/api';
@@ -25,6 +24,7 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import { PurchaseDetail } from '../ConfirmPurchase';
 
 const { width } = Dimensions.get('window');
 
@@ -60,7 +60,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -246,10 +245,20 @@ export default function CableTv({ navigation }: { navigation: any }) {
   const handleProceed = () => {
     if (!validateForm()) return;
     if (!selectedProvider || !selectedPlan) { showError('Error', 'Please select both provider and cable plan'); return; }
-    setShowConfirmModal(true);
+    navigation.navigate('ConfirmPurchase', {
+      onConfirm: purchaseCable,
+      title: 'Confirm Cable TV Subscription',
+      providerLogo: selectedProvider?.logoLocal,
+      providerName: selectedProvider?.name,
+      details: getConfirmationDetails(),
+      amount: parseFloat(amount) || 0,
+      commission,
+      confirmButtonText: 'Subscribe Now',
+      infoNote: 'Cable subscription will be activated within 2-5 minutes after successful payment',
+    });
   };
 
-  const purchaseCable = async () => {
+  const purchaseCable = async (pin: string) => {
     if (!selectedProvider || !selectedPlan) return { success: false };
     setIsSubmitting(true);
     try {
@@ -268,6 +277,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         customer_name: customerName,
         validation_status: customerName === 'Customer (Unverified)' ? 'warning' : 'validated',
         validation_message: customerName === 'Customer (Unverified)' ? 'Decoder may be invalid, user confirmed' : 'Validated successfully',
+        pin,
       };
       const response = await billService.purchaseData(payload);
       if (response.success) {
@@ -279,23 +289,30 @@ export default function CableTv({ navigation }: { navigation: any }) {
         setSelectedProvider(null);
         setCustomerName('');
         setCommission(0);
-        setShowConfirmModal(false);
         navigation.navigate('Tabs');
         return { success: true, data: response.data };
       } else {
-        showError('Error', response.message || 'Cable subscription failed');
-        return { success: false };
+        const message = response.message || 'Cable subscription failed';
+        if (!/pin/i.test(message)) {
+          showError('Error', message);
+        }
+        return { success: false, message };
       }
     } catch (error: any) {
+      let errorMessage = error.message || 'Cable subscription failed';
       if (error.errors) {
         const apiErrors: Record<string, string> = {};
         Object.entries(error.errors).forEach(([field, messages]) => { if (Array.isArray(messages) && messages.length) apiErrors[field] = messages[0]; });
         setErrors(apiErrors);
         const firstError = Object.values(apiErrors)[0];
-        if (firstError) showError('Validation Error', firstError);
-      } else showError('Error', error.message || 'Cable subscription failed');
-      setShowConfirmModal(false);
-      return { success: false };
+        if (firstError) {
+          errorMessage = String(firstError);
+          if (!/pin/i.test(errorMessage)) showError('Validation Error', errorMessage);
+        }
+      } else if (!/pin/i.test(errorMessage)) {
+        showError('Error', errorMessage);
+      }
+      return { success: false, message: errorMessage };
     } finally { setIsSubmitting(false); }
   };
 
@@ -530,7 +547,6 @@ export default function CableTv({ navigation }: { navigation: any }) {
       <CablePlanModal visible={showPlanModal} onClose={() => setShowPlanModal(false)} cablePlans={cablePlans} selectedPlan={selectedPlan} onSelectPlan={handlePlanSelect} loading={loading} providerName={selectedProvider?.name} />
       <RecentCustomersModal visible={showRecentDecoderModal} onClose={() => setShowRecentDecoderModal(false)} customers={recentDecoders} loading={loadingRecentDecoders} onSelectCustomer={handleSelectDecoder} type="decoder" />
       <RecentCustomersModal visible={showRecentPhoneModal} onClose={() => setShowRecentPhoneModal(false)} customers={recentPhones} loading={loadingRecentPhones} onSelectCustomer={handleSelectPhone} type="phone" />
-      <ConfirmPurchaseModal visible={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={purchaseCable} title="Confirm Cable TV Subscription" providerLogo={selectedProvider?.logoLocal} providerName={selectedProvider?.name} details={getConfirmationDetails()} amount={parseFloat(amount) || 0} commission={commission} loading={isSubmitting} confirmButtonText="Subscribe Now" infoNote="Cable subscription will be activated within 2-5 minutes after successful payment" />
     </View>
   );
 }

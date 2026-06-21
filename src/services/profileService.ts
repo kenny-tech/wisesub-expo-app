@@ -73,6 +73,11 @@ class ProfileService {
     }
   }
 
+  async setPin(pin: string, confirmPin: string) {
+    const response = await api.post(API_ENDPOINTS.SET_PIN, { pin, confirm_pin: confirmPin });
+    return response.data;
+  }
+
   async logout(): Promise<LogoutResponse> {
     try {
       // First delete push token from backend

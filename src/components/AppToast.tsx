@@ -10,6 +10,7 @@ export const toastConfig = {
       contentContainerStyle={styles.content}
       text1Style={styles.title}
       text2Style={styles.message}
+      text2NumberOfLines={0}
     />
   ),
 
@@ -20,6 +21,7 @@ export const toastConfig = {
       contentContainerStyle={styles.content}
       text1Style={styles.title}
       text2Style={styles.message}
+      text2NumberOfLines={0}
     />
   ),
 };
@@ -28,13 +30,18 @@ const styles = StyleSheet.create({
   successContainer: {
     borderLeftColor: '#16A34A',
     borderLeftWidth: 6,
+    height: 'auto',
+    minHeight: 60,
   },
   errorContainer: {
     borderLeftColor: '#DC2626',
     borderLeftWidth: 6,
+    height: 'auto',
+    minHeight: 60,
   },
   content: {
     paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   title: {
     fontSize: 14,
@@ -45,6 +52,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Poppins-Regular',
     color: '#334155',
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
 });
 

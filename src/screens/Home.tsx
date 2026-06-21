@@ -1,4 +1,5 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Device from 'expo-device';
 import { Image } from "expo-image";
@@ -7,21 +8,30 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   RefreshControl,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import { formatAmount, formatDate } from "../helper/util";
+import { useAppDispatch } from "../redux/hooks";
 import { useNotifications } from "../redux/hooks/useNotifications";
 import { useProfile } from "../redux/hooks/useProfile";
+import { setUser } from "../redux/slices/authSlice";
+import { profileService } from "../services/profileService";
 import { pushNotificationService } from '../services/pushNotificationService';
 import { Transaction, walletService } from "../services/walletService";
 import { useTheme } from '../theme/ThemeContext';
+import { APP_CONSTANTS } from "../utils/constants";
+import { showSuccess } from "../utils/toast";
 
 const { width } = Dimensions.get("window");
 const SERVICE_COLS = 4;
@@ -67,6 +77,15 @@ export default function Home({ navigation }: { navigation: any }) {
 
   const { stats, fetchNotifications, markAllAsRead } = useNotifications();
   const { user } = useProfile();
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [settingPin, setSettingPin] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+
+  const dispatch = useAppDispatch();
 
   // Get device ID and register for push notifications
   useEffect(() => {
@@ -100,6 +119,49 @@ export default function Home({ navigation }: { navigation: any }) {
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  // Check pin_set from user profile
+  useEffect(() => {
+    // Show modal if pin_set is false OR undefined
+    if (user && !user.pin_set) {
+      setShowPinModal(true);
+    }
+  }, [user]);
+
+  // PIN setup handler
+  const handleSetPin = async () => {
+    setPinError(null);
+
+    if (pin.length !== 4 || confirmPin.length !== 4) {
+      setPinError('PIN must be 4 digits.');
+      return;
+    }
+    if (pin !== confirmPin) {
+      setPinError('PINs do not match.');
+      return;
+    }
+    setSettingPin(true);
+    try {
+      const result = await profileService.setPin(pin, confirmPin);
+      if (result.success) {
+        // Update user in Redux and AsyncStorage
+        const updatedUser = { ...user, pin_set: true };
+        dispatch(setUser(updatedUser)); // you need a setUser action
+        await AsyncStorage.setItem(
+          APP_CONSTANTS.STORAGE_KEYS.USER_DATA,
+          JSON.stringify(updatedUser)
+        );
+        setShowPinModal(false);
+        showSuccess('Success', 'PIN set successfully!');
+      } else {
+        setPinError(result.message || 'Failed to set PIN.');
+      }
+    } catch (error: any) {
+      setPinError(error.message || 'Failed to set PIN.');
+    } finally {
+      setSettingPin(false);
+    }
+  };
 
   const fetchWalletBalance = async () => {
     try {
@@ -398,6 +460,91 @@ export default function Home({ navigation }: { navigation: any }) {
         colors={colors}
         modalStyles={modalStyles}
       />
+
+      {showPinModal && (
+        <Modal
+          visible={showPinModal}
+          transparent={true}
+          animationType="fade"
+          statusBarTranslucent={true}
+          onRequestClose={() => { }} // Prevent dismissal on Android back press
+        >
+          <KeyboardAvoidingView
+            style={styles.pinModalOverlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            <ScrollView
+              contentContainerStyle={styles.pinModalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={[styles.pinModalContainer, { backgroundColor: colors.card }]}>
+                <Text style={[styles.pinModalTitle, { color: colors.textPrimary }]}>Secure Your Account</Text>
+                <Text style={[styles.pinModalSubtitle, { color: colors.textSecondary }]}>
+                  To protect your funds, we require a <Text style={{ fontWeight: 'bold' }}>4‑digit PIN</Text> for all transactions. This adds an extra layer of security.
+                </Text>
+                <View style={styles.pinInputGroup}>
+                  <Text style={[styles.pinInputLabel, { color: colors.textSecondary }]}>Enter PIN</Text>
+                  <View style={styles.pinInputWrapper}>
+                    <TextInput
+                      style={[styles.pinInput, { color: colors.textPrimary, backgroundColor: colors.backgroundSecondary }]}
+                      secureTextEntry={!showPin}
+                      maxLength={4}
+                      keyboardType="number-pad"
+                      value={pin}
+                      onChangeText={(text) => {
+                        setPin(text.replace(/\D/g, ''));
+                        if (pinError) setPinError(null);
+                      }}
+                      placeholder="****"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                    <TouchableOpacity onPress={() => setShowPin(!showPin)} style={styles.pinEyeButton}>
+                      <Ionicons name={showPin ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={styles.pinInputGroup}>
+                  <Text style={[styles.pinInputLabel, { color: colors.textSecondary }]}>Confirm PIN</Text>
+                  <View style={styles.pinInputWrapper}>
+                    <TextInput
+                      style={[styles.pinInput, { color: colors.textPrimary, backgroundColor: colors.backgroundSecondary }]}
+                      secureTextEntry={!showConfirmPin}
+                      maxLength={4}
+                      keyboardType="number-pad"
+                      value={confirmPin}
+                      onChangeText={(text) => {
+                        setConfirmPin(text.replace(/\D/g, ''));
+                        if (pinError) setPinError(null);
+                      }}
+                      placeholder="****"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                    <TouchableOpacity onPress={() => setShowConfirmPin(!showConfirmPin)} style={styles.pinEyeButton}>
+                      <Ionicons name={showConfirmPin ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                  {pinError && (
+                    <View style={styles.pinErrorRow}>
+                      <Ionicons name="alert-circle" size={14} color={colors.error} />
+                      <Text style={[styles.pinErrorText, { color: colors.error }]}>{pinError}</Text>
+                    </View>
+                  )}
+                </View>
+                <TouchableOpacity
+                  style={[styles.pinSetButton, { backgroundColor: colors.primary }]}
+                  onPress={handleSetPin}
+                  disabled={settingPin}
+                >
+                  {settingPin ? <ActivityIndicator color="#fff" /> : <Text style={styles.pinSetButtonText}>Set PIN</Text>}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
+
     </View>
   );
 }
@@ -491,6 +638,83 @@ const makeStyles = (colors: any) => StyleSheet.create({
   emptyText: { fontSize: 14, fontFamily: "Poppins-Regular", marginTop: 8 },
   retryButton: { marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: colors.primary, borderRadius: 8 },
   retryButtonText: { color: "#FFFFFF", fontSize: 14, fontFamily: "Poppins-SemiBold" },
+  pinModalOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 1000,
+  },
+  pinModalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  pinModalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  pinModalTitle: {
+    fontSize: 22,
+    fontFamily: 'Poppins-Bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  pinModalSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  pinInputGroup: { marginBottom: 16 },
+  pinInputLabel: { fontSize: 14, fontFamily: 'Poppins-Medium', marginBottom: 6 },
+  pinInputWrapper: { position: 'relative' },
+  pinInput: {
+    height: 50,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    fontFamily: 'Poppins-Medium',
+    textAlign: 'center',
+    letterSpacing: 8,
+  },
+  pinEyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: 15,
+  },
+  pinErrorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 4,
+  },
+  pinErrorText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    flexShrink: 1,
+  },
+  pinSetButton: {
+    height: 50,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  pinSetButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
+  },
 });
 
 const makeModalStyles = (colors: any) => StyleSheet.create({

@@ -1,4 +1,3 @@
-import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
@@ -13,12 +12,13 @@ import {
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import { PurchaseDetail } from '../ConfirmPurchase';
 
 const NETWORKS = [
-  { id: 'mtn',     name: 'MTN',     logo: `${IMAGE_BASE_URL}/mtn.png`,       logoLocal: require('../../../assets/images/mtn.png') },
-  { id: 'airtel',  name: 'Airtel',  logo: `${IMAGE_BASE_URL}/airtel.png`,    logoLocal: require('../../../assets/images/airtel.png') },
-  { id: 'glo',     name: 'Glo',     logo: `${IMAGE_BASE_URL}/glo.png`,       logoLocal: require('../../../assets/images/glo.png') },
-  { id: '9mobile', name: '9mobile', logo: `${IMAGE_BASE_URL}/ninemobile.png`,logoLocal: require('../../../assets/images/ninemobile.png') },
+  { id: 'mtn', name: 'MTN', logo: `${IMAGE_BASE_URL}/mtn.png`, logoLocal: require('../../../assets/images/mtn.png') },
+  { id: 'airtel', name: 'Airtel', logo: `${IMAGE_BASE_URL}/airtel.png`, logoLocal: require('../../../assets/images/airtel.png') },
+  { id: 'glo', name: 'Glo', logo: `${IMAGE_BASE_URL}/glo.png`, logoLocal: require('../../../assets/images/glo.png') },
+  { id: '9mobile', name: '9mobile', logo: `${IMAGE_BASE_URL}/ninemobile.png`, logoLocal: require('../../../assets/images/ninemobile.png') },
 ];
 
 const NETWORK_OPTIONS = NETWORKS.map(n => ({
@@ -91,7 +91,6 @@ export default function Airtime({ navigation }: { navigation: any }) {
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedNetwork, setSelectedNetwork] = useState<typeof NETWORK_OPTIONS[0] | null>(null);
@@ -150,27 +149,56 @@ export default function Airtime({ navigation }: { navigation: any }) {
     return true;
   };
 
+  // Navigate to the confirmation screen instead of opening a modal
   const handleProceed = () => {
     if (!validateForm() || !selectedNetwork) { if (!selectedNetwork) showError('Error', 'Please select a network'); return; }
-    setShowConfirmModal(true);
+    navigation.navigate('ConfirmPurchase', {
+      onConfirm: purchaseAirtime,
+      title: 'Confirm Airtime Purchase',
+      providerLogo: selectedNetwork?.logoLocal,
+      providerName: selectedNetwork?.name,
+      details: getConfirmationDetails(),
+      amount: parseFloat(amount) || 0,
+      commission,
+      confirmButtonText: 'Buy Airtime',
+      infoNote: 'Airtime will be delivered instantly after successful payment',
+    });
   };
 
-  const purchaseAirtime = async () => {
+  // Called by the ConfirmPurchase screen with the entered PIN
+  const purchaseAirtime = async (pin: string) => {
     if (!selectedNetwork) return { success: false };
     setIsSubmitting(true);
     try {
-      const payload = { serviceID: selectedNetwork.serviceID, amount: parseFloat(amount), customer: phone, type: 'Airtime', provider_logo: selectedNetwork.logo, name: selectedNetwork.name, service_type: 'Airtime', billersCode: phone, variation_code: 'default', phone, network: selectedNetwork.value, network_name: selectedNetwork.name };
+      const payload = { serviceID: selectedNetwork.serviceID, amount: parseFloat(amount), customer: phone, type: 'Airtime', provider_logo: selectedNetwork.logo, name: selectedNetwork.name, service_type: 'Airtime', billersCode: phone, variation_code: 'default', phone, network: selectedNetwork.value, network_name: selectedNetwork.name, pin };
       const r = await billService.purchaseData(payload);
       if (r.success) {
         showSuccess('Success', r.message || 'Airtime purchase successful!');
         setPhone(''); setAmount(''); setCustomAmount(''); setSelectedNetwork(null); setCommission(0);
-        setShowConfirmModal(false); navigation.navigate('Tabs');
+        navigation.navigate('Tabs');
         return { success: true, data: r.data };
-      } else { showError('Error', r.message || 'Airtime purchase failed'); return { success: false }; }
+      } else {
+        const message = r.message || 'Airtime purchase failed';
+        if (!/pin/i.test(message)) {
+          showError('Error', message);
+        }
+        return { success: false, message };
+      }
     } catch (error: any) {
-      if (error.errors) { const apiErrors: Record<string, string> = {}; Object.entries(error.errors).forEach(([f, m]) => { if (Array.isArray(m) && m.length) apiErrors[f] = m[0]; }); setErrors(apiErrors); const first = Object.values(apiErrors)[0]; if (first) showError('Validation Error', first); }
-      else showError('Error', error.message || 'Airtime purchase failed. Please try again.');
-      setShowConfirmModal(false); return { success: false };
+      let errorMessage = error.message || 'Airtime purchase failed. Please try again.';
+      if (error.errors) {
+        const apiErrors: Record<string, string> = {};
+        Object.entries(error.errors).forEach(([f, m]) => { if (Array.isArray(m) && m.length) apiErrors[f] = m[0]; });
+        setErrors(apiErrors);
+        const first = Object.values(apiErrors)[0];
+        if (first) {
+          errorMessage = String(first);
+          if (!/pin/i.test(errorMessage)) showError('Validation Error', errorMessage);
+        }
+      } else if (!/pin/i.test(errorMessage)) {
+        showError('Error', errorMessage);
+      }
+      return { success: false, message: errorMessage };
     } finally { setIsSubmitting(false); }
   };
 
@@ -266,64 +294,63 @@ export default function Airtime({ navigation }: { navigation: any }) {
       </ScrollView>
 
       <RecentCustomersModal visible={showRecentModal} onClose={() => setShowRecentModal(false)} customers={recentCustomers} loading={loadingRecentCustomers} onSelectCustomer={handleSelectCustomer} />
-      <ConfirmPurchaseModal visible={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={purchaseAirtime} title="Confirm Airtime Purchase" providerLogo={selectedNetwork?.logoLocal} providerName={selectedNetwork?.name} details={getConfirmationDetails()} amount={parseFloat(amount) || 0} commission={commission} loading={isSubmitting} confirmButtonText="Buy Airtime" infoNote="Airtime will be delivered instantly after successful payment" />
     </View>
   );
 }
 
 const modalStyles = StyleSheet.create({
-  overlay:          { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  container:        { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, minHeight: 400, maxHeight: '80%' },
-  header:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, borderBottomWidth: 1, paddingBottom: 12 },
-  title:            { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
-  closeButton:      { padding: 4 },
-  subtitle:         { fontSize: 14, fontFamily: 'Poppins-Regular', marginBottom: 24, marginTop: 8 },
-  listContent:      { paddingBottom: 20 },
-  customerItem:     { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 16, marginBottom: 8, borderWidth: 1 },
-  customerIcon:     { marginRight: 12 },
-  customerInfo:     { flex: 1 },
-  customerPhone:    { fontSize: 16, fontFamily: 'Poppins-Medium' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  container: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, minHeight: 400, maxHeight: '80%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, borderBottomWidth: 1, paddingBottom: 12 },
+  title: { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  closeButton: { padding: 4 },
+  subtitle: { fontSize: 14, fontFamily: 'Poppins-Regular', marginBottom: 24, marginTop: 8 },
+  listContent: { paddingBottom: 20 },
+  customerItem: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 16, marginBottom: 8, borderWidth: 1 },
+  customerIcon: { marginRight: 12 },
+  customerInfo: { flex: 1 },
+  customerPhone: { fontSize: 16, fontFamily: 'Poppins-Medium' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
-  loadingText:      { fontSize: 14, fontFamily: 'Poppins-Regular', marginTop: 12 },
-  emptyContainer:   { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
-  emptyTitle:       { fontSize: 18, fontFamily: 'Poppins-SemiBold', marginTop: 16, marginBottom: 8 },
+  loadingText: { fontSize: 14, fontFamily: 'Poppins-Regular', marginTop: 12 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+  emptyTitle: { fontSize: 18, fontFamily: 'Poppins-SemiBold', marginTop: 16, marginBottom: 8 },
   emptyDescription: { fontSize: 14, fontFamily: 'Poppins-Regular', textAlign: 'center', maxWidth: 300, lineHeight: 20 },
 });
 
 const styles = StyleSheet.create({
-  container:              { flex: 1 },
-  header:                 { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, borderBottomWidth: 1 },
-  backButton:             { padding: 4 },
-  title:                  { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
-  placeholder:            { width: 32 },
-  scrollView:             { flex: 1 },
-  scrollContent:          { paddingBottom: 40 },
-  section:                { paddingHorizontal: 20, marginBottom: 24 },
-  sectionHeader:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle:           { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 16 },
-  beneficiaryLink:        { fontSize: 14, fontFamily: 'Poppins-Medium' },
-  networksContainer:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  networkCard:            { alignItems: 'center', borderRadius: 12, padding: 12, width: 80, height: 90, borderWidth: 2, borderColor: 'transparent' },
-  networkLogoContainer:   { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
-  networkLogo:            { width: 36, height: 36, borderRadius: 18 },
-  networkName:            { fontSize: 12, fontFamily: 'Poppins-Medium', textAlign: 'center' },
-  inputContainer:         { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, height: 56, borderWidth: 1 },
-  input:                  { flex: 1, fontSize: 16, fontFamily: 'Poppins-Regular' },
-  contactButton:          { padding: 8 },
-  currencySymbol:         { fontSize: 16, fontFamily: 'Poppins-Medium', marginLeft: 8 },
-  amountsScroll:          { marginHorizontal: -20, marginTop: 12 },
-  amountsScrollContent:   { paddingHorizontal: 20, gap: 8 },
-  amountChip:             { borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, minWidth: 80, alignItems: 'center', justifyContent: 'center' },
-  amountChipText:         { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, borderBottomWidth: 1 },
+  backButton: { padding: 4 },
+  title: { fontSize: 20, fontFamily: 'Poppins-SemiBold' },
+  placeholder: { width: 32 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
+  section: { paddingHorizontal: 20, marginBottom: 24 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Poppins-SemiBold', marginBottom: 16 },
+  beneficiaryLink: { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  networksContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  networkCard: { alignItems: 'center', borderRadius: 12, padding: 12, width: 80, height: 90, borderWidth: 2, borderColor: 'transparent' },
+  networkLogoContainer: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  networkLogo: { width: 36, height: 36, borderRadius: 18 },
+  networkName: { fontSize: 12, fontFamily: 'Poppins-Medium', textAlign: 'center' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 16, height: 56, borderWidth: 1 },
+  input: { flex: 1, fontSize: 16, fontFamily: 'Poppins-Regular' },
+  contactButton: { padding: 8 },
+  currencySymbol: { fontSize: 16, fontFamily: 'Poppins-Medium', marginLeft: 8 },
+  amountsScroll: { marginHorizontal: -20, marginTop: 12 },
+  amountsScrollContent: { paddingHorizontal: 20, gap: 8 },
+  amountChip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, minWidth: 80, alignItems: 'center', justifyContent: 'center' },
+  amountChipText: { fontSize: 14, fontFamily: 'Poppins-Medium' },
   amountDisplayContainer: { marginTop: 16, borderRadius: 12, padding: 16 },
-  amountDisplay:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  amountDisplayLabel:     { fontSize: 14, fontFamily: 'Poppins-Medium' },
-  amountDisplayValue:     { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#10B981' },
-  commissionContainer:    { flexDirection: 'row', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTopWidth: 1 },
-  commissionText:         { fontSize: 14, fontFamily: 'Poppins-Medium', color: '#10B981' },
-  commissionLoader:       { marginLeft: 8 },
-  proceedButton:          { marginHorizontal: 20, borderRadius: 12, height: 56, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, marginTop: 8, marginBottom: 24 },
-  proceedButtonDisabled:  { backgroundColor: '#94A3B8', opacity: 0.6 },
-  proceedButtonText:      { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
-  errorText:              { color: '#EF4444', fontSize: 12, fontFamily: 'Poppins-Regular', marginTop: 8 },
+  amountDisplay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  amountDisplayLabel: { fontSize: 14, fontFamily: 'Poppins-Medium' },
+  amountDisplayValue: { fontSize: 18, fontFamily: 'Poppins-Bold', color: '#10B981' },
+  commissionContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTopWidth: 1 },
+  commissionText: { fontSize: 14, fontFamily: 'Poppins-Medium', color: '#10B981' },
+  commissionLoader: { marginLeft: 8 },
+  proceedButton: { marginHorizontal: 20, borderRadius: 12, height: 56, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, marginTop: 8, marginBottom: 24 },
+  proceedButtonDisabled: { backgroundColor: '#94A3B8', opacity: 0.6 },
+  proceedButtonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Poppins-SemiBold' },
+  errorText: { color: '#EF4444', fontSize: 12, fontFamily: 'Poppins-Regular', marginTop: 8 },
 });
