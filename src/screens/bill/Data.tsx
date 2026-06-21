@@ -1,4 +1,3 @@
-import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { DataPlanModal } from '@/src/components/bills/DataPlanModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
@@ -23,6 +22,7 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import { PurchaseDetail } from '../ConfirmPurchase';
 
 const { width } = Dimensions.get('window');
 
@@ -110,7 +110,6 @@ export default function Data({ navigation }: { navigation: any }) {
   // State
   const [phone, setPhone] = useState('');
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
@@ -357,7 +356,7 @@ export default function Data({ navigation }: { navigation: any }) {
     return true;
   };
 
-  // Show confirmation modal
+  // Navigate to confirmation screen
   const handleProceed = () => {
     if (!validateForm()) {
       return;
@@ -368,11 +367,23 @@ export default function Data({ navigation }: { navigation: any }) {
       return;
     }
 
-    setShowConfirmModal(true);
+    navigation.navigate('ConfirmPurchase', {
+      onConfirm: purchaseData,
+      title: isAwuf ? 'Confirm AWUF Data Purchase' : 'Confirm Data Purchase',
+      providerLogo: selectedNetwork?.logoLocal,
+      providerName: selectedNetwork?.name,
+      details: getConfirmationDetails(),
+      amount: getAmount(),
+      commission: !isAwuf ? commission : 0,
+      confirmButtonText: 'Buy Data',
+      infoNote: isAwuf
+        ? 'Dial *323*4# or *323*1# to check your data balance after purchase'
+        : 'Data will be delivered within 1-3 minutes after successful payment',
+    });
   };
 
-  // Purchase data
-  const purchaseData = async () => {
+  // Purchase data — called by the ConfirmPurchase screen with the entered PIN
+  const purchaseData = async (pin: string) => {
     if (!selectedNetwork || !selectedPlan) {
       showError('Error', 'Please select both network and data plan');
       return { success: false };
@@ -397,6 +408,7 @@ export default function Data({ navigation }: { navigation: any }) {
           package_code: selectedPlan.package_api_code,
           network: selectedNetwork.originalNetwork,
           network_name: selectedNetwork.name,
+          pin,
         };
       } else {
         // Regular Data payload
@@ -413,6 +425,7 @@ export default function Data({ navigation }: { navigation: any }) {
           amount: parseFloat(selectedPlan.variation_amount?.toString() || '0'),
           network: selectedNetwork.value,
           network_name: selectedNetwork.name,
+          pin,
         };
       }
 
@@ -433,12 +446,14 @@ export default function Data({ navigation }: { navigation: any }) {
         setCommission(0);
         setIsAwuf(false);
 
-        setShowConfirmModal(false);
         navigation.navigate('Tabs');
         return { success: true, data: response.data };
       } else {
-        showError('Error', response.message || 'Data purchase failed');
-        return { success: false };
+        const message = response.message || 'Data purchase failed';
+        if (!/pin/i.test(message)) {
+          showError('Error', message);
+        }
+        return { success: false, message };
       }
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -456,16 +471,20 @@ export default function Data({ navigation }: { navigation: any }) {
 
         const firstError = Object.values(apiErrors)[0];
         if (firstError) {
-          showError('Validation Error', firstError);
+          errorMessage = String(firstError);
+          if (!/pin/i.test(errorMessage)) {
+            showError('Validation Error', errorMessage);
+          }
         }
       } else if (error.message) {
         errorMessage = error.message;
-        showError('Error', errorMessage);
+        if (!/pin/i.test(errorMessage)) {
+          showError('Error', errorMessage);
+        }
       } else {
         showError('Error', errorMessage);
       }
 
-      setShowConfirmModal(false);
       return { success: false, message: errorMessage };
     } finally {
       setIsSubmitting(false);
@@ -839,13 +858,6 @@ export default function Data({ navigation }: { navigation: any }) {
             </Text>
           )}
         </TouchableOpacity>
-        {isAwuf && (
-          <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
-            <Text style={styles.infoText}>Dial *323*4# or *323*1# to check balance.</Text>
-          </View>
-        )}
-
         <View style={{ height: 320 }} />
       </ScrollView>
 
@@ -867,24 +879,6 @@ export default function Data({ navigation }: { navigation: any }) {
         customers={recentCustomers}
         loading={loadingRecentCustomers}
         onSelectCustomer={handleSelectCustomer}
-      />
-
-      {/* Confirmation Modal */}
-      <ConfirmPurchaseModal
-        visible={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={purchaseData}
-        title={isAwuf ? "Confirm AWUF Data Purchase" : "Confirm Data Purchase"}
-        providerLogo={selectedNetwork?.logoLocal}
-        providerName={selectedNetwork?.name}
-        details={getConfirmationDetails()}
-        amount={getAmount()}
-        commission={!isAwuf ? commission : 0}
-        loading={isSubmitting}
-        confirmButtonText="Buy Data"
-        infoNote={isAwuf
-          ? "Dial *323*4# or *323*1# to check your data balance after purchase"
-          : "Data will be delivered within 1-3 minutes after successful payment"}
       />
     </View>
   );

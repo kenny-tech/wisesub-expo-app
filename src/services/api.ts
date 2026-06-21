@@ -5,8 +5,8 @@ export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
 export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
 
 // Base API URL
-// export const BASE_API = 'https://app.wisesub.com.ng/api/v1/';
-// export const IMAGE_BASE_URL = 'https://app.wisesub.com.ng/images';
+// export const BASE_API = 'https://3af1-154-118-9-168.ngrok-free.app/api/v1/';
+// export const IMAGE_BASE_URL = 'https://3af1-154-118-9-168.ngrok-free.app/images';
 // export const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-3fe10c6cd18ef925281db5aeffda7781-X';
 
 // Create UNAUTHENTICATED axios instance for auth endpoints (login, register, etc.)
@@ -74,6 +74,8 @@ export const API_ENDPOINTS = {
   GET_PROFILE: 'profile',
   UPDATE_PROFILE: 'user/update_profile',
   CHANGE_PASSWORD: 'user/change_password',
+  CHANGE_PIN: 'user/change_pin',
+  SET_PIN: 'user/set_pin',
   DELETE_ACCOUNT: 'user/delete-account',
   LOGOUT: 'user/logout',
 

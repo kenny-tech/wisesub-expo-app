@@ -14,11 +14,11 @@ import { useTheme } from '../theme/ThemeContext';
 
 export default function Profile({ navigation }: { navigation: any }) {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [logoutLoading,      setLogoutLoading]      = useState(false);
-  const [biometricToggling,  setBiometricToggling]  = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [biometricToggling, setBiometricToggling] = useState(false);
 
-  const dispatch       = useAppDispatch();
-  const { user }       = useProfile();
+  const dispatch = useAppDispatch();
+  const { user } = useProfile();
   const { colors, isDark, toggleDark } = useTheme();
 
   const {
@@ -139,11 +139,11 @@ export default function Profile({ navigation }: { navigation: any }) {
               title="Profile Information"
               onPress={() => navigation.navigate('ProfileInfo')}
             />
-            <ProfileItem
+            {/* <ProfileItem
               icon={<Ionicons name="people-outline" size={20} color={colors.primary} />}
               title="Refer & Earn"
               onPress={() => navigation.navigate('Referral')}
-            />
+            /> */}
           </View>
         </View>
 
@@ -174,6 +174,11 @@ export default function Profile({ navigation }: { navigation: any }) {
               icon={<Ionicons name="lock-closed-outline" size={20} color={colors.primary} />}
               title="Change Password"
               onPress={() => navigation.navigate('ChangePassword')}
+            />
+            <ProfileItem
+              icon={<Ionicons name="key-outline" size={20} color={colors.primary} />}
+              title="Change PIN"
+              onPress={() => navigation.navigate('ChangePin')}
             />
             {isBiometricAvailable && (
               <ProfileItem
@@ -289,7 +294,7 @@ export default function Profile({ navigation }: { navigation: any }) {
 
 const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
   StyleSheet.create({
-    screen:        { flex: 1, backgroundColor: colors.background },
+    screen: { flex: 1, backgroundColor: colors.background },
     header: {
       backgroundColor: colors.background,
       paddingHorizontal: 20, paddingTop: 60, paddingBottom: 30,
@@ -305,11 +310,11 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
     },
-    avatarText:    { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Bold' },
-    userInfo:      { flex: 1 },
-    userName:      { fontSize: 24, fontFamily: 'Poppins-Bold',    color: colors.textPrimary, marginBottom: 4 },
-    userEmail:     { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary },
-    section:       { marginTop: 8, paddingHorizontal: 20 },
+    avatarText: { color: '#FFFFFF', fontSize: 32, fontFamily: 'Poppins-Bold' },
+    userInfo: { flex: 1 },
+    userName: { fontSize: 24, fontFamily: 'Poppins-Bold', color: colors.textPrimary, marginBottom: 4 },
+    userEmail: { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary },
+    section: { marginTop: 8, paddingHorizontal: 20 },
     sectionTitle: {
       fontSize: 14, fontFamily: 'Poppins-SemiBold', color: colors.textSecondary,
       marginBottom: 12, marginTop: 16, textTransform: 'uppercase', letterSpacing: 0.5,
@@ -324,17 +329,17 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       paddingVertical: 16, paddingHorizontal: 16,
       borderBottomWidth: 1, borderBottomColor: colors.separator,
     },
-    profileItemLeft:   { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    profileItemLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     iconContainer: {
       width: 40, height: 40, borderRadius: 12,
       backgroundColor: colors.iconContainerBlue,
       justifyContent: 'center', alignItems: 'center', marginRight: 12,
     },
-    destructiveIcon:   { backgroundColor: colors.iconContainerRed },
-    profileItemText:   { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textPrimary, flex: 1 },
-    destructiveText:   { color: colors.error },
-    versionContainer:  { alignItems: 'center', paddingVertical: 32 },
-    versionText:       { fontSize: 14, fontFamily: 'Poppins-Regular', color: colors.textMuted },
+    destructiveIcon: { backgroundColor: colors.iconContainerRed },
+    profileItemText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textPrimary, flex: 1 },
+    destructiveText: { color: colors.error },
+    versionContainer: { alignItems: 'center', paddingVertical: 32 },
+    versionText: { fontSize: 14, fontFamily: 'Poppins-Regular', color: colors.textMuted },
 
     // Modal
     modalOverlay: {
@@ -352,12 +357,12 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       backgroundColor: colors.iconContainerRed,
       justifyContent: 'center', alignItems: 'center', marginBottom: 16,
     },
-    modalTitle:       { fontSize: 20, fontFamily: 'Poppins-Bold',    color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+    modalTitle: { fontSize: 20, fontFamily: 'Poppins-Bold', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
     modalDescription: { fontSize: 16, fontFamily: 'Poppins-Regular', color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-    modalButtons:     { flexDirection: 'row', gap: 12, width: '100%' },
-    modalButton:      { flex: 1, height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    cancelButton:     { backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.divider },
-    logoutButton:     { backgroundColor: colors.error },
+    modalButtons: { flexDirection: 'row', gap: 12, width: '100%' },
+    modalButton: { flex: 1, height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    cancelButton: { backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.divider },
+    logoutButton: { backgroundColor: colors.error },
     cancelButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: colors.textSecondary },
     logoutButtonText: { fontSize: 16, fontFamily: 'Poppins-Medium', color: '#FFFFFF' },
   });

@@ -52,5 +52,7 @@ export type RootStackParamList = {
         amount: string;
     };
     Notification: undefined;
+    ConfirmPurchase: undefined;
+    ChangePin: undefined;
     Tabs: undefined;
 };

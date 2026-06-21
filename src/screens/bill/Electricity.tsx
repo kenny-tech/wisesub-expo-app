@@ -1,4 +1,3 @@
-import { ConfirmPurchaseModal, PurchaseDetail } from '@/src/components/bills/ConfirmPurchaseModal';
 import { ElectricityTokenDisplay } from '@/src/components/bills/ElectricityTokenDisplay';
 import { formatAmount } from '@/src/helper/util';
 import { useProfile } from '@/src/redux/hooks/useProfile';
@@ -25,6 +24,7 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import { PurchaseDetail } from '../ConfirmPurchase';
 
 const { width } = Dimensions.get('window');
 
@@ -57,7 +57,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [customAmount, setCustomAmount] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validating, setValidating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -231,10 +230,20 @@ export default function Electricity({ navigation }: { navigation: any }) {
   const handleProceed = () => {
     if (!validateForm()) return;
     if (!selectedProvider) { showError('Error', 'Please select a provider'); return; }
-    setShowConfirmModal(true);
+    navigation.navigate('ConfirmPurchase', {
+      onConfirm: purchaseElectricity,
+      title: 'Confirm Electricity Purchase',
+      providerLogo: selectedProvider?.logoLocal,
+      providerName: selectedProvider?.name,
+      details: getConfirmationDetails(),
+      amount: parseFloat(amount) || 0,
+      commission,
+      confirmButtonText: meterType === 'prepaid' ? 'Buy Electricity Token' : 'Pay Electricity Bill',
+      infoNote: meterType === 'prepaid' ? 'Electricity token will be generated instantly' : 'Postpaid bill payment will be processed within 24 hours',
+    });
   };
 
-  const purchaseElectricity = async () => {
+  const purchaseElectricity = async (pin: string) => {
     if (!selectedProvider) return { success: false };
     setIsSubmitting(true);
     try {
@@ -252,6 +261,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         meterType: meterType,
         customer_name: customerName,
         validation_status: customerName === 'Customer (Validation Warning)' ? 'warning' : 'validated',
+        pin,
       };
       const response = await billService.purchaseData(payload);
       if (response.success) {
@@ -265,28 +275,37 @@ export default function Electricity({ navigation }: { navigation: any }) {
             customerName: customerName,
             phoneNumber: phoneNumber,
           });
+          // Leave the confirm screen first, then show the token on this screen
+          navigation.goBack();
           setShowToken(true);
         } else {
           Alert.alert('Success', response.message || 'Electricity purchase successful!');
           resetForm();
-          setShowConfirmModal(false);
           navigation.navigate('Tabs');
         }
         return { success: true, data: response.data };
       } else {
-        showError('Error', response.message || 'Electricity purchase failed');
-        return { success: false };
+        const message = response.message || 'Electricity purchase failed';
+        if (!/pin/i.test(message)) {
+          showError('Error', message);
+        }
+        return { success: false, message };
       }
     } catch (error: any) {
+      let errorMessage = error.message || 'Electricity purchase failed';
       if (error.errors) {
         const apiErrors: Record<string, string> = {};
         Object.entries(error.errors).forEach(([field, messages]) => { if (Array.isArray(messages) && messages.length) apiErrors[field] = messages[0]; });
         setErrors(apiErrors);
         const firstError = Object.values(apiErrors)[0];
-        if (firstError) showError('Validation Error', firstError);
-      } else showError('Error', error.message || 'Electricity purchase failed');
-      setShowConfirmModal(false);
-      return { success: false };
+        if (firstError) {
+          errorMessage = String(firstError);
+          if (!/pin/i.test(errorMessage)) showError('Validation Error', errorMessage);
+        }
+      } else if (!/pin/i.test(errorMessage)) {
+        showError('Error', errorMessage);
+      }
+      return { success: false, message: errorMessage };
     } finally { setIsSubmitting(false); }
   };
 
@@ -309,7 +328,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
     setShowToken(false);
     setTokenData(null);
     resetForm();
-    setShowConfirmModal(false);
     navigation.navigate('Tabs');
   };
 
@@ -470,7 +488,6 @@ export default function Electricity({ navigation }: { navigation: any }) {
         <View style={{ height: 320 }} />
       </ScrollView>
 
-      <ConfirmPurchaseModal visible={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={purchaseElectricity} title="Confirm Electricity Purchase" providerLogo={selectedProvider?.logoLocal} providerName={selectedProvider?.name} details={getConfirmationDetails()} amount={parseFloat(amount) || 0} commission={commission} loading={isSubmitting} confirmButtonText={meterType === 'prepaid' ? 'Buy Electricity Token' : 'Pay Electricity Bill'} infoNote={meterType === 'prepaid' ? 'Electricity token will be generated instantly' : 'Postpaid bill payment will be processed within 24 hours'} />
       <RecentCustomersModal visible={showRecentMeterModal} onClose={() => setShowRecentMeterModal(false)} customers={recentMeters} loading={loadingRecentMeters} onSelectCustomer={handleSelectMeter} type="meter" />
       <RecentCustomersModal visible={showRecentPhoneModal} onClose={() => setShowRecentPhoneModal(false)} customers={recentPhones} loading={loadingRecentPhones} onSelectCustomer={handleSelectPhone} type="phone" />
       {tokenData && <ElectricityTokenDisplay visible={showToken} onClose={handleCloseTokenDisplay} token={tokenData.token} units={tokenData.units} amount={tokenData.amount} meterNumber={tokenData.meterNumber} provider={tokenData.provider} customerName={tokenData.customerName} phoneNumber={tokenData.phoneNumber} />}

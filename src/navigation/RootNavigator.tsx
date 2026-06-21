@@ -13,6 +13,8 @@ import CableTv from '../screens/bill/CableTv';
 import Data from '../screens/bill/Data';
 import Electricity from '../screens/bill/Electricity';
 import ChangePassword from '../screens/ChangePassword';
+import ChangePin from '../screens/ChangePin.tsx';
+import ConfirmPurchase from '../screens/ConfirmPurchase';
 import DeleteAccount from '../screens/DeleteAccount';
 import BankTransferDetails from '../screens/fund/BankTransferDetails';
 import FundAmount from '../screens/FundAmount';
@@ -73,6 +75,8 @@ export default function RootNavigator() {
       <Stack.Screen name="TransactionDetail" component={TransactionDetail} />
       <Stack.Screen name="BankTransferDetails" component={BankTransferDetails} />
       <Stack.Screen name="Notification" component={Notification} />
+      <Stack.Screen name="ConfirmPurchase" component={ConfirmPurchase} />
+      <Stack.Screen name="ChangePin" component={ChangePin} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

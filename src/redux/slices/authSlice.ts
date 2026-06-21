@@ -6,11 +6,12 @@ import { authService, LoginData, RegisterData } from '../../services/authService
 import { profileService } from '../../services/profileService';
 import { APP_CONSTANTS } from '../../utils/constants';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
+  pin_set?: boolean;
   email_verified_at?: string;
   created_at?: string;
   updated_at?: string;
@@ -218,6 +219,10 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+    },
   },
   extraReducers: (builder) => {
     // Register
@@ -243,6 +248,15 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.token = action.payload.token;
       state.user = action.payload.user;
+
+      const userToStore = {
+        ...action.payload.user,
+        pin_set: action.payload.user.pin_set ?? false, // fallback
+      };
+      AsyncStorage.setItem(
+        APP_CONSTANTS.STORAGE_KEYS.USER_DATA,
+        JSON.stringify(userToStore)
+      );
     });
     builder.addCase(loginUser.rejected, (state, action) => {
       state.isLoading = false;
@@ -295,5 +309,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, setUser } = authSlice.actions;
 export default authSlice.reducer;

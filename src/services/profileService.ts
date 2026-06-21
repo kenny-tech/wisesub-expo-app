@@ -30,6 +30,12 @@ export interface ChangePasswordResponse {
   errors?: Record<string, string[]>;
 }
 
+export interface ChangePinResponse {
+  success: boolean;
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
 export interface DeleteAccountResponse {
   success: boolean;
   message: string;
@@ -67,6 +73,20 @@ class ProfileService {
   async deleteAccount(data: DeleteAccountData): Promise<DeleteAccountResponse> {
     try {
       const response = await api.post<DeleteAccountResponse>(API_ENDPOINTS.DELETE_ACCOUNT, data);
+      return response.data;
+    } catch (error: any) {
+      return this.handleApiError(error);
+    }
+  }
+
+  async setPin(pin: string, confirmPin: string) {
+    const response = await api.post(API_ENDPOINTS.SET_PIN, { pin, confirm_pin: confirmPin });
+    return response.data;
+  }
+
+  async changePin(data: { password: string; pin: string; confirm_pin: string }): Promise<ChangePinResponse> {
+    try {
+      const response = await api.post<ChangePinResponse>(API_ENDPOINTS.CHANGE_PIN, data);
       return response.data;
     } catch (error: any) {
       return this.handleApiError(error);
