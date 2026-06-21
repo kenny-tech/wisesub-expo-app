@@ -858,13 +858,6 @@ export default function Data({ navigation }: { navigation: any }) {
             </Text>
           )}
         </TouchableOpacity>
-        {/* {isAwuf && (
-          <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
-            <Text style={styles.infoText}>Dial *323*4# or *323*1# to check balance.</Text>
-          </View>
-        )} */}
-
         <View style={{ height: 320 }} />
       </ScrollView>
 
