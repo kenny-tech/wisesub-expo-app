@@ -2,11 +2,11 @@ import { formatAmount } from '@/src/helper/util';
 import { Ionicons } from '@expo/vector-icons';
 import React, { ReactNode, useRef, useState } from 'react';
 import {
-    ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity, View
+  ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity, View
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -238,6 +238,17 @@ export default function ConfirmPurchase({ navigation, route }: { navigation: any
                 <Text style={[styles.pinErrorText, { color: colors.error }]}>{pinError}</Text>
               </View>
             ) : null}
+
+            {/* Forgot PIN link */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ChangePin')}
+              disabled={loading}
+              style={styles.forgotPinContainer}
+            >
+              <Text style={[styles.forgotPinText, { color: colors.primary }]}>
+                Forgot PIN?
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
@@ -330,6 +341,9 @@ const makeStyles = (colors: any) => StyleSheet.create({
 
   pinErrorRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10, justifyContent: 'center' },
   pinErrorText: { fontSize: 12, fontFamily: 'Poppins-Regular' },
+
+  forgotPinContainer: { alignItems: 'center', marginTop: 12 },
+  forgotPinText: { fontSize: 14, fontFamily: 'Poppins-Medium' },
 
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 24, gap: 12 },
   cancelButton: { flex: 1, paddingVertical: 16, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
