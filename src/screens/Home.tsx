@@ -51,10 +51,10 @@ const servicesData: Service[] = [
   { id: 2, name: "Airtime", icon: <Ionicons name="call" size={20} />, screen: "Airtime" },
   { id: 3, name: "Cable", icon: <MaterialIcons name="live-tv" size={20} />, screen: "CableTv" },
   { id: 4, name: "Electricity", icon: <Ionicons name="flash" size={20} />, screen: "Electricity" },
-  { id: 5, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards" },
-  { id: 6, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral" },
-  { id: 7, name: "Help", icon: <Ionicons name="help-circle" size={20} />, screen: "Support" },
-  { id: 8, name: "History", icon: <Ionicons name="receipt" size={20} />, screen: "History" },
+  { id: 5, name: "Education", icon: <Ionicons name="school" size={20} />, screen: "Education" },
+  { id: 6, name: "Rewards", icon: <Ionicons name="gift" size={20} />, screen: "Rewards" },
+  { id: 7, name: "Refer & Earn", icon: <Ionicons name="people" size={20} />, screen: "Referral" },
+  { id: 8, name: "Help", icon: <Ionicons name="help-circle" size={20} />, screen: "Support" },
 ];
 
 export default function Home({ navigation }: { navigation: any }) {
@@ -280,6 +280,9 @@ export default function Home({ navigation }: { navigation: any }) {
   };
 
   const getTransactionDescription = (transaction: Transaction) => {
+    if (transaction.name === "WAEC Registration" || transaction.name === "WAEC Result Checker") {
+      return transaction.name;
+    }
     if (transaction.name === "Commission") return `Bonus from ${transaction.type} purchase`;
     if (transaction.name === "Fund Wallet") return "Top Up";
     let description = transaction.name;

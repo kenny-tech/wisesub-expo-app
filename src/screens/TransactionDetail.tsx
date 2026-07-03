@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { ElectricityTokenDisplay } from '../components/bills/ElectricityTokenDisplay';
+import WAECReceipt from '../components/bills/WAECReceipt';
 import { formatAmount, formatDate } from '../helper/util';
 import { useTheme } from '../theme/ThemeContext';
 import { showError, showSuccess } from '../utils/toast';
@@ -41,6 +42,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
 
   const { transaction } = route.params;
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showWAECReceipt, setShowWAECReceipt] = useState(false);
+  const [waecReceiptData, setWaecReceiptData] = useState<any>(null);
 
   const isCredit = [
     'Fund Wallet',
@@ -326,6 +329,48 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                 <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
               </TouchableOpacity>
             )}
+            {/* WAEC Receipt Button */}
+            {transaction.cards && transaction.cards.length > 0 && (
+              <TouchableOpacity
+                style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
+                onPress={() => {
+                  setWaecReceiptData({
+                    cards: transaction.cards,
+                    tokens: transaction.tokens,
+                    purchasedCode: transaction.purchased_code,
+                    amount: transaction.amount,
+                    customer: transaction.customer,
+                    serviceType: transaction.service_type === 'WAEC Registration' ? 'waec-registration' : 'waec',
+                    productName: transaction.name,
+                  });
+                  setShowWAECReceipt(true);
+                }}
+              >
+                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
+              </TouchableOpacity>
+            )}
+            {/* Similar for tokens (WAEC Registration) */}
+            {transaction.tokens && transaction.tokens.length > 0 && (
+              <TouchableOpacity
+                style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
+                onPress={() => {
+                  setWaecReceiptData({
+                    cards: transaction.cards,
+                    tokens: transaction.tokens,
+                    purchasedCode: transaction.purchased_code,
+                    amount: transaction.amount,
+                    customer: transaction.customer,
+                    serviceType: 'waec-registration',
+                    productName: transaction.name,
+                  });
+                  setShowWAECReceipt(true);
+                }}
+              >
+                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -356,6 +401,16 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           provider={transaction.name ?? ''}
           customerName={transaction.customer_name ?? ''}
           phoneNumber={transaction.phone ?? ''}
+        />
+      )}
+      {showWAECReceipt && waecReceiptData && (
+        <WAECReceipt
+          visible={showWAECReceipt}
+          onClose={() => {
+            setShowWAECReceipt(false);
+            setWaecReceiptData(null);
+          }}
+          {...waecReceiptData}
         />
       )}
     </ScrollView>

@@ -11,9 +11,11 @@ import Verification from '../screens/auth/Verification';
 import Airtime from '../screens/bill/Airtime';
 import CableTv from '../screens/bill/CableTv';
 import Data from '../screens/bill/Data';
+import Education from '../screens/bill/Education';
 import Electricity from '../screens/bill/Electricity';
+import WAECPurchase from '../screens/bill/WAECPurchase';
 import ChangePassword from '../screens/ChangePassword';
-import ChangePin from '../screens/ChangePin.tsx';
+import ChangePin from '../screens/ChangePin';
 import ConfirmPurchase from '../screens/ConfirmPurchase';
 import DeleteAccount from '../screens/DeleteAccount';
 import BankTransferDetails from '../screens/fund/BankTransferDetails';
@@ -77,6 +79,8 @@ export default function RootNavigator() {
       <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="ConfirmPurchase" component={ConfirmPurchase} />
       <Stack.Screen name="ChangePin" component={ChangePin} />
+      <Stack.Screen name="Education" component={Education} />
+      <Stack.Screen name="WAECPurchase" component={WAECPurchase} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
     </Stack.Navigator>
   );

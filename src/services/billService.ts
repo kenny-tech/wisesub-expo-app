@@ -239,6 +239,10 @@ class BillService {
     }
   }
 
+  async getVariationCodes(serviceID: string): Promise<any> {
+    return this.getDataPlans(serviceID);
+  }
+
   private handleApiError(error: any): never {
     if (error.response) {
       const apiError = error.response.data;
