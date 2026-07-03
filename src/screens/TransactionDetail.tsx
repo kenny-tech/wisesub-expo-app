@@ -296,7 +296,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
               <View style={styles.detailRow}>
                 <View style={styles.detailLeft}>
                   <Ionicons name="key" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Meter Token</Text>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Token </Text>
                 </View>
                 <View style={styles.tokenContainer}>
                   <Text style={[styles.tokenValue, { color: colors.primary }]}>{transaction.electricity_token}</Text>
