@@ -167,6 +167,17 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const getProductDisplayName = (transaction: any) => {
+    if (transaction.type === 'WAEC Registration') {
+      return 'WAEC Registration PIN';
+    }
+    if (transaction.type === 'WAEC Result Checker') {
+      return 'WAEC Result Checker PIN';
+    }
+    // For other services, use the name as is
+    return transaction.name;
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.separator }]}>
@@ -203,7 +214,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.serviceInfo}>
-            <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{getDisplayName(transaction.name)}</Text>
+            <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{getDisplayName(getProductDisplayName(transaction))}</Text>            
             <Text style={[styles.serviceType, { color: colors.textSecondary }]}>
               {transaction.type || (isWiseSubTransaction ? 'Wallet Transaction' : 'Service Purchase')}
             </Text>
@@ -341,7 +352,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                     amount: transaction.amount,
                     customer: transaction.customer,
                     serviceType: transaction.service_type === 'WAEC Registration' ? 'waec-registration' : 'waec',
-                    productName: transaction.name,
+                    productName: getProductDisplayName(transaction),
+
                   });
                   setShowWAECReceipt(true);
                 }}
@@ -362,7 +374,7 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
                     amount: transaction.amount,
                     customer: transaction.customer,
                     serviceType: 'waec-registration',
-                    productName: transaction.name,
+                    productName: getProductDisplayName(transaction),
                   });
                   setShowWAECReceipt(true);
                 }}
