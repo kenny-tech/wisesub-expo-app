@@ -54,5 +54,7 @@ export type RootStackParamList = {
     Notification: undefined;
     ConfirmPurchase: undefined;
     ChangePin: undefined;
+    Education: undefined;
+    WAECPurchase: undefined;
     Tabs: undefined;
 };

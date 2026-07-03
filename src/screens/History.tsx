@@ -51,6 +51,9 @@ export default function History({ navigation }: { navigation: any }) {
   };
 
   const getTransactionDescription = (transaction: Transaction) => {
+    if (transaction.name === "WAEC Registration" || transaction.name === "WAEC Result Checker") {
+      return transaction.name;
+    }
     if (transaction.name === "Commission") return `Bonus from ${transaction.type} purchase`;
     if (transaction.name === "Fund Wallet") return "Top Up";
     let description = transaction.name;
