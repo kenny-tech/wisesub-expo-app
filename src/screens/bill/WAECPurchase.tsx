@@ -131,6 +131,7 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                 amount: parseFloat(selectedPlan.variation_amount) * quantity,
                 phone: phoneNumber,
                 customer: phoneNumber,
+                billersCode: phoneNumber,
                 type: name,
                 service_type: serviceType,
                 provider_logo: providerLogo,
@@ -297,7 +298,6 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                                 setErrors((prev) => ({ ...prev, quantity: '' }));
                             }}
                             keyboardType="number-pad"
-                            min={1}
                         />
                         <TouchableOpacity
                             style={[styles.quantityButton, { backgroundColor: colors.backgroundSecondary }]}

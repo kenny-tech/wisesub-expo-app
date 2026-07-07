@@ -66,8 +66,11 @@ export interface PurchaseResponse {
   success: boolean;
   message: string;
   data?: {
-    transactionId: string;
-    status: string;
+    transactionId?: string;
+    status?: string;
+    cards?: Array<{ Serial: string; Pin: string }>;
+    tokens?: string[];
+    purchased_code?: string;
   };
 }
 
