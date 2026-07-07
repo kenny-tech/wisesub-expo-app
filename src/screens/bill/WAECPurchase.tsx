@@ -131,7 +131,6 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                 amount: parseFloat(selectedPlan.variation_amount) * quantity,
                 phone: phoneNumber,
                 customer: phoneNumber,
-                billersCode: phoneNumber,
                 type: name,
                 service_type: serviceType,
                 provider_logo: providerLogo,
@@ -140,7 +139,7 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                 pin,
             };
 
-            const response = await billService.purchaseData(payload);
+            const response = await billService.purchaseWAEC(payload);
 
             if (response.success) {
                 const data = response.data;
