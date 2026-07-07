@@ -131,14 +131,13 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                 amount: parseFloat(selectedPlan.variation_amount) * quantity,
                 phone: phoneNumber,
                 customer: phoneNumber,
-                type: name,                     // "WAEC Registration" or "WAEC Result Checker"
+                type: name,
                 service_type: serviceType,
                 provider_logo: providerLogo,
                 name: name,
                 quantity: quantity,
                 pin,
             };
-            console.log('🔍 WAEC Purchase Payload:', JSON.stringify(payload, null, 2));
 
             const response = await billService.purchaseData(payload);
 
@@ -181,8 +180,16 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
 
     const renderPlanPicker = () => (
         <Modal visible={showPlanPicker} animationType="slide" transparent>
-            <View style={styles.modalOverlay}>
-                <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <TouchableOpacity
+                activeOpacity={1}
+                style={styles.modalOverlay}
+                onPress={() => setShowPlanPicker(false)}
+            >
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={[styles.modalContainer, { backgroundColor: colors.card }]}
+                    onPress={(e) => e.stopPropagation()}
+                >
                     <View style={[styles.modalHeader, { borderBottomColor: colors.separator }]}>
                         <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Plan</Text>
                         <TouchableOpacity onPress={() => setShowPlanPicker(false)}>
@@ -221,8 +228,8 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                             contentContainerStyle={{ paddingBottom: 20 }}
                         />
                     )}
-                </View>
-            </View>
+                </TouchableOpacity>
+            </TouchableOpacity>
         </Modal>
     );
 

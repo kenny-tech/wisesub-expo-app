@@ -9,18 +9,18 @@ export default function Education({ navigation }: { navigation: any }) {
 
     const options = [
         {
+            id: 'waec-result',
+            title: 'WAEC Result Checker PIN',
+            image: require('../../../assets/images/waec-logo.png'),
+            serviceID: 'waec',
+            serviceName: 'WAEC Result Checker',
+        },
+        {
             id: 'waec-registration',
             title: 'WAEC Registration PIN',
             image: require('../../../assets/images/waec-logo.png'),
             serviceID: 'waec-registration',
             serviceName: 'WAEC Registration',
-        },
-        {
-            id: 'waec-result',
-            title: 'WAEC Result Checker',
-            image: require('../../../assets/images/waec-logo.png'),
-            serviceID: 'waec',
-            serviceName: 'WAEC Result Checker',
         },
     ];
 
