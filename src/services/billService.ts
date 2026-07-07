@@ -115,6 +115,31 @@ export interface ValidateMeterResponse {
   };
 }
 
+export interface WAECPurchasePayload {
+  serviceID: 'waec' | 'waec-registration';
+  variation_code: string;
+  phone: string;
+  customer: string;
+  amount: number;         // total = unit_price * quantity
+  quantity: number;
+  type: string;           // e.g., "WAEC Result Checker" or "WAEC Registration"
+  service_type: string;
+  provider_logo?: string;
+  name: string;
+  pin: string;
+}
+
+export interface WAECPurchaseResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    cards?: Array<{ Serial: string; Pin: string }>;
+    tokens?: string[];
+    purchased_code?: string;
+    [key: string]: any;   // flexibility for extra fields
+  };
+}
+
 class BillService {
   async getDataPlans(serviceID: string): Promise<DataPlansResponse> {
     try {
@@ -241,6 +266,26 @@ class BillService {
 
   async getVariationCodes(serviceID: string): Promise<any> {
     return this.getDataPlans(serviceID);
+  }
+
+  /**
+  * Purchase WAEC Result Checker or Registration PIN
+  */
+  async purchaseWAEC(payload: WAECPurchasePayload): Promise<WAECPurchaseResponse> {
+    try {
+      const response = await api.post(API_ENDPOINTS.PAY_BILL, payload);
+      return {
+        success: true,
+        message: response.data.message || 'Purchase successful',
+        data: response.data.data || response.data,
+      };
+    } catch (error: any) {
+      console.error('WAEC purchase error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Purchase failed',
+      };
+    }
   }
 
   private handleApiError(error: any): never {

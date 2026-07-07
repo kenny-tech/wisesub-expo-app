@@ -139,7 +139,7 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                 pin,
             };
 
-            const response = await billService.purchaseData(payload);
+            const response = await billService.purchaseWAEC(payload);
 
             if (response.success) {
                 const data = response.data;
@@ -297,7 +297,6 @@ export default function WAECPurchase({ navigation }: { navigation: any }) {
                                 setErrors((prev) => ({ ...prev, quantity: '' }));
                             }}
                             keyboardType="number-pad"
-                            min={1}
                         />
                         <TouchableOpacity
                             style={[styles.quantityButton, { backgroundColor: colors.backgroundSecondary }]}
