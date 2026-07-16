@@ -1,3 +1,4 @@
+import BalanceBar from '@/src/components/bills/BalanceBar.tsx';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService } from '@/src/services/billService';
@@ -218,7 +219,7 @@ export default function Airtime({ navigation }: { navigation: any }) {
         <Text style={[styles.title, { color: colors.textPrimary }]}>Buy Airtime</Text>
         <View style={styles.placeholder} />
       </View>
-
+      <BalanceBar />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Network Selection */}
         <View style={styles.section}>

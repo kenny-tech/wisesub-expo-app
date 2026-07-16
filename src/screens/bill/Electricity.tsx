@@ -1,3 +1,4 @@
+import BalanceBar from '@/src/components/bills/BalanceBar.tsx';
 import { ElectricityTokenDisplay } from '@/src/components/bills/ElectricityTokenDisplay';
 import { formatAmount } from '@/src/helper/util';
 import { useProfile } from '@/src/redux/hooks/useProfile';
@@ -384,7 +385,7 @@ export default function Electricity({ navigation }: { navigation: any }) {
         <Text style={[styles.title, { color: colors.textPrimary }]}>Buy Electricity</Text>
         <View style={styles.placeholder} />
       </View>
-
+      <BalanceBar />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Provider Selection */}
         <View style={styles.section}>

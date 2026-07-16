@@ -1,3 +1,4 @@
+import BalanceBar from '@/src/components/bills/BalanceBar.tsx';
 import { DataPlanModal } from '@/src/components/bills/DataPlanModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
@@ -263,13 +264,7 @@ export default function Data({ navigation }: { navigation: any }) {
       const response = await billService.getAwufDataPlans(providerCode);
 
       if (response.success && response.data) {
-        const sorted = [...response.data].sort((a, b) => {
-          const aIsAwuf = a.package_name?.toLowerCase().includes('awuf') ? 0 : 1;
-          const bIsAwuf = b.package_name?.toLowerCase().includes('awuf') ? 0 : 1;
-          return aIsAwuf - bIsAwuf;
-        });
-
-        setDataPlans(sorted);
+        setDataPlans(response.data);
       } else {
         setDataPlans([]);
         showError('Info', 'No AWUF plans available for this network');
@@ -626,7 +621,7 @@ export default function Data({ navigation }: { navigation: any }) {
         <Text style={[styles.title, { color: colors.textPrimary }]}>Buy Data</Text>
         <View style={styles.placeholder} />
       </View>
-
+      <BalanceBar />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
