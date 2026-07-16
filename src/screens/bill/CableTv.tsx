@@ -1,3 +1,4 @@
+import BalanceBar from '@/src/components/bills/BalanceBar.tsx';
 import { CablePlanModal } from '@/src/components/bills/CablePlanModal';
 import { formatAmount } from '@/src/helper/util';
 import { useProfile } from '@/src/redux/hooks/useProfile';
@@ -392,7 +393,7 @@ export default function CableTv({ navigation }: { navigation: any }) {
         <Text style={[styles.title, { color: colors.textPrimary }]}>Cable TV</Text>
         <View style={styles.placeholder} />
       </View>
-
+      <BalanceBar />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Provider Selection */}
         <View style={styles.section}>

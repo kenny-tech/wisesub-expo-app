@@ -68,6 +68,8 @@ export interface PurchaseResponse {
   data?: {
     transactionId: string;
     status: string;
+    // Allow any other fields returned by the API
+    [key: string]: any;
   };
 }
 
