@@ -1,9 +1,11 @@
 import { formatAmount } from '@/src/helper/util';
-import { walletService } from '@/src/services/walletService';
 import { useTheme } from '@/src/theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+
+const BALANCE_STORAGE_KEY = '@wisesub_balances';
 
 export default function BalanceBar() {
   const { colors } = useTheme();
@@ -12,19 +14,19 @@ export default function BalanceBar() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBalances();
+    loadBalances();
   }, []);
 
-  const fetchBalances = async () => {
-    setLoading(true);
+  const loadBalances = async () => {
     try {
-      const response = await walletService.getWalletBalance();
-      if (response.success) {
-        setWalletBalance(response.data.wallet_balance || '0');
-        setCommissionBalance(response.data.commission_balance || '0');
+      const stored = await AsyncStorage.getItem(BALANCE_STORAGE_KEY);
+      if (stored) {
+        const balances = JSON.parse(stored);
+        setWalletBalance(balances.wallet_balance || '0');
+        setCommissionBalance(balances.commission_balance || '0');
       }
     } catch (error) {
-      console.error('Failed to fetch balances:', error);
+      console.error('Failed to load balances from storage:', error);
     } finally {
       setLoading(false);
     }

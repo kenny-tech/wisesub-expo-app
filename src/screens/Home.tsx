@@ -169,8 +169,15 @@ export default function Home({ navigation }: { navigation: any }) {
       setWalletError(null);
       const response = await walletService.getWalletBalance();
       if (response.success) {
-        setWalletBalance(response.data.wallet_balance);
-        setCommissionBalance(response.data.commission_balance);
+        const balances = {
+          wallet_balance: response.data.wallet_balance,
+          commission_balance: response.data.commission_balance,
+        };
+        setWalletBalance(balances.wallet_balance);
+        setCommissionBalance(balances.commission_balance);
+
+        // Store in AsyncStorage
+        await AsyncStorage.setItem('@wisesub_balances', JSON.stringify(balances));
       } else {
         setWalletError(response.message || 'Failed to fetch balance');
       }

@@ -3,12 +3,12 @@ import { DataPlanModal } from '@/src/components/bills/DataPlanModal';
 import { formatAmount } from '@/src/helper/util';
 import { IMAGE_BASE_URL } from '@/src/services/api';
 import { billService, DataPlan } from '@/src/services/billService';
-import { CommissionConfig, commissionService } from '@/src/services/commissionService';
+import { CommissionConfig } from '@/src/services/commissionService';
 import { RecentCustomer, walletService } from '@/src/services/walletService';
 import { showError, showSuccess } from '@/src/utils/toast';
 import { DataValidators } from '@/src/utils/validators/dataValidators';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -142,55 +142,55 @@ export default function Data({ navigation }: { navigation: any }) {
   };
 
   // Fetch commission configuration for VTPass
-  useEffect(() => {
-    fetchCommissionConfig('Data');
-  }, []);
+  // useEffect(() => {
+  //   fetchCommissionConfig('Data');
+  // }, []);
 
   // Fetch AidaPay pricing config
-  useEffect(() => {
-    fetchAwufPricingConfig();
-  }, []);
+  // useEffect(() => {
+  //   fetchAwufPricingConfig();
+  // }, []);
 
   // Fetch commission configuration
-  const fetchCommissionConfig = async (type: string) => {
-    setLoadingCommission(true);
-    try {
-      const response = await commissionService.getCommissionConfig(type);
-      if (response.success && response.data) {
-        setCommissionConfig(response.data);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch commission config:', error);
-    } finally {
-      setLoadingCommission(false);
-    }
-  };
+  // const fetchCommissionConfig = async (type: string) => {
+  //   setLoadingCommission(true);
+  //   try {
+  //     const response = await commissionService.getCommissionConfig(type);
+  //     if (response.success && response.data) {
+  //       setCommissionConfig(response.data);
+  //     }
+  //   } catch (error: any) {
+  //     console.error('Failed to fetch commission config:', error);
+  //   } finally {
+  //     setLoadingCommission(false);
+  //   }
+  // };
 
   // Fetch AidaPay pricing config
-  const fetchAwufPricingConfig = async () => {
-    try {
-      const response = await billService.getAwufPricingConfig();
-      if (response.success && response.data) {
-        setAdditionalAmount(response.data.additional_amount);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch AidaPay config:', error);
-    }
-  };
+  // const fetchAwufPricingConfig = async () => {
+  //   try {
+  //     const response = await billService.getAwufPricingConfig();
+  //     if (response.success && response.data) {
+  //       setAdditionalAmount(response.data.additional_amount);
+  //     }
+  //   } catch (error: any) {
+  //     console.error('Failed to fetch AidaPay config:', error);
+  //   }
+  // };
 
   // Calculate commission only for VTPass plans
-  const calculateCommissionForPlan = (planAmount: number) => {
-    if (!commissionConfig || planAmount <= 0 || isAwuf) {
-      setCommission(0);
-      return;
-    }
+  // const calculateCommissionForPlan = (planAmount: number) => {
+  //   if (!commissionConfig || planAmount <= 0 || isAwuf) {
+  //     setCommission(0);
+  //     return;
+  //   }
 
-    const calculatedCommission = commissionService.calculateCommission(
-      planAmount,
-      commissionConfig
-    );
-    setCommission(calculatedCommission);
-  };
+  //   const calculatedCommission = commissionService.calculateCommission(
+  //     planAmount,
+  //     commissionConfig
+  //   );
+  //   setCommission(calculatedCommission);
+  // };
 
   // Network selection handler
   const handleNetworkSelect = async (network: any) => {
@@ -286,7 +286,7 @@ export default function Data({ navigation }: { navigation: any }) {
     // Calculate commission only for VTPass plans
     if (!plan.isAwuf) {
       const planAmount = parseFloat(plan.variation_amount?.toString() || '0');
-      calculateCommissionForPlan(planAmount);
+      // calculateCommissionForPlan(planAmount);
     } else {
       setCommission(0);
     }
