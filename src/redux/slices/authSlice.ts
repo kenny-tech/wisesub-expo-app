@@ -148,6 +148,8 @@ export const logoutUser = createAsyncThunk(
       // Even if API fails, still clear local storage
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
       await AsyncStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER_DATA);
+      // Clear balance storage
+      await AsyncStorage.removeItem('@wisesub_balances');
     }
   }
 );
