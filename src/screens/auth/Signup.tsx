@@ -14,6 +14,7 @@ import { authService } from '../../services/authService';
 import { makeAuthStyles } from '../../styles/authStyles';
 import { useTheme } from '../../theme/ThemeContext';
 import { APP_CONSTANTS } from '../../utils/constants';
+import { getOtpParams, saveOtpParams } from '../../utils/otpStorage';
 import { AuthValidators } from '../../utils/validators/authValidators';
 
 const SignupScreen: React.FC = () => {
@@ -28,6 +29,18 @@ const SignupScreen: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => { getDeviceId(); }, []);
+
+  useEffect(() => {
+    checkExistingOtp();
+  }, []);
+
+  const checkExistingOtp = async () => {
+    const params = await getOtpParams();
+    if (params) {
+      // User already has an ongoing OTP flow – redirect to Verification
+      navigation.navigate('Verification', params);
+    }
+  };
 
   const getDeviceId = async () => {
     try { setDeviceId(Device.osBuildId || Device.modelId || 'mobile-device'); }
@@ -59,6 +72,12 @@ const SignupScreen: React.FC = () => {
       const response = await authService.register(payload);
       if (response?.success) {
         showSuccess('Registration Successful', response.message || 'Please check your email for verification.');
+        // Store OTP params in AsyncStorage
+        await saveOtpParams({
+          email: formData.email.toLowerCase().trim(),
+          name: formData.name.trim(),
+          otpType: APP_CONSTANTS.OTP_TYPES.SIGNUP,
+        });
         navigation.navigate('Verification', { email: formData.email.toLowerCase().trim(), name: formData.name.trim(), otpType: APP_CONSTANTS.OTP_TYPES.SIGNUP });
       }
     } catch (error: any) {

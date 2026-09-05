@@ -28,17 +28,29 @@ import TransactionDetail from '../screens/TransactionDetail';
 import Welcome from '../screens/Welcome';
 import TabNavigator from './TabNavigator';
 
+import { getOtpParams } from '../utils/otpStorage';
+
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null);
+  const [initialParams, setInitialParams] = useState<any>(null);
 
   useEffect(() => {
-    checkSavedEmail();
+    checkInitialRoute();
   }, []);
 
-  const checkSavedEmail = async () => {
+  const checkInitialRoute = async () => {
     try {
+      // First check for existing OTP flow
+      const otpParams = await getOtpParams();
+      if (otpParams) {
+        setInitialRoute('Verification');
+        setInitialParams(otpParams); // pass email, name, otpType
+        return;
+      }
+
+      // Otherwise check for saved email (logged in user)
       const savedEmail = await AsyncStorage.getItem('userEmail');
       if (savedEmail) {
         setInitialRoute('Signin');
@@ -46,7 +58,7 @@ export default function RootNavigator() {
         setInitialRoute('Welcome');
       }
     } catch (error) {
-      console.log('Error checking saved email:', error);
+      console.log('Error checking initial route:', error);
       setInitialRoute('Welcome');
     }
   };
@@ -54,7 +66,6 @@ export default function RootNavigator() {
   if (initialRoute === null) {
     return null; // Or a loading screen
   }
-
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
@@ -73,7 +84,7 @@ export default function RootNavigator() {
       <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
-      <Stack.Screen name="Verification" component={Verification} />
+      <Stack.Screen name="Verification" component={Verification} initialParams={initialParams} />
       <Stack.Screen name="TransactionDetail" component={TransactionDetail} />
       <Stack.Screen name="BankTransferDetails" component={BankTransferDetails} />
       <Stack.Screen name="Notification" component={Notification} />
