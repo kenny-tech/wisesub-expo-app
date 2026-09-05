@@ -12,16 +12,14 @@ import { authService } from '../../services/authService';
 import { makeAuthStyles } from '../../styles/authStyles';
 import { useTheme } from '../../theme/ThemeContext';
 import { APP_CONSTANTS } from '../../utils/constants';
+import { clearOtpParams, getOtpParams } from '../../utils/otpStorage';
 import { AuthValidators } from '../../utils/validators/authValidators';
 
 const Verification: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { email, otpType, name } = route.params as {
-    email: string;
-    otpType: string;
-    name?: string;
-  };
+  const params = (route.params as any) || {};
+  const { email, otpType, name } = params;
 
   const { colors } = useTheme();
   const styles = makeAuthStyles(colors);
@@ -31,9 +29,29 @@ const Verification: React.FC = () => {
   const [timer, setTimer] = useState(APP_CONSTANTS.OTP_TIMER_DURATION);
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true); // new loading state
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup function to clear timer
+  // Fetch params if not present in route
+  useEffect(() => {
+    const fetchParams = async () => {
+      if (email && otpType) {
+        setIsLoading(false);
+        return;
+      }
+      const stored = await getOtpParams();
+      if (stored) {
+        navigation.replace('Verification', stored);
+      } else {
+        // No active OTP flow – go to Signin
+        navigation.replace('Signin');
+      }
+      setIsLoading(false);
+    };
+    fetchParams();
+  }, []);
+
+  // Timer logic
   const clearTimer = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -42,7 +60,7 @@ const Verification: React.FC = () => {
   };
 
   const startTimer = () => {
-    clearTimer(); // clear any existing timer before starting a new one
+    clearTimer();
     timerRef.current = setInterval(() => {
       setTimer(prev => {
         if (prev <= 1) {
@@ -54,11 +72,25 @@ const Verification: React.FC = () => {
     }, 1000);
   };
 
-  // Start timer on component mount
   useEffect(() => {
     startTimer();
     return () => clearTimer();
   }, []);
+
+  // If still loading, show a spinner
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  // If no email even after loading, redirect (just in case)
+  if (!email || !otpType) {
+    navigation.replace('Signin');
+    return null;
+  }
 
   const handleOtpComplete = async (completeOtp: string) => {
     setOtp(completeOtp);
@@ -100,6 +132,8 @@ const Verification: React.FC = () => {
           text2: response.message || 'OTP verified successfully.',
         });
 
+        await clearOtpParams();
+
         if (otpType === APP_CONSTANTS.OTP_TYPES.FORGOT_PASSWORD) {
           navigation.navigate('ResetPassword', {
             email,
@@ -140,7 +174,7 @@ const Verification: React.FC = () => {
   };
 
   const handleResendOtp = async () => {
-    if (timer > 0 || resendLoading) return; // prevent if timer still active or already sending
+    if (timer > 0 || resendLoading) return;
 
     setResendLoading(true);
     setError('');
@@ -154,7 +188,7 @@ const Verification: React.FC = () => {
           text2: response.message || 'New OTP sent to your email.',
         });
         setTimer(APP_CONSTANTS.OTP_TIMER_DURATION);
-        startTimer(); // restart timer after resend
+        startTimer();
         setOtp('');
       }
     } catch (apiError: any) {
@@ -162,6 +196,11 @@ const Verification: React.FC = () => {
     } finally {
       setResendLoading(false);
     }
+  };
+
+  const handleCancel = async () => {
+    await clearOtpParams();
+    navigation.navigate('Signin');
   };
 
   const getScreenTitle = () => {
@@ -233,6 +272,13 @@ const Verification: React.FC = () => {
                 </TouchableOpacity>
               )}
             </View>
+            {/* Cancel button */}
+            <TouchableOpacity
+              style={{ marginTop: 16, alignSelf: 'center' }}
+              onPress={handleCancel}
+            >
+              <Text style={[styles.link, { fontSize: 14 }]}>Cancel verification</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

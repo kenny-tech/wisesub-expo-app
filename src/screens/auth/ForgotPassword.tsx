@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform,
   ScrollView, Text, TouchableOpacity, View,
@@ -11,6 +11,7 @@ import { authService } from '../../services/authService';
 import { makeAuthStyles } from '../../styles/authStyles';
 import { useTheme } from '../../theme/ThemeContext';
 import { APP_CONSTANTS } from '../../utils/constants';
+import { getOtpParams, saveOtpParams } from '../../utils/otpStorage';
 import { AuthValidators } from '../../utils/validators/authValidators';
 
 const ForgotPasswordScreen: React.FC = () => {
@@ -22,6 +23,18 @@ const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    checkExistingOtp();
+  }, []);
+
+  const checkExistingOtp = async () => {
+    const params = await getOtpParams();
+    if (params) {
+      // User already has an ongoing OTP flow – redirect to Verification
+      navigation.navigate('Verification', params);
+    }
+  };
+
   const handleSendOtp = async () => {
     const emailError = AuthValidators.validateEmail(email);
     if (emailError) { setError(emailError); return; }
@@ -31,6 +44,11 @@ const ForgotPasswordScreen: React.FC = () => {
       const response = await authService.forgotPassword(email.toLowerCase().trim());
       if (response?.success) {
         Toast.show({ type: 'success', text1: 'OTP Sent', text2: response.message || 'Check your email for OTP.' });
+        await saveOtpParams({
+          email: email.toLowerCase().trim(),
+          name: response.data.name,
+          otpType: APP_CONSTANTS.OTP_TYPES.FORGOT_PASSWORD,
+        });
         navigation.navigate('Verification', {
           name: response.data.name,
           email: email.toLowerCase().trim(),
