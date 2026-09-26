@@ -86,7 +86,7 @@ export function useBiometrics() {
                 promptMessage: message ?? 'Authenticate to continue',
                 fallbackLabel: 'Use Password',
                 cancelLabel: 'Cancel',
-                disableDeviceFallback: false,
+                disableDeviceFallback: true,
             });
             return result.success;
         } catch (_) {

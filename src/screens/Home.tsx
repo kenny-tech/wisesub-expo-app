@@ -368,36 +368,56 @@ export default function Home({ navigation }: { navigation: any }) {
 
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle={colors.isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
+      <StatusBar
+        barStyle={colors.isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
+
+      {/* ── Fixed header (greeting + notifications) — does NOT scroll ── */}
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.greeting, { color: colors.textPrimary }]}>
+            Hi {user?.name?.split(' ')[0]}!
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Welcome back to WiseSub
+          </Text>
+        </View>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: colors.card }]}
+            onPress={async () => {
+              if (stats.unread > 0) {
+                try {
+                  await markAllAsRead();
+                  await fetchNotifications();
+                } catch (error) { console.error(error); }
+              }
+              navigation.navigate("Notification");
+            }}
+          >
+            <Ionicons name="notifications-outline" size={18} color={colors.textPrimary} />
+            {stats.unread > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>{stats.unread > 9 ? '9+' : stats.unread}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ── Scrollable body ── */}
       <FlatList
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         ListHeaderComponent={
           <>
-            <View style={styles.header}>
-              <View>
-                <Text style={[styles.greeting, { color: colors.textPrimary }]}>Hi {user?.name?.split(' ')[0]}!</Text>
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Welcome back to WiseSub</Text>
-              </View>
-              <View style={styles.headerIcons}>
-                <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.card }]} onPress={async () => {
-                  if (stats.unread > 0) {
-                    try {
-                      await markAllAsRead();
-                      await fetchNotifications();
-                    } catch (error) { console.error(error); }
-                  }
-                  navigation.navigate("Notification");
-                }}>
-                  <Ionicons name="notifications-outline" size={18} color={colors.textPrimary} />
-                  {stats.unread > 0 && (
-                    <View style={styles.notificationBadge}>
-                      <Text style={styles.badgeText}>{stats.unread > 9 ? '9+' : stats.unread}</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-
             <View style={styles.walletContainer}>
               <View style={[styles.walletCard, { backgroundColor: colors.primary }]}>
                 <View style={styles.walletRow}>
@@ -598,7 +618,7 @@ function FundWalletModal({ isVisible, onClose, onSelectMethod, colors, modalStyl
 const makeStyles = (colors: any) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background, paddingTop: 15 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
-  header: { marginTop: 18, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
+  header: { marginTop: 18, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
   greeting: { fontSize: 22, fontFamily: "Poppins-Bold" },
   subtitle: { marginTop: 4, fontSize: 13, fontFamily: "Poppins-Regular" },
   headerIcons: { flexDirection: "row", gap: 10 },

@@ -115,21 +115,19 @@ export default function Profile({ navigation }: { navigation: any }) {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{getInitial(user?.name)}</Text>
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user?.name}</Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
-            </View>
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitial(user?.name)}</Text>
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user?.name}</Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
           </View>
         </View>
-
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* ── Account ── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
