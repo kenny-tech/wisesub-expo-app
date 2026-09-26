@@ -197,34 +197,41 @@ const SigninScreen: React.FC = () => {
                 : <Text style={styles.buttonText}>Sign In</Text>}
             </TouchableOpacity>
 
-            {/* BIG, CENTRALIZED, SPACED FINGERPRINT ICON */}
-            <View style={styles.biometricIconContainer}>
-              <TouchableOpacity
-                style={styles.fingerprintCircle}
-                onPress={showBiometricIcon ? handleBiometricLogin : undefined}
-                disabled={!showBiometricIcon || isLoading}
-                activeOpacity={showBiometricIcon ? 0.7 : 1}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="large" color={colors.primary} />
-                ) : (
-                  <Ionicons
-                    name={
-                      showBiometricIcon && biometricType === 'Face ID'
-                        ? 'scan-outline'
-                        : 'finger-print-outline'
-                    }
-                    size={80}
-                    color={showBiometricIcon ? colors.primary : colors.disabled}
-                  />
+            {/* BIG, CENTRALIZED, SPACED FINGERPRINT ICON
+            — only rendered when the device actually has biometric hardware,
+              matching the gating used on the Profile screen. */}
+            {isBiometricAvailable && (
+              <View style={styles.biometricIconContainer}>
+                <TouchableOpacity
+                  style={styles.fingerprintCircle}
+                  onPress={showBiometricIcon ? handleBiometricLogin : undefined}
+                  disabled={!showBiometricIcon || isLoading}
+                  activeOpacity={showBiometricIcon ? 0.7 : 1}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  ) : (
+                    <Ionicons
+                      name={
+                        showBiometricIcon && biometricType === 'Face ID'
+                          ? 'scan-outline'
+                          : 'finger-print-outline'
+                      }
+                      size={80}
+                      color={showBiometricIcon ? colors.primary : colors.disabled}
+                    />
+                  )}
+                </TouchableOpacity>
+
+                {/* Only show the "not set up" hint when the hardware exists
+                but the user hasn't enabled biometric login yet. */}
+                {!showBiometricIcon && (
+                  <Text style={styles.biometricUnavailableText}>
+                    Biometric login is not set up or has been cleared. Please sign in and enable it from your profile.
+                  </Text>
                 )}
-              </TouchableOpacity>
-              {!showBiometricIcon && (
-                <Text style={styles.biometricUnavailableText}>
-                  Biometric login is not set up or has been cleared. Please sign in and enable it from your profile.
-                </Text>
-              )}
-            </View>
+              </View>
+            )}
 
             <TouchableOpacity
               style={styles.linkContainer}
