@@ -116,7 +116,11 @@ export default function BankTransferDetails({ navigation }: { navigation: any })
               <Ionicons name="business-outline" size={18} color={colors.textSecondary} />
               <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Bank Name</Text>
             </View>
-            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transferDetails.bank_name}</Text>
+            <View style={styles.detailValueContainer}>
+              <Text style={[styles.detailValue, styles.detailValueWrap, { color: colors.textPrimary }]}>
+                {transferDetails.bank_name}
+              </Text>
+            </View>
           </View>
 
           {/* Account Number */}
@@ -235,11 +239,40 @@ const makeStyles = (colors: any) => StyleSheet.create({
   noteCard: { flexDirection: 'row', alignItems: 'flex-start', borderRadius: 12, padding: 16, marginTop: 20, marginBottom: 16, borderWidth: 1 },
   noteText: { flex: 1, fontSize: 14, fontFamily: 'Poppins-Medium', marginLeft: 12, lineHeight: 20 },
   detailsCard: { borderRadius: 16, padding: 20, marginBottom: 24, borderWidth: 1 },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
-  detailLabelContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  detailLabel: { fontSize: 14, fontFamily: 'Poppins-Medium', marginLeft: 8 },
-  detailValueContainer: { flexDirection: 'row', alignItems: 'center' },
-  detailValue: { fontSize: 14, fontFamily: 'Poppins-SemiBold' },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  detailLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,        // ← was: flex: 1
+    marginRight: 12,      // ← guarantees a gap between label and value
+  },
+  detailLabel: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    marginLeft: 8,
+  },
+  detailValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    flex: 1,              // ← takes remaining space
+    justifyContent: 'flex-end',
+  },
+  detailValue: {
+    fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
+    textAlign: 'right',   // ← aligns short values right
+    flexShrink: 1,        // ← lets long values wrap instead of pushing the label
+  },
+  detailValueWrap: {
+    flexWrap: 'wrap',
+  },
   detailValueSmall: { fontSize: 11, fontFamily: 'Poppins-SemiBold', maxWidth: 120 },
   copyButton: { padding: 4, marginLeft: 8 },
   instructionsCard: { borderRadius: 16, padding: 20, marginBottom: 24, borderWidth: 1 },

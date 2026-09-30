@@ -179,7 +179,8 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* ── Fixed header — does NOT scroll ── */}
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.separator }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
@@ -187,252 +188,252 @@ const TransactionDetail: React.FC<Props> = ({ navigation, route }) => {
         <Text style={[styles.title, { color: colors.textPrimary }]}>Transaction Details</Text>
         <View style={styles.placeholder} />
       </View>
+      <ScrollView style={[styles.scrollView, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          {/* Logo/Icon Section */}
+          <View style={[styles.logoSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+            <View style={[styles.logoContainer, { backgroundColor: containerBg, borderColor: colors.divider }]}>
+              {isBonus ? (
+                <View style={styles.iconFallback}>
+                  <Ionicons name={serviceIcon} size={32} color={iconColor} />
+                </View>
+              ) : logoSource ? (
+                <Image
+                  source={logoSource}
+                  style={[
+                    styles.logoImage,
+                    isWiseSubTransaction ? styles.wiseSubLogo : styles.providerLogo
+                  ]}
+                  resizeMode={isWiseSubTransaction ? 'contain' : 'cover'}
+                  defaultSource={require('../../assets/images/logo.png')}
+                />
+              ) : (
+                <View style={styles.iconFallback}>
+                  <Ionicons name={serviceIcon} size={32} color={iconColor} />
+                </View>
+              )}
+            </View>
 
-      <View style={styles.content}>
-        {/* Logo/Icon Section */}
-        <View style={[styles.logoSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
-          <View style={[styles.logoContainer, { backgroundColor: containerBg, borderColor: colors.divider }]}>
-            {isBonus ? (
-              <View style={styles.iconFallback}>
-                <Ionicons name={serviceIcon} size={32} color={iconColor} />
-              </View>
-            ) : logoSource ? (
-              <Image
-                source={logoSource}
-                style={[
-                  styles.logoImage,
-                  isWiseSubTransaction ? styles.wiseSubLogo : styles.providerLogo
-                ]}
-                resizeMode={isWiseSubTransaction ? 'contain' : 'cover'}
-                defaultSource={require('../../assets/images/logo.png')}
-              />
-            ) : (
-              <View style={styles.iconFallback}>
-                <Ionicons name={serviceIcon} size={32} color={iconColor} />
-              </View>
-            )}
+            <View style={styles.serviceInfo}>
+              <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{getDisplayName(getProductDisplayName(transaction))}</Text>
+              <Text style={[styles.serviceType, { color: colors.textSecondary }]}>
+                {transaction.type || (isWiseSubTransaction ? 'Wallet Transaction' : 'Service Purchase')}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.serviceInfo}>
-            <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{getDisplayName(getProductDisplayName(transaction))}</Text>            
-            <Text style={[styles.serviceType, { color: colors.textSecondary }]}>
-              {transaction.type || (isWiseSubTransaction ? 'Wallet Transaction' : 'Service Purchase')}
+          {/* Amount Card */}
+          <View style={[styles.amountCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+            <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
+            <Text style={[styles.amount, { color: getStatusColor() }]}>
+              ₦{formatAmount(transaction.amount)}
             </Text>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
+              <Text style={[styles.statusText, { color: getStatusColor() }]}>
+                {getStatusText()}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {/* Amount Card */}
-        <View style={[styles.amountCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
-          <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
-          <Text style={[styles.amount, { color: getStatusColor() }]}>
-            ₦{formatAmount(transaction.amount)}
-          </Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor() }]}>
-              {getStatusText()}
+          {/* Transaction Info Card */}
+          <View style={[styles.infoCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+            <View style={styles.infoHeader}>
+              <Ionicons name="information-circle" size={20} color={colors.primary} />
+              <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>Transaction Information</Text>
+            </View>
+
+            <View style={styles.infoGrid}>
+              <View style={styles.infoItem}>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Date</Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{formatDate(transaction.created_at)}</Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Status</Text>
+                <View style={[styles.statusIndicator, { backgroundColor: isCredit ? '#10B98120' : '#EF444420' }]}>
+                  <Text style={[styles.statusIndicatorText, { color: getStatusColor() }]}>
+                    {isCredit ? 'Completed' : 'Completed'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Details Card */}
+          <View style={[styles.detailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+            <View style={[styles.detailsHeader, { borderBottomColor: colors.divider }]}>
+              <Ionicons name="receipt" size={20} color={colors.primary} />
+              <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transaction Details</Text>
+            </View>
+
+            <View style={styles.detailsContent}>
+              <View style={styles.detailRow}>
+                <View style={styles.detailLeft}>
+                  <Ionicons name="cube" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Service Type</Text>
+                </View>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{getDisplayName(transaction.name)}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <View style={styles.detailLeft}>
+                  <Ionicons name="grid" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Category</Text>
+                </View>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{getDisplayName(transaction.type) || 'General'}</Text>
+              </View>
+
+              {transaction.customer && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <Ionicons name="person" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Customer</Text>
+                  </View>
+                  <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transaction.customer}</Text>
+                </View>
+              )}
+
+              {transaction.electricity_token && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <Ionicons name="key" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Token </Text>
+                  </View>
+                  <View style={styles.tokenContainer}>
+                    <Text style={[styles.tokenValue, { color: colors.primary }]}>{transaction.electricity_token}</Text>
+                    <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyToken(transaction.electricity_token)}>
+                      <Ionicons name="copy-outline" size={14} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {transaction.units && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <Ionicons name="flash" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Units</Text>
+                  </View>
+                  <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transaction.units}</Text>
+                </View>
+              )}
+
+              {transaction.reference && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <Ionicons name="document-text" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Reference</Text>
+                  </View>
+                  <View style={styles.referenceContainer}>
+                    <Text style={[styles.referenceValue, { color: colors.textPrimary }]}>{transaction.reference}</Text>
+                    <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyReference(transaction.reference)}>
+                      <Ionicons name="copy-outline" size={14} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+              {isElectricityWithToken && (
+                <TouchableOpacity
+                  style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
+                  onPress={() => setShowReceiptModal(true)}
+                >
+                  <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
+                </TouchableOpacity>
+              )}
+              {/* WAEC Receipt Button */}
+              {transaction.cards && transaction.cards.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
+                  onPress={() => {
+                    setWaecReceiptData({
+                      cards: transaction.cards,
+                      tokens: transaction.tokens,
+                      purchasedCode: transaction.purchased_code,
+                      amount: transaction.amount,
+                      customer: transaction.customer,
+                      serviceType: transaction.service_type === 'WAEC Registration' ? 'waec-registration' : 'waec',
+                      productName: getProductDisplayName(transaction),
+
+                    });
+                    setShowWAECReceipt(true);
+                  }}
+                >
+                  <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
+                </TouchableOpacity>
+              )}
+              {/* Similar for tokens (WAEC Registration) */}
+              {transaction.tokens && transaction.tokens.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
+                  onPress={() => {
+                    setWaecReceiptData({
+                      cards: transaction.cards,
+                      tokens: transaction.tokens,
+                      purchasedCode: transaction.purchased_code,
+                      amount: transaction.amount,
+                      customer: transaction.customer,
+                      serviceType: 'waec-registration',
+                      productName: getProductDisplayName(transaction),
+                    });
+                    setShowWAECReceipt(true);
+                  }}
+                >
+                  <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Help Section */}
+          <View style={[styles.helpCard, { backgroundColor: colors.primaryLight, borderColor: `${colors.primary}20` }]}>
+            <View style={styles.helpHeader}>
+              <Ionicons name="help-circle" size={20} color={colors.primary} />
+              <Text style={[styles.helpTitle, { color: colors.textPrimary }]}>Need Help?</Text>
+            </View>
+            <Text style={[styles.helpText, { color: colors.textSecondary }]}>
+              If you have any questions about this transaction, please contact our support team.
             </Text>
+            <TouchableOpacity style={[styles.supportButton, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate("Support")} >
+              <Ionicons name="chatbubble-ellipses" size={18} color="#FFFFFF" />
+              <Text style={styles.supportButtonText}>Contact Support</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Transaction Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="information-circle" size={20} color={colors.primary} />
-            <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>Transaction Information</Text>
-          </View>
-
-          <View style={styles.infoGrid}>
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Date</Text>
-              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{formatDate(transaction.created_at)}</Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Status</Text>
-              <View style={[styles.statusIndicator, { backgroundColor: isCredit ? '#10B98120' : '#EF444420' }]}>
-                <Text style={[styles.statusIndicatorText, { color: getStatusColor() }]}>
-                  {isCredit ? 'Completed' : 'Completed'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Details Card */}
-        <View style={[styles.detailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
-          <View style={[styles.detailsHeader, { borderBottomColor: colors.divider }]}>
-            <Ionicons name="receipt" size={20} color={colors.primary} />
-            <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transaction Details</Text>
-          </View>
-
-          <View style={styles.detailsContent}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailLeft}>
-                <Ionicons name="cube" size={16} color={colors.textSecondary} />
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Service Type</Text>
-              </View>
-              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{getDisplayName(transaction.name)}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <View style={styles.detailLeft}>
-                <Ionicons name="grid" size={16} color={colors.textSecondary} />
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Category</Text>
-              </View>
-              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{getDisplayName(transaction.type) || 'General'}</Text>
-            </View>
-
-            {transaction.customer && (
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <Ionicons name="person" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Customer</Text>
-                </View>
-                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transaction.customer}</Text>
-              </View>
-            )}
-
-            {transaction.electricity_token && (
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <Ionicons name="key" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Token </Text>
-                </View>
-                <View style={styles.tokenContainer}>
-                  <Text style={[styles.tokenValue, { color: colors.primary }]}>{transaction.electricity_token}</Text>
-                  <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyToken(transaction.electricity_token)}>
-                    <Ionicons name="copy-outline" size={14} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {transaction.units && (
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <Ionicons name="flash" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Units</Text>
-                </View>
-                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{transaction.units}</Text>
-              </View>
-            )}
-
-            {transaction.reference && (
-              <View style={styles.detailRow}>
-                <View style={styles.detailLeft}>
-                  <Ionicons name="document-text" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Reference</Text>
-                </View>
-                <View style={styles.referenceContainer}>
-                  <Text style={[styles.referenceValue, { color: colors.textPrimary }]}>{transaction.reference}</Text>
-                  <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyReference(transaction.reference)}>
-                    <Ionicons name="copy-outline" size={14} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            {isElectricityWithToken && (
-              <TouchableOpacity
-                style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
-                onPress={() => setShowReceiptModal(true)}
-              >
-                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
-                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
-              </TouchableOpacity>
-            )}
-            {/* WAEC Receipt Button */}
-            {transaction.cards && transaction.cards.length > 0 && (
-              <TouchableOpacity
-                style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
-                onPress={() => {
-                  setWaecReceiptData({
-                    cards: transaction.cards,
-                    tokens: transaction.tokens,
-                    purchasedCode: transaction.purchased_code,
-                    amount: transaction.amount,
-                    customer: transaction.customer,
-                    serviceType: transaction.service_type === 'WAEC Registration' ? 'waec-registration' : 'waec',
-                    productName: getProductDisplayName(transaction),
-
-                  });
-                  setShowWAECReceipt(true);
-                }}
-              >
-                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
-                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
-              </TouchableOpacity>
-            )}
-            {/* Similar for tokens (WAEC Registration) */}
-            {transaction.tokens && transaction.tokens.length > 0 && (
-              <TouchableOpacity
-                style={[styles.receiptButton, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
-                onPress={() => {
-                  setWaecReceiptData({
-                    cards: transaction.cards,
-                    tokens: transaction.tokens,
-                    purchasedCode: transaction.purchased_code,
-                    amount: transaction.amount,
-                    customer: transaction.customer,
-                    serviceType: 'waec-registration',
-                    productName: getProductDisplayName(transaction),
-                  });
-                  setShowWAECReceipt(true);
-                }}
-              >
-                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
-                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>View Receipt</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Help Section */}
-        <View style={[styles.helpCard, { backgroundColor: colors.primaryLight, borderColor: `${colors.primary}20` }]}>
-          <View style={styles.helpHeader}>
-            <Ionicons name="help-circle" size={20} color={colors.primary} />
-            <Text style={[styles.helpTitle, { color: colors.textPrimary }]}>Need Help?</Text>
-          </View>
-          <Text style={[styles.helpText, { color: colors.textSecondary }]}>
-            If you have any questions about this transaction, please contact our support team.
-          </Text>
-          <TouchableOpacity style={[styles.supportButton, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate("Support")} >
-            <Ionicons name="chatbubble-ellipses" size={18} color="#FFFFFF" />
-            <Text style={styles.supportButtonText}>Contact Support</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {isElectricityWithToken && (
-        <ElectricityTokenDisplay
-          visible={showReceiptModal}
-          onClose={() => setShowReceiptModal(false)}
-          token={transaction.electricity_token}
-          units={transaction.units ?? '0'}
-          amount={transaction.amount}
-          meterNumber={transaction.customer ?? ''}
-          provider={transaction.name ?? ''}
-          customerName={transaction.customer_name ?? ''}
-          phoneNumber={transaction.phone ?? ''}
-        />
-      )}
-      {showWAECReceipt && waecReceiptData && (
-        <WAECReceipt
-          visible={showWAECReceipt}
-          onClose={() => {
-            setShowWAECReceipt(false);
-            setWaecReceiptData(null);
-          }}
-          {...waecReceiptData}
-        />
-      )}
-    </ScrollView>
+        {isElectricityWithToken && (
+          <ElectricityTokenDisplay
+            visible={showReceiptModal}
+            onClose={() => setShowReceiptModal(false)}
+            token={transaction.electricity_token}
+            units={transaction.units ?? '0'}
+            amount={transaction.amount}
+            meterNumber={transaction.customer ?? ''}
+            provider={transaction.name ?? ''}
+            customerName={transaction.customer_name ?? ''}
+            phoneNumber={transaction.phone ?? ''}
+          />
+        )}
+        {showWAECReceipt && waecReceiptData && (
+          <WAECReceipt
+            visible={showWAECReceipt}
+            onClose={() => {
+              setShowWAECReceipt(false);
+              setWaecReceiptData(null);
+            }}
+            {...waecReceiptData}
+          />
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
 const makeStyles = (colors: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  scrollView: { flex: 1 },
+  screen: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -648,6 +649,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
+    marginBottom: 32,
   },
   helpHeader: {
     flexDirection: 'row',

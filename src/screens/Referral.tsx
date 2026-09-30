@@ -3,14 +3,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Modal,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  Modal,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useProfile } from "../redux/hooks/useProfile";
@@ -87,69 +87,71 @@ export default function Referral({ navigation }: { navigation: any }) {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }}>
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
-        <View style={[styles.header, { backgroundColor: colors.background }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Refer & Earn</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        <View style={styles.content}>
-          <View style={styles.descriptionContainer}>
-            <Ionicons name="people" size={48} color={colors.primary} />
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              You will receive a commission each time the person you refer performs a transaction
-            </Text>
-          </View>
-
-          {referralCount > 0 && (
-            <View style={styles.statsContainer}>
-              <TouchableOpacity style={[styles.statCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]} onPress={openReferralModal} activeOpacity={0.7}>
-                <View style={[styles.statIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="person-add" size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>People Referred</Text>
-                <Text style={[styles.statCount, { color: colors.primary }]}>{referralCount}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.primary} style={styles.chevron} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View style={[styles.referralSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Referral Code</Text>
-            <View style={styles.referralInputContainer}>
-              <View style={[styles.referralInput, { backgroundColor: colors.card, borderColor: colors.divider }]}>
-                <Text style={[styles.referralCodeText, { color: colors.textPrimary }]}>{user?.referral_code}</Text>
-              </View>
-              <TouchableOpacity onPress={copyToClipboard} style={[styles.copyButton, { backgroundColor: colors.card, borderColor: colors.divider }]}>
-                <Ionicons name="copy" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={onShare} style={[styles.shareButton, { backgroundColor: colors.primary }]}>
-              <Ionicons name="share-social" size={20} color="#FFFFFF" />
-              <Text style={styles.shareButtonText}>Share Referral Code</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={[styles.howItWorksCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>How It Works</Text>
-            <View style={styles.stepsContainer}>
-              {['Share your referral code with friends', 'They sign up using your code', 'Earn commissions on their transactions'].map((text, i) => (
-                <View key={i} style={styles.step}>
-                  <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.stepNumberText}>{i + 1}</Text>
-                  </View>
-                  <Text style={[styles.stepText, { color: colors.textSecondary }]}>{text}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* ── Fixed header — does NOT scroll ── */}
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.separator }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Refer & Earn</Text>
+        <View style={styles.placeholder} />
       </View>
+      <ScrollView style={[styles.scrollView, { backgroundColor: colors.background }]}>
+        <View style={[styles.screen, { backgroundColor: colors.background }]}>
+          <View style={styles.content}>
+            <View style={styles.descriptionContainer}>
+              <Ionicons name="people" size={48} color={colors.primary} />
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                You will receive a commission each time the person you refer performs a transaction
+              </Text>
+            </View>
 
+            {referralCount > 0 && (
+              <View style={styles.statsContainer}>
+                <TouchableOpacity style={[styles.statCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]} onPress={openReferralModal} activeOpacity={0.7}>
+                  <View style={[styles.statIcon, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="person-add" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>People Referred</Text>
+                  <Text style={[styles.statCount, { color: colors.primary }]}>{referralCount}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.primary} style={styles.chevron} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={[styles.referralSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Referral Code</Text>
+              <View style={styles.referralInputContainer}>
+                <View style={[styles.referralInput, { backgroundColor: colors.card, borderColor: colors.divider }]}>
+                  <Text style={[styles.referralCodeText, { color: colors.textPrimary }]}>{user?.referral_code}</Text>
+                </View>
+                <TouchableOpacity onPress={copyToClipboard} style={[styles.copyButton, { backgroundColor: colors.card, borderColor: colors.divider }]}>
+                  <Ionicons name="copy" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity onPress={onShare} style={[styles.shareButton, { backgroundColor: colors.primary }]}>
+                <Ionicons name="share-social" size={20} color="#FFFFFF" />
+                <Text style={styles.shareButtonText}>Share Referral Code</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.howItWorksCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.divider }]}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>How It Works</Text>
+              <View style={styles.stepsContainer}>
+                {['Share your referral code with friends', 'They sign up using your code', 'Earn commissions on their transactions'].map((text, i) => (
+                  <View key={i} style={styles.step}>
+                    <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.stepNumberText}>{i + 1}</Text>
+                    </View>
+                    <Text style={[styles.stepText, { color: colors.textSecondary }]}>{text}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
+        <View style={{ height: 50 }} />
+      </ScrollView>
       <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={closeModal}>
         <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPressOut={closeModal}>
           <View style={[modalStyles.modalContainer, { backgroundColor: colors.card }]}>
@@ -174,12 +176,13 @@ export default function Referral({ navigation }: { navigation: any }) {
           </View>
         </TouchableOpacity>
       </Modal>
-      <View style={{ height: 50 }} />
-    </ScrollView>
+    </View>
   );
 }
 
 const makeStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
   screen: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   loadingText: { marginTop: 16, fontSize: 16, fontFamily: "Poppins-Regular", textAlign: "center" },
